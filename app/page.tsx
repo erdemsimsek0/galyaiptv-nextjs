@@ -105,7 +105,7 @@ const productSchema = {
     '@type': 'AggregateRating',
     ratingValue: '4.9',
     bestRating: '5',
-    reviewCount: '2847',
+    reviewCount: '12847',
   },
 };
 
@@ -150,14 +150,14 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-br from-purple-950/50 to-gray-950 pointer-events-none" />
           <div className="relative max-w-4xl mx-auto">
             <div className="inline-block bg-purple-900/50 border border-purple-700 text-purple-300 text-sm px-4 py-1 rounded-full mb-6">
-              ⭐ 2847+ Memnun Müşteri · %99.9 Uptime Garantisi
+              ⭐ 12847+ Memnun Müşteri · %99.9 Uptime Garantisi
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
               Türkiye'nin En İyi{' '}
               <span className="gradient-text">IPTV Hizmeti</span>
             </h1>
             <p className="text-gray-300 text-lg md:text-xl mb-10 max-w-2xl mx-auto">
-              10.000+ kanal, 4K Ultra HD yayın kalitesi, donmayan altyapı ve 7/24 teknik destek.
+              85.000+ kanal, 4K Ultra HD yayın kalitesi, donmayan altyapı ve 7/24 teknik destek.
               IPTV satın al, anında başla!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -167,7 +167,7 @@ export default function HomePage() {
                 rel="noopener noreferrer"
                 className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-colors"
               >
-                🆓 Ücretsiz Test Al
+                 Ücretsiz Test Al
               </a>
               <Link
                 href="/#paketler"
