@@ -10,22 +10,36 @@ export const metadata: Metadata = {
 
 const packages = [
   {
-    name: 'Başlangıç Paketi',
-    duration: '1 Aylık',
+    name: '6 Aylık Paket',
+    duration: '6 Aylık',
     price: '800',
-    features: ['10.000+ Kanal', 'Full HD Yayın', '7/24 Destek', '1 Bağlantı'],
+    features: ['10.000+ Kanal', 'Full HD Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
     popular: false,
   },
   {
-    name: 'Popüler Paket',
-    duration: '6 Aylık',
-    price: '35.000',
+    name: '12 + 3 Ay Paket',
+    duration: '15 Aylık',
+    price: '1.200',
     features: ['10.000+ Kanal', '4K Yayın', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum'],
     popular: true,
   },
   {
-    name: 'Premium Paket',
-    duration: '12 Aylık',
+    name: '24 Aylık Paket',
+    duration: '24 Aylık',
+    price: '2.000',
+    features: ['10.000+ Kanal', '4K Yayın', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum'],
+    popular: false,
+  },
+  {
+    name: '36 Aylık Paket',
+    duration: '36 Aylık',
+    price: '2.900',
+    features: ['10.000+ Kanal', '4K Ultra HD', '7/24 Destek', '3 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
+    popular: false,
+  },
+  {
+    name: 'Süresiz Paket',
+    duration: 'Ömür Boyu',
     price: '6.000',
     features: ['10.000+ Kanal', '4K Ultra HD', '7/24 Destek', '3 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
     popular: false,
@@ -78,7 +92,7 @@ const productSchema = {
     highPrice: '6000',
     priceCurrency: 'TRY',
     availability: 'https://schema.org/InStock',
-    offerCount: '3',
+    offerCount: '5',
   },
   aggregateRating: {
     '@type': 'AggregateRating',
@@ -177,14 +191,14 @@ export default function HomePage() {
 
         {/* Packages */}
         <section id="paketler" className="py-20 px-4">
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-              IPTV Paketleri
+              Türkiye IPTV Paketlerimiz
             </h2>
             <p className="text-gray-400 text-center mb-12">
               İhtiyacınıza göre en uygun paketi seçin. Tüm paketlerde ücretsiz kurulum desteği.
             </p>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {packages.map((pkg) => (
                 <div
                   key={pkg.name}
