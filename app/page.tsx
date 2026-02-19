@@ -143,7 +143,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-br from-purple-950/50 to-gray-950 pointer-events-none" />
           <div className="relative max-w-4xl mx-auto">
             <div className="inline-block bg-purple-900/50 border border-purple-700 text-purple-300 text-sm px-4 py-1 rounded-full mb-6">
-              ⭐ 2847+ Memnun Müşteri · %99.9 Uptime Garantisi
+              ⭐ 12847+ Memnun Müşteri · %99.9 Uptime Garantisi
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
               Türkiye'nin En İyi{' '}
