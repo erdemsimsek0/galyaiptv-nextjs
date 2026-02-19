@@ -98,7 +98,7 @@ const productSchema = {
     '@type': 'AggregateRating',
     ratingValue: '4.9',
     bestRating: '5',
-    reviewCount: '2847',
+    reviewCount: '12847',
   },
 };
 
