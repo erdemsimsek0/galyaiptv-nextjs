@@ -198,8 +198,9 @@ export default function HomePage() {
             <p className="text-gray-400 text-center mb-12">
               İhtiyacınıza göre en uygun paketi seçin. Tüm paketlerde ücretsiz kurulum desteği.
             </p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {packages.map((pkg) => (
+            {/* İlk 3 paket */}
+            <div className="grid sm:grid-cols-3 gap-6 mb-6">
+              {packages.slice(0, 3).map((pkg) => (
                 <div
                   key={pkg.name}
                   className={`relative rounded-2xl p-6 border ${
@@ -215,9 +216,7 @@ export default function HomePage() {
                   )}
                   <div className="text-gray-400 text-sm mb-1">{pkg.duration}</div>
                   <h3 className="text-xl font-bold mb-2">{pkg.name}</h3>
-                  <div className="text-4xl font-extrabold mb-1">
-                    ₺{pkg.price}
-                  </div>
+                  <div className="text-4xl font-extrabold mb-1">₺{pkg.price}</div>
                   <div className="text-gray-500 text-sm mb-6">tek seferlik ödeme</div>
                   <ul className="space-y-3 mb-8">
                     {pkg.features.map((f) => (
@@ -235,6 +234,44 @@ export default function HomePage() {
                         ? 'bg-purple-600 hover:bg-purple-700 text-white'
                         : 'border border-gray-600 hover:border-purple-500 text-gray-300 hover:text-white'
                     }`}
+                  >
+                    Şimdi Satın Al
+                  </a>
+                </div>
+              ))}
+            </div>
+            {/* Son 2 paket ortalı */}
+            <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+              {packages.slice(3).map((pkg) => (
+                <div
+                  key={pkg.name}
+                  className={`relative rounded-2xl p-6 border ${
+                    pkg.popular
+                      ? 'border-purple-500 bg-purple-900/20'
+                      : 'border-gray-700 bg-gray-900/50'
+                  }`}
+                >
+                  {pkg.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-xs font-bold px-4 py-1 rounded-full">
+                      EN POPÜLER
+                    </div>
+                  )}
+                  <div className="text-gray-400 text-sm mb-1">{pkg.duration}</div>
+                  <h3 className="text-xl font-bold mb-2">{pkg.name}</h3>
+                  <div className="text-4xl font-extrabold mb-1">₺{pkg.price}</div>
+                  <div className="text-gray-500 text-sm mb-6">tek seferlik ödeme</div>
+                  <ul className="space-y-3 mb-8">
+                    {pkg.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
+                        <span className="text-green-400">✓</span> {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <a
+                    href={`https://wa.me/447445508352?text=Merhaba,%20${encodeURIComponent(pkg.name)}%20almak%20istiyorum`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-center py-3 rounded-xl font-semibold transition-colors border border-gray-600 hover:border-purple-500 text-gray-300 hover:text-white"
                   >
                     Şimdi Satın Al
                   </a>
