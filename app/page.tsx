@@ -13,35 +13,42 @@ const packages = [
     name: '6 Aylık Paket',
     duration: '6 Aylık',
     price: '800',
-    features: ['80.000+ Kanal', 'Full HD Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
+    features: ['85.000+ Kanal', 'Full HD Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
     popular: false,
   },
   {
     name: '12 + 3 Ay Paket',
     duration: '15 Aylık',
     price: '1.200',
-    features: ['80.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
+    features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum'],
     popular: true,
+  },
+  {
+    name: '12 x 2 Paket',
+    duration: '2 Ekran · 12 Aylık',
+    price: '2.000',
+    features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum'],
+    popular: false,
   },
   {
     name: '24 Aylık Paket',
     duration: '24 Aylık',
     price: '2.000',
-    features: ['80.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
+    features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum'],
     popular: false,
   },
   {
     name: '36 Aylık Paket',
     duration: '36 Aylık',
     price: '2.900',
-    features: ['80.000+ Kanal', '4K Ultra HD', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
+    features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '3 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
     popular: false,
   },
   {
     name: 'Süresiz Paket',
     duration: 'Ömür Boyu',
     price: '6.000',
-    features: ['80.000+ Kanal', '4K Ultra HD', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
+    features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '3 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
     popular: false,
   },
 ];
@@ -92,13 +99,13 @@ const productSchema = {
     highPrice: '6000',
     priceCurrency: 'TRY',
     availability: 'https://schema.org/InStock',
-    offerCount: '5',
+    offerCount: '6',
   },
   aggregateRating: {
     '@type': 'AggregateRating',
     ratingValue: '4.9',
     bestRating: '5',
-    reviewCount: '12847',
+    reviewCount: '2847',
   },
 };
 
@@ -143,7 +150,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-br from-purple-950/50 to-gray-950 pointer-events-none" />
           <div className="relative max-w-4xl mx-auto">
             <div className="inline-block bg-purple-900/50 border border-purple-700 text-purple-300 text-sm px-4 py-1 rounded-full mb-6">
-              ⭐ 12847+ Memnun Müşteri · %99.9 Uptime Garantisi
+              ⭐ 2847+ Memnun Müşteri · %99.9 Uptime Garantisi
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
               Türkiye'nin En İyi{' '}
@@ -198,9 +205,8 @@ export default function HomePage() {
             <p className="text-gray-400 text-center mb-12">
               İhtiyacınıza göre en uygun paketi seçin. Tüm paketlerde ücretsiz kurulum desteği.
             </p>
-            {/* İlk 3 paket */}
-            <div className="grid sm:grid-cols-3 gap-6 mb-6">
-              {packages.slice(0, 3).map((pkg) => (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {packages.map((pkg) => (
                 <div
                   key={pkg.name}
                   className={`relative rounded-2xl p-6 border ${
@@ -234,44 +240,6 @@ export default function HomePage() {
                         ? 'bg-purple-600 hover:bg-purple-700 text-white'
                         : 'border border-gray-600 hover:border-purple-500 text-gray-300 hover:text-white'
                     }`}
-                  >
-                    Şimdi Satın Al
-                  </a>
-                </div>
-              ))}
-            </div>
-            {/* Son 2 paket ortalı */}
-            <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
-              {packages.slice(3).map((pkg) => (
-                <div
-                  key={pkg.name}
-                  className={`relative rounded-2xl p-6 border ${
-                    pkg.popular
-                      ? 'border-purple-500 bg-purple-900/20'
-                      : 'border-gray-700 bg-gray-900/50'
-                  }`}
-                >
-                  {pkg.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-xs font-bold px-4 py-1 rounded-full">
-                      EN POPÜLER
-                    </div>
-                  )}
-                  <div className="text-gray-400 text-sm mb-1">{pkg.duration}</div>
-                  <h3 className="text-xl font-bold mb-2">{pkg.name}</h3>
-                  <div className="text-4xl font-extrabold mb-1">₺{pkg.price}</div>
-                  <div className="text-gray-500 text-sm mb-6">tek seferlik ödeme</div>
-                  <ul className="space-y-3 mb-8">
-                    {pkg.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
-                        <span className="text-green-400">✓</span> {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    href={`https://wa.me/447445508352?text=Merhaba,%20${encodeURIComponent(pkg.name)}%20almak%20istiyorum`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-center py-3 rounded-xl font-semibold transition-colors border border-gray-600 hover:border-purple-500 text-gray-300 hover:text-white"
                   >
                     Şimdi Satın Al
                   </a>
