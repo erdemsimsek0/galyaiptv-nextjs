@@ -19,7 +19,7 @@ const packages = [
   {
     name: 'Popüler Paket',
     duration: '6 Aylık',
-    price: '3.500',
+    price: '35.000',
     features: ['10.000+ Kanal', '4K Yayın', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum'],
     popular: true,
   },
