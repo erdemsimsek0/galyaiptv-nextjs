@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Galya IPTV - IPTV Satın Al | Premium IPTV Hizmeti 2025',
   description:
-    'Galya IPTV ile en kaliteli IPTV deneyimi. 10.000+ kanal, 4K yayın, 7/24 destek, ücretsiz test. Türkiye\'nin en iyi IPTV sağlayıcısı.',
+    'Galya IPTV ile en kaliteli IPTV deneyimi. 80.000+ kanal, 4K yayın, 7/24 destek, ücretsiz test. Türkiye\'nin en iyi IPTV sağlayıcısı.',
   alternates: { canonical: 'https://galyaiptv.com' },
 };
 
@@ -56,7 +56,7 @@ const packages = [
 const faqs = [
   {
     q: 'IPTV nedir?',
-    a: 'IPTV (Internet Protocol Television), internet üzerinden televizyon yayını almanızı sağlayan bir teknolojidir. Galya IPTV ile dünyanın dört bir yanından 10.000+ kanala erişebilirsiniz.',
+    a: 'IPTV (Internet Protocol Television), internet üzerinden televizyon yayını almanızı sağlayan bir teknolojidir. Galya IPTV ile dünyanın dört bir yanından 85.000+ kanala erişebilirsiniz.',
   },
   {
     q: 'IPTV satın almak güvenli mi?',
@@ -91,7 +91,7 @@ const productSchema = {
   '@type': 'Product',
   name: 'Galya IPTV Abonelik',
   image: 'https://galyaiptv.com/iptv-product.jpg',
-  description: 'Premium IPTV hizmeti ile 10.000+ kanala erişim. 4K, Full HD yayın kalitesi.',
+  description: 'Premium IPTV hizmeti ile 85.000+ kanala erişim. 4K, Full HD yayın kalitesi.',
   brand: { '@type': 'Brand', name: 'Galya IPTV' },
   offers: {
     '@type': 'AggregateOffer',
@@ -183,7 +183,7 @@ export default function HomePage() {
         <section className="py-12 border-y border-gray-800 bg-gray-900/50">
           <div className="max-w-4xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: '10.000+', label: 'Canlı Kanal' },
+              { value: '15.000+', label: 'Canlı Kanal' },
               { value: '4K', label: 'Ultra HD Yayın' },
               { value: '7/24', label: 'Teknik Destek' },
               { value: '%99.9', label: 'Uptime Garantisi' },
@@ -257,7 +257,7 @@ export default function HomePage() {
             </h2>
             <div className="grid md:grid-cols-3 gap-6">
               {[
-                { icon: '📺', title: '10.000+ Kanal', desc: 'Türk, yabancı, spor, film, dizi kanalları. Her kategoride en geniş içerik.' },
+                { icon: '📺', title: '85.000+ Kanal', desc: 'Türk, yabancı, spor, film, dizi kanalları. Her kategoride en geniş içerik.' },
                 { icon: '🎯', title: '4K Ultra HD Yayın', desc: 'Kristal netliğinde görüntü kalitesi. 4K, Full HD ve HD seçenekleri.' },
                 { icon: '⚡', title: 'Donmayan Altyapı', desc: 'Güçlü sunucu altyapısı ile kesintisiz yayın. Hiçbir donma, takılma yok.' },
                 { icon: '🛡️', title: '7/24 Teknik Destek', desc: 'WhatsApp üzerinden her saat ulaşabileceğiniz uzman destek ekibi.' },
