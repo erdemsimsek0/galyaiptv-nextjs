@@ -20,7 +20,7 @@ const packages = [
     name: '12 + 3 Ay Paket',
     duration: '15 Aylık',
     price: '1.200',
-    features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum'],
+    features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
     popular: true,
   },
   {
@@ -34,21 +34,21 @@ const packages = [
     name: '24 Aylık Paket',
     duration: '24 Aylık',
     price: '2.000',
-    features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum'],
+    features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
     popular: false,
   },
   {
     name: '36 Aylık Paket',
     duration: '36 Aylık',
     price: '2.900',
-    features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '3 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
+    features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
     popular: false,
   },
   {
     name: 'Süresiz Paket',
     duration: 'Ömür Boyu',
     price: '6.000',
-    features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '3 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
+    features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
     popular: false,
   },
 ];
