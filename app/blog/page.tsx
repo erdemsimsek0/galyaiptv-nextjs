@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'IPTV Blog - Rehberler, İpuçları ve Haberler',
   description:
     'IPTV hakkında her şey: kurulum rehberleri, en iyi player uygulamaları, cihaz uyumluluğu, kanal listeleri ve daha fazlası.',
-  alternates: { canonical: 'https://galyaiptv.com/blog' },
+  alternates: { canonical: 'https://galyaiptv.com.tr/blog' },
 };
 
 const posts = [
@@ -63,12 +63,12 @@ const blogListSchema = {
   '@context': 'https://schema.org',
   '@type': 'Blog',
   name: 'Galya IPTV Blog',
-  url: 'https://galyaiptv.com/blog',
+  url: 'https://galyaiptv.com.tr/blog',
   description: 'IPTV rehberleri, ipuçları ve haberleri',
   blogPost: posts.map((p) => ({
     '@type': 'BlogPosting',
     headline: p.title,
-    url: `https://galyaiptv.com/blog/${p.slug}`,
+    url: `https://galyaiptv.com.tr/blog/${p.slug}`,
     datePublished: p.date,
   })),
 };

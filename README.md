@@ -67,6 +67,6 @@ Bu proje Netlify için optimize edilmiştir.
 ## Google Search Console
 
 1. Google Search Console'a giriş yapın
-2. `https://galyaiptv.com` alan adını ekleyin
+2. `https://galyaiptv.com.tr` alan adını ekleyin
 3. `layout.tsx` içindeki `YOUR_GOOGLE_VERIFICATION_CODE` kısmını güncelleyin
-4. Sitemap olarak `https://galyaiptv.com/sitemap.xml` ekleyin
+4. Sitemap olarak `https://galyaiptv.com.tr/sitemap.xml` ekleyin

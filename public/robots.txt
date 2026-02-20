@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://galyaiptv.com/sitemap.xml
+Sitemap: https://galyaiptv.com.tr/sitemap.xml

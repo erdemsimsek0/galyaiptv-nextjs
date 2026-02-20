@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'IPTV Paketleri ve Fiyatları 2025',
   description:
     'Galya IPTV paketleri: Aylık, 6 aylık, yıllık seçenekler. Uygun fiyat, kaliteli hizmet. Hemen IPTV satın al!',
-  alternates: { canonical: 'https://galyaiptv.com/paketler' },
+  alternates: { canonical: 'https://galyaiptv.com.tr/paketler' },
 };
 
 const packages = [

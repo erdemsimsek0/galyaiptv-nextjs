@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'İletişim - 7/24 Destek',
   description:
     'Galya IPTV müşteri hizmetleri ile 7/24 WhatsApp üzerinden iletişime geçin. Ücretsiz test ve teknik destek.',
-  alternates: { canonical: 'https://galyaiptv.com/iletisim' },
+  alternates: { canonical: 'https://galyaiptv.com.tr/iletisim' },
 };
 
 export default function ContactPage() {

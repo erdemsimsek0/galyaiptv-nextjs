@@ -18,13 +18,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: post.title,
     description: post.description,
-    alternates: { canonical: `https://galyaiptv.com/blog/${post.slug}` },
+    alternates: { canonical: `https://galyaiptv.com.tr/blog/${post.slug}` },
     openGraph: {
       title: post.title,
       description: post.description,
       type: 'article',
       publishedTime: post.date,
-      url: `https://galyaiptv.com/blog/${post.slug}`,
+      url: `https://galyaiptv.com.tr/blog/${post.slug}`,
     },
   };
 }
@@ -59,9 +59,9 @@ export default async function BlogPostPage({ params }: Props) {
     publisher: {
       '@type': 'Organization',
       name: 'Galya IPTV',
-      logo: { '@type': 'ImageObject', url: 'https://galyaiptv.com/logo.png' },
+      logo: { '@type': 'ImageObject', url: 'https://galyaiptv.com.tr/logo.png' },
     },
-    url: `https://galyaiptv.com/blog/${post.slug}`,
+    url: `https://galyaiptv.com.tr/blog/${post.slug}`,
   };
 
   return (
