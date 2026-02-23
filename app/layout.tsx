@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 const SITE_URL = 'https://galyaiptv.com.tr';
-// ÖNEMLİ: Görselin adının public klasöründekiyle aynı olduğundan ve uzantısından (.jpg / .png) emin ol!
+// Görselin adının public klasöründe "og-image.png" olduğundan emin ol!
 const OG_IMAGE_PATH = '/og-image.png'; 
 
 export const metadata: Metadata = {
@@ -61,13 +61,13 @@ export const metadata: Metadata = {
     title: 'Galya IPTV - IPTV Satın Al | Premium IPTV Hizmeti',
     description:
       'Türkiye’nin en kaliteli IPTV hizmeti. 10.000+ kanal, 4K yayın ve 7/24 destek ile kesintisiz TV deneyimi burada.',
-    images: [OG_IMAGE_PATH],
+    images: [OG_IMAGE_PATH], // Twitter için liste yapısı
   },
   alternates: {
     canonical: SITE_URL,
   },
   verification: {
-    google: 'YOUR_GOOGLE_VERIFICATION_CODE', // Burayı Search Console'dan aldığın kodla değiştir
+    google: 'YOUR_GOOGLE_VERIFICATION_CODE', // Search Console kodunu buraya eklemeyi unutma
   },
 };
 
@@ -78,7 +78,7 @@ const organizationSchema = {
   alternateName: ['Galya IP TV', 'Galaxy IPTV', 'Galya TV'],
   url: SITE_URL,
   logo: `${SITE_URL}/logo.png`,
-  description: 'Türkiye\'nin en kaliteli IPTV hizmeti sağlayıcısı. 10.000+ kanal, 4K yayın, 7/24 destek.',
+  description: "Türkiye'nin en kaliteli IPTV hizmeti sağlayıcısı. 10.000+ kanal, 4K yayın, 7/24 destek.",
   contactPoint: {
     '@type': 'ContactPoint',
     telephone: '+44-7445-508352',
