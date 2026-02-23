@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 const SITE_URL = 'https://galyaiptv.com.tr';
+// ÖNEMLİ: Görselin adının public klasöründekiyle aynı olduğundan ve uzantısından (.jpg / .png) emin ol!
+const OG_IMAGE_PATH = '/og-image.jpg'; 
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -10,7 +12,7 @@ export const metadata: Metadata = {
     template: '%s | Galya IPTV',
   },
   description:
-    'Galya IPTV ile en kaliteli IPTV deneyimi. IPTV satın al, donmayan IPTV, 4K yayın, 10.000+ kanal, 7/24 destek, ücretsiz test. Türkiye\'nin en iyi IPTV sağlayıcısı.',
+    'Galya IPTV ile donmayan, kesintisiz ve 4K kalitesinde yayın keyfini yaşayın. 10.000+ kanal seçeneği ve 7/24 teknik destekle Türkiye’nin en iyi IPTV sağlayıcısıyız.',
   keywords: [
     'iptv satın al',
     'iptv satın al ucuz',
@@ -44,10 +46,10 @@ export const metadata: Metadata = {
     siteName: 'Galya IPTV',
     title: 'Galya IPTV - IPTV Satın Al | Premium IPTV Hizmeti',
     description:
-      'Türkiye\'nin en kaliteli IPTV hizmeti. 10.000+ kanal, 4K yayın, 7/24 destek. Hemen IPTV satın al!',
+      'Türkiye’nin en kaliteli IPTV hizmeti. 10.000+ kanal, 4K yayın ve donmayan sunucu altyapısıyla hemen aboneliğinizi başlatın ve kesintisiz yayının tadını çıkarın!',
     images: [
       {
-        url: '/og-image.jpg',
+        url: OG_IMAGE_PATH,
         width: 1200,
         height: 630,
         alt: 'Galya IPTV - Premium IPTV Hizmeti',
@@ -58,14 +60,14 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Galya IPTV - IPTV Satın Al | Premium IPTV Hizmeti',
     description:
-      'Türkiye\'nin en kaliteli IPTV hizmeti. 10.000+ kanal, 4K yayın, 7/24 destek.',
-    images: ['/og-image.jpg'],
+      'Türkiye’nin en kaliteli IPTV hizmeti. 10.000+ kanal, 4K yayın ve 7/24 destek ile kesintisiz TV deneyimi burada.',
+    images: [OG_IMAGE_PATH],
   },
   alternates: {
     canonical: SITE_URL,
   },
   verification: {
-    google: 'YOUR_GOOGLE_VERIFICATION_CODE', // Google Search Console'dan alın
+    google: 'YOUR_GOOGLE_VERIFICATION_CODE', // Burayı Search Console'dan aldığın kodla değiştir
   },
 };
 
