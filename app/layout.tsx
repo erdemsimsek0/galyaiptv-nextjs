@@ -3,7 +3,7 @@ import './globals.css';
 
 const SITE_URL = 'https://galyaiptv.com.tr';
 // ÖNEMLİ: Görselin adının public klasöründekiyle aynı olduğundan ve uzantısından (.jpg / .png) emin ol!
-const OG_IMAGE_PATH = '/og-image.jpg'; 
+const OG_IMAGE_PATH = '/og-image.png'; 
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
