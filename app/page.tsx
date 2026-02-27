@@ -135,7 +135,7 @@ export default function HomePage() {
               İletişim
             </Link>
             <a
-              href="https://wa.me/447445508352?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
+              href="https://wa.me/447441921660?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
@@ -169,7 +169,7 @@ export default function HomePage() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="https://wa.me/447445508352?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
+                href="https://wa.me/447441921660?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-colors"
@@ -236,7 +236,7 @@ export default function HomePage() {
                     ))}
                   </ul>
                   <a
-                    href={`https://wa.me/447445508352?text=Merhaba,%20${encodeURIComponent(pkg.name)}%20almak%20istiyorum`}
+                    href={`https://wa.me/447441921660?text=Merhaba,%20${encodeURIComponent(pkg.name)}%20almak%20istiyorum`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`block text-center py-3 rounded-xl font-semibold transition-colors ${
@@ -396,7 +396,7 @@ export default function HomePage() {
               Ücretsiz test ile Galya IPTV&apos;yi deneyin. Memnun kalırsanız en uygun paketi seçin.
             </p>
             <a
-              href="https://wa.me/447445508352?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
+              href="https://wa.me/447441921660?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-10 py-4 rounded-xl text-lg transition-colors"
