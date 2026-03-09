@@ -2,81 +2,149 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'İletişim - 7/24 Destek',
+  title: 'İletişim | Galya IPTV 7/24 WhatsApp Destek ve Ücretsiz Test',
   description:
-    'Galya IPTV müşteri hizmetleri ile 7/24 WhatsApp üzerinden iletişime geçin. Ücretsiz test ve teknik destek.',
-  alternates: { canonical: 'https://galyaiptv.com.tr/iletisim' },
+    'Galya IPTV iletişim sayfası. 7/24 WhatsApp destek hattı, ücretsiz IPTV test yayını, hızlı kurulum ve teknik destek için hemen bizimle iletişime geçin.',
+  keywords: [
+    'Galya IPTV iletişim',
+    'IPTV iletişim',
+    'IPTV WhatsApp destek',
+    'ücretsiz IPTV test',
+    'IPTV müşteri hizmetleri',
+    '7/24 IPTV destek',
+    'Galya IPTV WhatsApp',
+    'IPTV teknik destek',
+  ],
+  alternates: {
+    canonical: 'https://galyaiptv.com.tr/iletisim',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: 'İletişim | Galya IPTV 7/24 WhatsApp Destek ve Ücretsiz Test',
+    description:
+      'Galya IPTV müşteri hizmetleri ile 7/24 WhatsApp üzerinden iletişime geçin. Ücretsiz test yayını ve teknik destek için hemen ulaşın.',
+    url: 'https://galyaiptv.com.tr/iletisim',
+    siteName: 'Galya IPTV',
+    locale: 'tr_TR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'İletişim | Galya IPTV 7/24 WhatsApp Destek ve Ücretsiz Test',
+    description:
+      'Galya IPTV ile ücretsiz test yayını alın, 7/24 WhatsApp destek hattımıza ulaşın.',
+  },
 };
 
 export default function ContactPage() {
+  const phoneNumber = '+44 7441 921660';
+  const phoneHref = 'tel:+447441921660';
+  const whatsappBase = 'https://wa.me/447441921660';
+
   return (
     <>
-      <header className="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-sm border-b border-gray-800">
-        <nav className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+      <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 backdrop-blur-sm">
+        <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+          <Link
+            href="/"
+            className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-xl font-bold text-transparent"
+            aria-label="Galya IPTV ana sayfa"
+          >
             Galya IPTV
           </Link>
+
           <div className="flex items-center gap-6 text-sm text-gray-300">
-            <Link href="/#paketler" className="hover:text-white transition-colors">Paketler</Link>
-            <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-            <Link href="/iletisim" className="text-white font-medium">İletişim</Link>
+            <Link href="/#paketler" className="transition-colors hover:text-white">
+              Paketler
+            </Link>
+            <Link href="/blog" className="transition-colors hover:text-white">
+              Blog
+            </Link>
+            <Link href="/iletisim" className="font-medium text-white" aria-current="page">
+              İletişim
+            </Link>
           </div>
         </nav>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-20 text-center">
-        <h1 className="text-4xl font-bold mb-4">İletişim</h1>
-        <p className="text-gray-400 text-lg mb-12">
-          7/24 WhatsApp destek hattımız üzerinden bize ulaşabilirsiniz.
-        </p>
+      <main className="mx-auto max-w-3xl px-4 py-20 text-center">
+        <section>
+          <h1 className="mb-4 text-4xl font-bold md:text-5xl">
+            Galya IPTV İletişim ve Destek
+          </h1>
 
-        <div className="grid md:grid-cols-2 gap-6 text-left mb-12">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <div className="text-3xl mb-3">💬</div>
-            <h2 className="font-bold text-lg mb-2">WhatsApp Destek</h2>
-            <p className="text-gray-400 text-sm mb-4">
-              En hızlı destek kanalımız. 7/24 yanıt veriyoruz.
+          <p className="mb-12 text-lg leading-8 text-gray-400">
+            Galya IPTV müşteri hizmetleri ile <strong className="text-white">7/24 WhatsApp destek</strong>{' '}
+            üzerinden iletişime geçebilirsiniz. Ücretsiz IPTV test yayını, teknik destek,
+            kurulum yardımı ve paket bilgileri için bize hemen ulaşın.
+          </p>
+        </section>
+
+        <section className="mb-12 grid gap-6 text-left md:grid-cols-2">
+          <article className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+            <div className="mb-3 text-3xl" aria-hidden="true">
+              💬
+            </div>
+            <h2 className="mb-2 text-lg font-bold">WhatsApp Destek</h2>
+            <p className="mb-4 text-sm leading-6 text-gray-400">
+              En hızlı iletişim kanalımız üzerinden bize yazın. Teknik destek, paket bilgisi
+              ve kurulum yardımı için 7/24 yanıt veriyoruz.
             </p>
             <a
-              href="https://wa.me/447445508352?text=Merhaba,%20destek%20almak%20istiyorum"
+              href={`${whatsappBase}?text=Merhaba,%20destek%20almak%20istiyorum`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition-colors"
+              className="block rounded-xl bg-green-600 py-3 text-center font-semibold text-white transition-colors hover:bg-green-700"
+              aria-label="WhatsApp üzerinden destek al"
             >
-              WhatsApp'ta Yaz
+              WhatsApp&apos;ta Yaz
             </a>
-          </div>
+          </article>
 
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <div className="text-3xl mb-3">🆓</div>
-            <h2 className="font-bold text-lg mb-2">Ücretsiz Test</h2>
-            <p className="text-gray-400 text-sm mb-4">
-              24 saatlik ücretsiz test hesabı talep edin.
+          <article className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+            <div className="mb-3 text-3xl" aria-hidden="true">
+              🆓
+            </div>
+            <h2 className="mb-2 text-lg font-bold">Ücretsiz Test</h2>
+            <p className="mb-4 text-sm leading-6 text-gray-400">
+              Hizmeti satın almadan önce ücretsiz IPTV test yayını talep edebilirsiniz.
+              Beğendiğiniz takdirde üyeliğiniz hemen aktif edilir.
             </p>
             <a
-              href="https://wa.me/447445508352?text=Merhaba,%20ücretsiz%20IPTV%20test%20almak%20istiyorum"
+              href={`${whatsappBase}?text=Merhaba,%20ücretsiz%20IPTV%20test%20almak%20istiyorum`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-center bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-xl transition-colors"
+              className="block rounded-xl bg-purple-600 py-3 text-center font-semibold text-white transition-colors hover:bg-purple-700"
+              aria-label="Ücretsiz IPTV test talep et"
             >
               Test Talep Et
             </a>
-          </div>
-        </div>
+          </article>
+        </section>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-          <h2 className="font-bold text-lg mb-4">Telefon</h2>
+        <section className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+          <h2 className="mb-4 text-lg font-bold">Telefon ile İletişim</h2>
           <a
-            href="tel:+447445508352"
-            className="text-purple-400 hover:text-purple-300 text-2xl font-mono"
+            href={phoneHref}
+            className="font-mono text-2xl text-purple-400 transition-colors hover:text-purple-300"
+            aria-label={`Telefon numarası ${phoneNumber}`}
           >
-            +44 7445 508352
+            {phoneNumber}
           </a>
-          <p className="text-gray-500 text-sm mt-2">Pazartesi - Pazar, 09:00 - 24:00</p>
-        </div>
+          <p className="mt-2 text-sm text-gray-500">
+            Pazartesi - Pazar, 09:00 - 24:00
+          </p>
+          <p className="mt-4 text-sm leading-6 text-gray-400">
+            IPTV paketleri, kurulum desteği, yayın sorunu ve test hesabı talepleriniz için
+            WhatsApp veya telefon üzerinden bizimle iletişime geçebilirsiniz.
+          </p>
+        </section>
       </main>
 
-      <footer className="border-t border-gray-800 py-8 px-4 text-center text-gray-500 text-sm">
+      <footer className="border-t border-gray-800 px-4 py-8 text-center text-sm text-gray-500">
         <p>© {new Date().getFullYear()} Galya IPTV. Tüm hakları saklıdır.</p>
       </footer>
     </>
