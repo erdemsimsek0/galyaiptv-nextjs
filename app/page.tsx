@@ -347,7 +347,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <p className="mb-4 text-gray-400">
-                    “Donmayan IPTV al” arayışında olan kullanıcıların dikkat etmesi gereken en önemli nokta, sadece
+                    "Donmayan IPTV al" arayışında olan kullanıcıların dikkat etmesi gereken en önemli nokta, sadece
                     reklam cümlelerine değil gerçek kullanım koşullarına bakmaktır. İnternet hızınız, modem
                     kaliteniz, Wi-Fi gücünüz, kullandığınız player uygulaması ve cihaz performansınız yayın akıcılığını
                     doğrudan etkiler.
@@ -448,7 +448,7 @@ export default function HomePage() {
             <div className="mt-10 rounded-2xl border border-purple-800/40 bg-purple-950/20 p-8">
               <h3 className="mb-3 text-2xl font-bold">Doğru Paket, Doğru Kurulum, Daha İyi Deneyim</h3>
               <p className="leading-relaxed text-gray-300">
-                Kullanıcıların çoğu yalnızca “en ucuz paket” arayışıyla karar veriyor; sonra da yayın deneyimi
+                Kullanıcıların çoğu yalnızca "en ucuz paket" arayışıyla karar veriyor; sonra da yayın deneyimi
                 beklentiyi karşılamayınca sorun yaşıyor. Oysa eski usul mantık hâlâ doğrudur: önce ihtiyacı doğru
                 belirle, sonra uygun sistemi kur. Galya IPTV tarafında bu yüzden hem paket seçimi hem de kurulum
                 desteği birlikte düşünülür. Böylece sadece bir üyelik değil, baştan sona daha düzenli bir kullanım
@@ -521,42 +521,51 @@ export default function HomePage() {
               ))}
             </div>
 
-<div className="mt-10 rounded-2xl border border-purple-900/30 bg-gray-900/50 p-6 text-gray-300 backdrop-blur-sm">
-  <h3 className="mb-3 text-xl font-bold text-white flex items-center gap-2">
-    <span className="text-purple-400">✦</span> 
-    Neden Galya IPTV'yi Seçmelisiniz?
-  </h3>
-  <p className="leading-relaxed text-gray-400 text-sm md:text-base">
-    Sadece bir <strong>IPTV satın al</strong> hizmeti değil, kesintisiz bir eğlence deneyimi sunuyoruz. 
-    Yayınlarımızda <strong>donma sorunu</strong> yaşanmaması için yüksek kapasiteli sunucular kullanıyor, 
-    <strong>Smart TV, Android ve iOS</strong> cihazlarınız için adım adım <strong>ücretsiz kurulum desteği</strong> sağlıyoruz. 
-    Gerçek 4K ve Full HD yayın kalitesini test etmek için hemen bizimle iletişime geçin; 
-    çünkü biz kuru vaatler değil, 7/24 teknik destek ve %99.9 uptime garantisi veriyoruz.
-  </p>
-</div>
-        <section className="px-4 py-20 text-center">
-          <div className="mx-auto max-w-2xl">
-            <h2 className="mb-4 text-3xl font-bold">Size Uygun IPTV Paketini Hemen Seçin</h2>
-            <p className="mb-8 text-gray-400">
-              Paketleri karşılaştırın, ücretsiz test isteyin ve cihazınıza uygun kurulum desteği ile kullanıma hızlıca
-              başlayın. Kararsızsanız önce test alın, sonra gönül rahatlığıyla seçim yapın.
-            </p>
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <a
-                href="https://wa.me/447441921660?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block rounded-xl bg-green-600 px-10 py-4 text-lg font-bold text-white shadow-lg shadow-green-900/20 transition-colors hover:bg-green-700"
-              >
-                WhatsApp ile Test Talep Et
-              </a>
-              <Link
-                href="/#paketler"
-                className="inline-block rounded-xl border border-purple-500 px-10 py-4 text-lg font-bold text-purple-300 transition-colors hover:bg-purple-900/30"
-              >
-                Fiyatları Gör
-              </Link>
+            <div className="mt-10 rounded-2xl border border-gray-800 bg-gray-900/50 p-8">
+              <h3 className="mb-4 text-xl font-bold text-white">
+                IPTV Hizmeti Seçerken Gerçekten Ne Önemlidir?
+              </h3>
+              <div className="grid gap-5 md:grid-cols-2 text-sm text-gray-400 leading-relaxed">
+                <p>
+                  Bir IPTV hizmetini değerlendirirken yalnızca fiyata bakarak karar vermek çoğu zaman hayal
+                  kırıklığına yol açar. Asıl belirleyici olan, paket süresinden bağımsız olarak altyapının ne
+                  kadar stabil çalıştığı, kurulum sürecinde ne kadar rehberlik sunulduğu ve sorun yaşandığında
+                  destek ekibine ne hızda ulaşılabildiğidir.
+                </p>
+                <p>
+                  Galya IPTV olarak her pakette kurulum desteği, cihaz uyumluluğu rehberliği ve doğrudan iletişim
+                  hattı sunuyoruz. Satın almadan önce ücretsiz test talep edebilir, yayın kalitesini ve kanal geçiş
+                  hızını kendi cihazınızda bizzat görebilirsiniz. Böylece beklentinizle örtüşen paketi daha net
+                  belirleyebilirsiniz.
+                </p>
+              </div>
             </div>
+
+            <section className="mt-16 px-0 py-0 text-center">
+              <div className="mx-auto max-w-2xl">
+                <h2 className="mb-4 text-3xl font-bold">Size Uygun IPTV Paketini Hemen Seçin</h2>
+                <p className="mb-8 text-gray-400">
+                  Paketleri karşılaştırın, ücretsiz test isteyin ve cihazınıza uygun kurulum desteği ile kullanıma hızlıca
+                  başlayın. Kararsızsanız önce test alın, sonra gönül rahatlığıyla seçim yapın.
+                </p>
+                <div className="flex flex-col justify-center gap-4 sm:flex-row">
+                  <a
+                    href="https://wa.me/447441921660?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block rounded-xl bg-green-600 px-10 py-4 text-lg font-bold text-white shadow-lg shadow-green-900/20 transition-colors hover:bg-green-700"
+                  >
+                    WhatsApp ile Test Talep Et
+                  </a>
+                  <Link
+                    href="/#paketler"
+                    className="inline-block rounded-xl border border-purple-500 px-10 py-4 text-lg font-bold text-purple-300 transition-colors hover:bg-purple-900/30"
+                  >
+                    Fiyatları Gör
+                  </Link>
+                </div>
+              </div>
+            </section>
           </div>
         </section>
       </main>
