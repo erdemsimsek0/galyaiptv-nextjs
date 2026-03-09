@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 // LÜTFEN DİKKAT: Next.js'te "use client" kullanılan sayfalarda metadata kullanılamaz.
-// Bu yüzden aşağıdaki metadata kısmını yoruma aldım. 
+// Bu yüzden aşağıdaki metadata kısmını yoruma aldım.
 // Bu bloğu kopyalayıp app/layout.tsx dosyanızın içine yapıştırmalısınız!
 /*
 import type { Metadata } from 'next';
@@ -170,55 +170,89 @@ export default function HomePage() {
   const [step, setStep] = useState(1); // 1: Email, 2: Kod, 3: Başarılı
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [otpToken, setOtpToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
 
-  const handleOpenModal = (e: any) => {
-    e.preventDefault();
+  const handleOpenModal = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault();
     setIsModalOpen(true);
+    setStep(1);
+    setEmail('');
+    setOtp('');
+    setOtpToken('');
+    setStatusMsg('');
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setStep(1);
+    setEmail('');
+    setOtp('');
+    setOtpToken('');
+    setStatusMsg('');
+    setLoading(false);
   };
 
   const handleSendOtp = async () => {
-    if (!email) return alert("Lütfen e-posta adresinizi girin.");
+    if (!email) return alert('Lütfen e-posta adresinizi girin.');
+
     setLoading(true);
+    setStatusMsg('');
+
     try {
       const res = await fetch('/api/test-talep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send_otp', email })
+        body: JSON.stringify({ action: 'send_otp', email }),
       });
-      if (res.ok) {
+
+      const data = await res.json();
+
+      if (data.success) {
+        setOtpToken(data.token);
         setStep(2);
       } else {
-        alert("Kod gönderilemedi, lütfen e-posta adresinizi kontrol edin.");
+        alert(data.error || 'Kod gönderilemedi, lütfen e-posta adresinizi kontrol edin.');
       }
     } catch (error) {
       console.error(error);
-      alert("Sunucuya bağlanılamadı.");
+      alert('Sunucuya bağlanılamadı.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleVerifyOtp = async () => {
-    if (!otp) return alert("Lütfen doğrulama kodunu girin.");
+    if (!otp) return alert('Lütfen doğrulama kodunu girin.');
+
     setLoading(true);
-    setStatusMsg("Test hesabınız oluşturuluyor, bu işlem 30-40 saniye sürebilir...");
+    setStatusMsg('Test hesabınız oluşturuluyor, bu işlem 30-40 saniye sürebilir...');
+
     try {
       const res = await fetch('/api/test-talep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email, otp })
+        body: JSON.stringify({
+          action: 'verify',
+          email,
+          otp,
+          token: otpToken,
+        }),
       });
+
       const data = await res.json();
+
       if (data.success) {
         setStep(3);
       } else {
-        alert(data.error || "Girdiğiniz kod hatalı veya süresi dolmuş.");
-        setStatusMsg("");
+        alert(data.error || 'Girdiğiniz kod hatalı veya süresi dolmuş.');
+        setStatusMsg('');
       }
     } catch (error) {
-      alert("Bir hata oluştu.");
+      console.error(error);
+      alert('Bir hata oluştu.');
+      setStatusMsg('');
     } finally {
       setLoading(false);
     }
@@ -261,7 +295,6 @@ export default function HomePage() {
             <Link href="/iletisim" className="transition-colors hover:text-white">
               İletişim
             </Link>
-            {/* WHATSAPP YERİNE MODAL BUTONU */}
             <button
               onClick={handleOpenModal}
               className="rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
@@ -293,7 +326,6 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              {/* WHATSAPP YERİNE MODAL BUTONU */}
               <button
                 onClick={handleOpenModal}
                 className="rounded-xl bg-purple-600 px-8 py-4 text-lg font-semibold text-white transition-colors hover:bg-purple-700"
@@ -376,7 +408,6 @@ export default function HomePage() {
                     ))}
                   </ul>
 
-                  {/* WHATSAPP YERİNE MODAL BUTONU */}
                   <button
                     onClick={handleOpenModal}
                     className={`block w-full rounded-xl py-3 text-center font-semibold transition-colors ${
@@ -587,7 +618,7 @@ export default function HomePage() {
               <h3 className="mb-4 text-xl font-bold text-white">
                 IPTV Hizmeti Seçerken Gerçekten Ne Önemlidir?
               </h3>
-              <div className="grid gap-5 md:grid-cols-2 text-sm text-gray-400 leading-relaxed">
+              <div className="grid gap-5 text-sm leading-relaxed text-gray-400 md:grid-cols-2">
                 <p>
                   Bir IPTV hizmetini değerlendirirken yalnızca fiyata bakarak karar vermek çoğu zaman hayal
                   kırıklığına yol açar. Asıl belirleyici olan, paket süresinden bağımsız olarak altyapının ne
@@ -611,7 +642,6 @@ export default function HomePage() {
                   başlayın. Kararsızsanız önce test alın, sonra gönül rahatlığıyla seçim yapın.
                 </p>
                 <div className="flex flex-col justify-center gap-4 sm:flex-row">
-                  {/* WHATSAPP YERİNE MODAL BUTONU */}
                   <button
                     onClick={handleOpenModal}
                     className="inline-block rounded-xl bg-green-600 px-10 py-4 text-lg font-bold text-white shadow-lg shadow-green-900/20 transition-colors hover:bg-green-700"
@@ -651,30 +681,33 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* --- E-POSTA DOĞRULAMALI TEST MODALI --- */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4">
           <div className="w-full max-w-md rounded-2xl border border-purple-500 bg-gray-950 p-8 shadow-[0_0_30px_rgba(147,51,234,0.3)]">
-            <button 
-              onClick={() => { setIsModalOpen(false); setStep(1); }} 
-              className="float-right text-gray-500 hover:text-white text-xl font-bold"
-            >✕</button>
-            
+            <button
+              onClick={handleCloseModal}
+              className="float-right text-xl font-bold text-gray-500 hover:text-white"
+            >
+              ✕
+            </button>
+
             {step === 1 && (
               <div className="space-y-5">
                 <h3 className="text-2xl font-bold text-white">Ücretsiz Test Oluştur</h3>
-                <p className="text-sm text-gray-400">Test bilgilerinizi gönderebilmemiz için lütfen geçerli bir e-posta adresi girin.</p>
-                <input 
-                  type="email" 
-                  placeholder="E-posta adresiniz" 
-                  className="w-full rounded-xl bg-gray-900 border border-gray-800 p-4 text-white outline-none focus:border-purple-500 transition-colors"
+                <p className="text-sm text-gray-400">
+                  Test bilgilerinizi gönderebilmemiz için lütfen geçerli bir e-posta adresi girin.
+                </p>
+                <input
+                  type="email"
+                  placeholder="E-posta adresiniz"
+                  className="w-full rounded-xl border border-gray-800 bg-gray-900 p-4 text-white outline-none transition-colors focus:border-purple-500"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <button 
-                  onClick={handleSendOtp} 
+                <button
+                  onClick={handleSendOtp}
                   disabled={loading}
-                  className="w-full rounded-xl bg-purple-600 py-4 font-bold text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                  className="w-full rounded-xl bg-purple-600 py-4 font-bold text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
                 >
                   {loading ? 'Kod Gönderiliyor...' : 'Doğrulama Kodu Gönder'}
                 </button>
@@ -684,20 +717,22 @@ export default function HomePage() {
             {step === 2 && (
               <div className="space-y-5 text-center">
                 <h3 className="text-2xl font-bold text-white">Kodu Doğrula</h3>
-                <p className="text-sm text-gray-400"><strong>{email}</strong> adresine gönderdiğimiz 6 haneli kodu girin.</p>
-                <input 
-                  type="text" 
-                  placeholder="000000" 
+                <p className="text-sm text-gray-400">
+                  <strong>{email}</strong> adresine gönderdiğimiz 6 haneli kodu girin.
+                </p>
+                <input
+                  type="text"
+                  placeholder="000000"
                   maxLength={6}
-                  className="w-full text-center text-3xl tracking-[10px] font-bold rounded-xl bg-gray-900 border border-gray-800 p-4 text-white outline-none focus:border-purple-500 transition-colors"
+                  className="w-full rounded-xl border border-gray-800 bg-gray-900 p-4 text-center text-3xl font-bold tracking-[10px] text-white outline-none transition-colors focus:border-purple-500"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                 />
-                <p className="text-xs text-purple-400 font-medium h-4">{statusMsg}</p>
-                <button 
-                  onClick={handleVerifyOtp} 
+                <p className="h-4 text-xs font-medium text-purple-400">{statusMsg}</p>
+                <button
+                  onClick={handleVerifyOtp}
                   disabled={loading}
-                  className="w-full rounded-xl bg-green-600 py-4 font-bold text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                  className="w-full rounded-xl bg-green-600 py-4 font-bold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                 >
                   {loading ? 'Lütfen Bekleyin...' : 'Onayla ve Testi Aç'}
                 </button>
@@ -705,13 +740,18 @@ export default function HomePage() {
             )}
 
             {step === 3 && (
-              <div className="text-center py-6 space-y-4">
-                <div className="text-6xl mb-4 text-green-500">✅</div>
-                <h3 className="text-2xl font-bold text-white mb-2">Harika! Testiniz Hazır.</h3>
-                <p className="text-gray-300">IPTV test bilgileriniz e-posta adresinize gönderildi. <br/><br/>Lütfen <strong className="text-white">Gereksiz (Spam)</strong> klasörünü de kontrol etmeyi unutmayın.</p>
-                <button 
-                  onClick={() => { setIsModalOpen(false); setStep(1); }}
-                  className="mt-6 inline-block rounded-lg px-6 py-2 border border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white transition-colors"
+              <div className="space-y-4 py-6 text-center">
+                <div className="mb-4 text-6xl text-green-500">✅</div>
+                <h3 className="mb-2 text-2xl font-bold text-white">Harika! Testiniz Hazır.</h3>
+                <p className="text-gray-300">
+                  IPTV test bilgileriniz e-posta adresinize gönderildi.
+                  <br />
+                  <br />
+                  Lütfen <strong className="text-white">Gereksiz (Spam)</strong> klasörünü de kontrol etmeyi unutmayın.
+                </p>
+                <button
+                  onClick={handleCloseModal}
+                  className="mt-6 inline-block rounded-lg border border-purple-500 px-6 py-2 text-purple-400 transition-colors hover:bg-purple-500 hover:text-white"
                 >
                   Pencereyi Kapat
                 </button>
