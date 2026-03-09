@@ -16,6 +16,7 @@
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@types/nodemailer": "^6.4.14",
     "@types/node": "22.13.10",
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4",
