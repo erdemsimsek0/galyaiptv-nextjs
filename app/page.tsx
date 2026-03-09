@@ -2,51 +2,75 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'IPTV Satın Al | 4K Donmayan IPTV Paketleri & Fiyatları – Galya IPTV',
+  title: 'IPTV Al | 4K IPTV Paketleri, Fiyatlar ve Ücretsiz Test | Galya IPTV',
   description:
-    'IPTV satın al: Galya IPTV ile 85.000+ kanal, 4K/Full HD yayın, donmayan altyapı ve 7/24 destek. IPTV paketleri ve fiyatları, ücretsiz test ve hızlı kurulum.',
+    "Galya IPTV ile 4K ve Full HD yayın kalitesinde IPTV paketlerini inceleyin. Uygun fiyatlar, ücretsiz test, hızlı kurulum desteği ve tüm cihazlarla uyumlu güçlü IPTV deneyimi.",
   alternates: { canonical: 'https://galyaiptv.com.tr/' },
+  openGraph: {
+    title: 'IPTV Al | 4K IPTV Paketleri, Fiyatlar ve Ücretsiz Test | Galya IPTV',
+    description:
+      "Galya IPTV ile 4K ve Full HD yayın kalitesinde IPTV paketlerini inceleyin. Uygun fiyatlar, ücretsiz test, hızlı kurulum desteği ve tüm cihazlarla uyumlu güçlü IPTV deneyimi.",
+    url: 'https://galyaiptv.com.tr/',
+    siteName: 'Galya IPTV',
+    locale: 'tr_TR',
+    type: 'website',
+    images: [
+      {
+        url: 'https://galyaiptv.com.tr/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Galya IPTV 4K IPTV Paketleri',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'IPTV Al | 4K IPTV Paketleri, Fiyatlar ve Ücretsiz Test | Galya IPTV',
+    description:
+      "Galya IPTV ile 4K ve Full HD yayın kalitesinde IPTV paketlerini inceleyin. Uygun fiyatlar, ücretsiz test ve hızlı kurulum desteği.",
+    images: ['https://galyaiptv.com.tr/og-image.jpg'],
+  },
 };
 
 const packages = [
   {
     name: '1 Aylık Paket',
-    duration: '1 Ay iptv',
+    duration: '1 Ay IPTV',
     price: '500',
     features: ['85.000+ Kanal', 'Full HD Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
     popular: false,
   },
   {
     name: '3 Aylık Paket',
-    duration: '3 Ay iptv',
+    duration: '3 Ay IPTV',
     price: '700',
     features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
     popular: true,
   },
   {
-    name: '6 Aylık',
-    duration: '6 ay iptv',
+    name: '6 Aylık Paket',
+    duration: '6 Ay IPTV',
     price: '1.000',
     features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum'],
     popular: false,
   },
   {
     name: '12 Aylık Paket',
-    duration: '12 ay iptv',
+    duration: '12 Ay IPTV',
     price: '1.400',
     features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
     popular: false,
   },
   {
     name: '24 Aylık Paket',
-    duration: '24 ay iptv',
+    duration: '24 Ay IPTV',
     price: '2.200',
     features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
     popular: false,
   },
   {
     name: 'Süresiz Paket',
-    duration: 'SINIRSIZ İPTV',
+    duration: 'Sınırsız IPTV',
     price: '6.900',
     features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
     popular: false,
@@ -55,24 +79,28 @@ const packages = [
 
 const faqs = [
   {
-    q: 'IPTV nedir?',
-    a: "IPTV (Internet Protocol Television), internet üzerinden televizyon yayını almanızı sağlayan bir teknolojidir. Galya IPTV ile dünyanın dört bir yanından 85.000+ kanala erişebilirsiniz.",
+    q: 'IPTV nedir ve nasıl çalışır?',
+    a: 'IPTV, televizyon yayınlarının internet protokolü üzerinden izlenmesini sağlayan bir sistemdir. Kablolu yayın mantığından farklı olarak içerikler internet bağlantınız üzerinden cihazınıza ulaşır. Galya IPTV ile canlı TV, spor, film ve dizi içeriklerini birçok cihazda kolayca izleyebilirsiniz.',
   },
   {
-    q: 'IPTV satın almak güvenli mi?',
-    a: 'Evet, Galya IPTV olarak müşteri memnuniyetini ön planda tutuyoruz. 7/24 teknik destek, kesintisiz yayın ve %99.9 uptime garantisi sunuyoruz.',
+    q: 'IPTV satın almadan önce test alabilir miyim?',
+    a: 'Evet. Hizmeti satın almadan önce ücretsiz test talep ederek yayın kalitesini, kanal geçiş hızını ve cihaz uyumluluğunu görebilirsiniz. Böylece size uygun paketi daha rahat seçebilirsiniz.',
   },
   {
-    q: 'IPTV test alabilir miyim?',
-    a: 'Evet, ücretsiz IPTV test hizmetimizden yararlanabilirsiniz. WhatsApp üzerinden bize ulaşarak 24 saatlik test hesabı talep edebilirsiniz.',
+    q: 'Hangi cihazlarda IPTV kullanabilirim?',
+    a: 'Android TV, Smart TV, Android telefon, iPhone, tablet, TV Box, bilgisayar, Apple TV, MAG cihazlar ve birçok farklı platformda IPTV kullanabilirsiniz. Kurulum adımları cihaz türüne göre değişse de destek ekibimiz süreçte yardımcı olur.',
   },
   {
-    q: 'Hangi cihazlarda çalışır?',
-    a: 'Android TV, Smart TV (Samsung, LG, Sony), iOS, Android telefon/tablet, MAG Box, Enigma2 ve daha birçok cihazda sorunsuz çalışır.',
+    q: 'IPTV donma sorunu neden olur?',
+    a: 'Donma sorunu çoğu zaman internet hızı, Wi-Fi kalitesi, cihaz performansı, uygulama seçimi veya yoğun saatlerde yaşanan bağlantı problemleri nedeniyle olur. Bu yüzden sadece paket değil, doğru uygulama ve doğru kurulum da önemlidir.',
   },
   {
-    q: 'Kurulum desteği var mı?',
-    a: 'Evet, 7/24 WhatsApp destek hattımız üzerinden ücretsiz kurulum yardımı alabilirsiniz. Uzman ekibimiz kurulum sürecinde yanınızda olacak.',
+    q: 'Kurulum desteği veriyor musunuz?',
+    a: 'Evet. Galya IPTV olarak kurulum aşamasında adım adım destek sağlıyoruz. Cihazınıza uygun uygulama önerisi, giriş bilgileri ve temel ayarlar konusunda destek ekibimiz yardımcı olur.',
+  },
+  {
+    q: 'IPTV fiyatları neye göre değişiyor?',
+    a: 'Fiyatlar paket süresine, bağlantı sayısına ve sunulan destek seviyesine göre değişir. Kısa süreli paketler denemek isteyenler için uygundur; uzun süreli paketler ise genelde daha avantajlı maliyet sunar.',
   },
 ];
 
@@ -82,25 +110,50 @@ const faqSchema = {
   mainEntity: faqs.map((faq) => ({
     '@type': 'Question',
     name: faq.q,
-    acceptedAnswer: { '@type': 'Answer', text: faq.a },
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.a,
+    },
   })),
 };
 
 const productSchema = {
   '@context': 'https://schema.org',
   '@type': 'Product',
-  name: 'Galya IPTV Abonelik',
-  image: 'https://galyaiptv.com.tr/iptv-product.jpg',
-  description: 'Premium IPTV hizmeti ile 85.000+ kanala erişim. 4K, Full HD yayın kalitesi.',
-  brand: { '@type': 'Brand', name: 'Galya IPTV' },
+  name: 'Galya IPTV Paketleri',
+  image: 'https://galyaiptv.com.tr/og-image.jpg',
+  description:
+    'Galya IPTV paketleri ile 4K ve Full HD yayın kalitesinde çok sayıda canlı kanal, film ve dizi içeriğine erişebilirsiniz. Farklı süre seçenekleri, ücretsiz test ve kurulum desteği sunulur.',
+  brand: {
+    '@type': 'Brand',
+    name: 'Galya IPTV',
+  },
   offers: {
     '@type': 'AggregateOffer',
-    lowPrice: '800',
-    highPrice: '6000',
+    lowPrice: '500',
+    highPrice: '6900',
     priceCurrency: 'TRY',
     availability: 'https://schema.org/InStock',
     offerCount: '6',
+    url: 'https://galyaiptv.com.tr/#paketler',
   },
+};
+
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Galya IPTV',
+  url: 'https://galyaiptv.com.tr/',
+  logo: 'https://galyaiptv.com.tr/logo.png',
+  sameAs: [],
+  contactPoint: [
+    {
+      '@type': 'ContactPoint',
+      contactType: 'customer support',
+      url: 'https://wa.me/447441921660?text=Merhaba,%20IPTV%20test%20almak%20istiyorum',
+      availableLanguage: ['Turkish'],
+    },
+  ],
 };
 
 export default function HomePage() {
@@ -114,31 +167,38 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
 
-      {/* Navigation */}
-      <header className="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-sm border-b border-gray-800">
-        <nav className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 backdrop-blur-sm">
+        <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Link href="/" className="text-xl font-bold gradient-text">
             Galya IPTV
           </Link>
-          <div className="hidden md:flex items-center gap-6 text-sm text-gray-300">
-            <Link href="/#paketler" className="hover:text-white transition-colors">
+
+          <div className="hidden items-center gap-6 text-sm text-gray-300 md:flex">
+            <Link href="/#paketler" className="transition-colors hover:text-white">
               Paketler
             </Link>
-            <Link href="/#ozellikler" className="hover:text-white transition-colors">
-              Özellikler
+            <Link href="/#neden-biz" className="transition-colors hover:text-white">
+              Neden Biz
             </Link>
-            <Link href="/blog" className="hover:text-white transition-colors">
+            <Link href="/#sss" className="transition-colors hover:text-white">
+              S.S.S
+            </Link>
+            <Link href="/blog" className="transition-colors hover:text-white">
               Blog
             </Link>
-            <Link href="/iletisim" className="hover:text-white transition-colors">
+            <Link href="/iletisim" className="transition-colors hover:text-white">
               İletişim
             </Link>
             <a
               href="https://wa.me/447441921660?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
             >
               Ücretsiz Test
             </a>
@@ -147,278 +207,374 @@ export default function HomePage() {
       </header>
 
       <main>
-        {/* Hero Section */}
-        <section className="relative overflow-hidden py-20 px-4 text-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-950/50 to-gray-950 pointer-events-none" />
-          <div className="relative max-w-4xl mx-auto">
-            <div className="inline-block bg-purple-900/50 border border-purple-700 text-purple-300 text-sm px-4 py-1 rounded-full mb-6">
-              ⭐ 12847+ Memnun Müşteri · %99.9 Uptime Garantisi
+        <section className="relative overflow-hidden px-4 py-20 text-center">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-purple-950/50 to-gray-950" />
+          <div className="relative mx-auto max-w-5xl">
+            <div className="mb-6 inline-block rounded-full border border-purple-700 bg-purple-900/50 px-4 py-1 text-sm text-purple-300">
+              4K IPTV Paketleri · Ücretsiz Test · Hızlı Kurulum Desteği
             </div>
 
-            {/* H1 (SEO odaklı) */}
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
-              <span className="gradient-text">IPTV Satın Al</span> – 4K Donmayan Premium IPTV
+            <h1 className="mb-6 text-4xl font-extrabold leading-tight md:text-6xl">
+              <span className="gradient-text">IPTV Al</span> ve 4K Yayın Kalitesini
+              <br className="hidden md:block" /> Güçlü Altyapı ile Keşfet
             </h1>
 
-            {/* Hero paragraf (SEO odaklı) */}
-            <p className="text-gray-300 text-lg md:text-xl mb-10 max-w-2xl mx-auto">
-              <strong>IPTV satın al</strong> işlemini Galya IPTV ile dakikalar içinde tamamlayın. 85.000+ kanal,
-              4K/Full HD yayın, donmayan altyapı ve 7/24 teknik destek ile kesintisiz deneyim yaşayın. Türkiye IPTV
-              paketleri ve fiyatlarını hemen inceleyin, ücretsiz test ile başlayın.
+            <p className="mx-auto mb-10 max-w-3xl text-lg text-gray-300 md:text-xl">
+              Galya IPTV ile canlı TV, spor, film ve dizi içeriklerine tek bir üyelikle kolayca erişin.
+              Farklı cihazlarla uyumlu paketleri inceleyin, size uygun seçeneği belirleyin ve ücretsiz test ile
+              yayın kalitesini satın almadan önce görün. Uygun fiyatlı <strong>IPTV paketleri</strong>, hızlı destek
+              ve pratik kurulum adımlarıyla aradığınız deneyimi tek yerde bulun.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <a
                 href="https://wa.me/447441921660?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-colors"
+                className="rounded-xl bg-purple-600 px-8 py-4 text-lg font-semibold text-white transition-colors hover:bg-purple-700"
               >
                 Ücretsiz Test Al
               </a>
               <Link
                 href="/#paketler"
-                className="border border-purple-500 text-purple-300 hover:bg-purple-900/30 font-semibold px-8 py-4 rounded-xl text-lg transition-colors"
+                className="rounded-xl border border-purple-500 px-8 py-4 text-lg font-semibold text-purple-300 transition-colors hover:bg-purple-900/30"
               >
                 Paketleri İncele
               </Link>
             </div>
+
+            <div className="mt-10 grid grid-cols-2 gap-4 text-left md:grid-cols-4">
+              {[
+                { title: '85.000+', desc: 'Canlı kanal ve içerik seçeneği' },
+                { title: '4K / Full HD', desc: 'Yüksek görüntü kalitesi' },
+                { title: 'Çoklu Cihaz', desc: 'TV, telefon, tablet ve PC uyumu' },
+                { title: 'Destek', desc: 'Kurulum ve kullanım yardımı' },
+              ].map((item) => (
+                <div key={item.title} className="rounded-2xl border border-gray-800 bg-gray-900/60 p-4">
+                  <div className="mb-1 text-xl font-bold gradient-text">{item.title}</div>
+                  <div className="text-sm text-gray-400">{item.desc}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* Stats */}
-        <section className="py-12 border-y border-gray-800 bg-gray-900/50">
-          <div className="max-w-4xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <section className="border-y border-gray-800 bg-gray-900/50 py-12">
+          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 px-4 text-center md:grid-cols-4">
             {[
               { value: '85.000+', label: 'Canlı Kanal' },
-              { value: '4K', label: 'Ultra HD Yayın' },
-              { value: '7/24', label: 'Teknik Destek' },
-              { value: '%99.9', label: 'Uptime Garantisi' },
+              { value: '4K', label: 'Yayın Kalitesi' },
+              { value: '7/24', label: 'Destek Hattı' },
+              { value: 'Çoklu', label: 'Cihaz Uyumu' },
             ].map((stat) => (
               <div key={stat.label}>
                 <div className="text-3xl font-bold gradient-text">{stat.value}</div>
-                <div className="text-gray-400 text-sm mt-1">{stat.label}</div>
+                <div className="mt-1 text-sm text-gray-400">{stat.label}</div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Packages */}
-        <section id="paketler" className="py-20 px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Türkiye IPTV Paketlerimiz</h2>
-            <p className="text-gray-400 text-center mb-12">
-              İhtiyacınıza göre en uygun paketi seçin. Tüm paketlerde ücretsiz kurulum desteği.
+        <section id="paketler" className="px-4 py-20">
+          <div className="mx-auto max-w-6xl">
+            <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Galya IPTV Paketleri</h2>
+            <p className="mx-auto mb-12 max-w-3xl text-center text-gray-400">
+              Size en uygun süreyi seçin, fiyatları karşılaştırın ve ihtiyacınıza göre en doğru üyeliği başlatın.
+              Kısa süreli deneme düşünenler için pratik seçenekler, uzun vadeli kullanım isteyenler için avantajlı
+              paketler burada.
             </p>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {packages.map((pkg) => (
                 <div
                   key={pkg.name}
-                  className={`relative rounded-2xl p-6 border ${
+                  className={`relative rounded-2xl border p-6 ${
                     pkg.popular ? 'border-purple-500 bg-purple-900/20' : 'border-gray-700 bg-gray-900/50'
                   }`}
                 >
                   {pkg.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-xs font-bold px-4 py-1 rounded-full">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-purple-600 px-4 py-1 text-xs font-bold text-white">
                       EN POPÜLER
                     </div>
                   )}
-                  <div className="text-gray-400 text-sm mb-1">{pkg.duration}</div>
-                  <h3 className="text-xl font-bold mb-2">{pkg.name}</h3>
-                  <div className="text-4xl font-extrabold mb-1">₺{pkg.price}</div>
-                  <div className="text-gray-500 text-sm mb-6">tek seferlik ödeme</div>
-                  <ul className="space-y-3 mb-8">
-                    {pkg.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
-                        <span className="text-green-400">✓</span> {f}
+
+                  <div className="mb-1 text-sm text-gray-400">{pkg.duration}</div>
+                  <h3 className="mb-2 text-xl font-bold">{pkg.name}</h3>
+                  <div className="mb-1 text-4xl font-extrabold">₺{pkg.price}</div>
+                  <div className="mb-6 text-sm text-gray-500">tek seferlik ödeme</div>
+
+                  <ul className="mb-8 space-y-3">
+                    {pkg.features.map((feature) => (
+                      <li key={feature} className="flex items-center gap-2 text-sm text-gray-300">
+                        <span className="text-green-400">✓</span> {feature}
                       </li>
                     ))}
                   </ul>
+
                   <a
-                    href={`https://wa.me/447441921660?text=Merhaba,%20${encodeURIComponent(pkg.name)}%20almak%20istiyorum`}
+                    href={`https://wa.me/447441921660?text=Merhaba,%20${encodeURIComponent(
+                      pkg.name,
+                    )}%20almak%20istiyorum`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`block text-center py-3 rounded-xl font-semibold transition-colors ${
+                    className={`block rounded-xl py-3 text-center font-semibold transition-colors ${
                       pkg.popular
-                        ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                        : 'border border-gray-600 hover:border-purple-500 text-gray-300 hover:text-white'
+                        ? 'bg-purple-600 text-white hover:bg-purple-700'
+                        : 'border border-gray-600 text-gray-300 hover:border-purple-500 hover:text-white'
                     }`}
                   >
-                    Şimdi Satın Al
+                    Paketi Seç
                   </a>
                 </div>
               ))}
             </div>
 
-            {/* SEO açıklama (tasarımı bozmadan, içerik güçlendirme) */}
-            <div className="mt-10 max-w-4xl mx-auto text-gray-300 leading-relaxed">
-              <h3 className="text-xl font-bold mb-3">IPTV Paketleri ve Fiyatları</h3>
-              <p className="text-gray-400">
-                Galya IPTV ile <strong>iptv satın al</strong> işlemi hızlı ve kolaydır. Paket seçiminizi yaptıktan sonra
-                kurulum adımlarını WhatsApp üzerinden anında iletiriz. Smart TV (Samsung/LG), Android TV/Box, telefon,
-                tablet, bilgisayar ve birçok IPTV uygulamasıyla uyumlu şekilde çalışır. Yayınlar 4K/Full HD seçenekleriyle
-                sunulur ve donma/takılma sorunlarını minimize eden optimize altyapı kullanılır.
-              </p>
-              <p className="text-gray-400 mt-3">
-                “IPTV fiyatları” kullanıcı ihtiyacına göre değişir; tek ekran, çoklu bağlantı ve süre seçenekleri fiyatı
-                belirler. Ücretsiz test ile önce deneme yapabilir, memnun kaldığınızda size uygun paketi seçebilirsiniz.
-              </p>
+            <div className="mx-auto mt-16 max-w-5xl rounded-2xl border border-gray-800 bg-gray-900/40 p-8 text-gray-300">
+              <h3 className="mb-4 text-2xl font-bold">IPTV Alırken Nelere Dikkat Etmelisiniz?</h3>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div>
+                  <p className="mb-4 text-gray-400">
+                    Bir kullanıcı için en doğru seçim yalnızca fiyatı düşük olan paket değildir. IPTV satın alırken
+                    cihaz uyumluluğu, yayın kalitesi, kurulum kolaylığı, destek hızı ve paket süresi birlikte
+                    değerlendirilmelidir. Özellikle Smart TV, Android TV veya mobil cihaz kullanan kişiler için
+                    doğru uygulama seçimi izleme deneyimini doğrudan etkiler.
+                  </p>
+                  <p className="text-gray-400">
+                    Galya IPTV tarafında amaç yalnızca paket sunmak değil, aynı zamanda kullanıcıya doğru kurulum
+                    düzenini göstermek ve mümkün olan en verimli kullanım deneyimini sağlamaktır. Ücretsiz test bu
+                    yüzden önemlidir; önce deneyip sonra karar vermek her zaman daha sağlam iştir.
+                  </p>
+                </div>
+                <div>
+                  <p className="mb-4 text-gray-400">
+                    “Donmayan IPTV al” arayışında olan kullanıcıların dikkat etmesi gereken en önemli nokta, sadece
+                    reklam cümlelerine değil gerçek kullanım koşullarına bakmaktır. İnternet hızınız, modem
+                    kaliteniz, Wi-Fi gücünüz, kullandığınız player uygulaması ve cihaz performansınız yayın akıcılığını
+                    doğrudan etkiler.
+                  </p>
+                  <p className="text-gray-400">
+                    Bu nedenle en iyi sonuç için güçlü bir servis kadar doğru kurulum rehberi de gerekir. Paketleri
+                    incelerken bağlantı sayısı, çözünürlük seçeneği ve destek kalitesine dikkat ederek karar vermeniz
+                    daha doğru olur.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Features */}
-        <section id="ozellikler" className="py-20 px-4 bg-gray-900/30">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Neden Galya IPTV?</h2>
-            <div className="grid md:grid-cols-3 gap-6">
+        <section id="neden-biz" className="bg-gray-900/30 px-4 py-20">
+          <div className="mx-auto max-w-5xl">
+            <h2 className="mb-12 text-center text-3xl font-bold md:text-4xl">Neden Galya IPTV?</h2>
+
+            <div className="grid gap-6 md:grid-cols-3">
               {[
                 {
                   icon: '📺',
-                  title: '85.000+ Kanal',
-                  desc: 'Türk, yabancı, spor, film, dizi kanalları. Her kategoride en geniş içerik.',
+                  title: 'Geniş İçerik Seçeneği',
+                  desc: 'Canlı TV, spor, belgesel, film ve dizi kategorilerinde zengin içerik yapısı.',
                 },
                 {
                   icon: '🎯',
-                  title: '4K Ultra HD Yayın',
-                  desc: 'Kristal netliğinde görüntü kalitesi. 4K, Full HD ve HD seçenekleri.',
+                  title: '4K ve Full HD Destek',
+                  desc: 'Destekleyen cihazlarda daha net ve keyifli bir izleme deneyimi.',
                 },
                 {
                   icon: '⚡',
-                  title: 'Donmayan Altyapı',
-                  desc: 'Güçlü sunucu altyapısı ile kesintisiz yayın. Hiçbir donma, takılma yok.',
+                  title: 'Güçlü Altyapı',
+                  desc: 'Stabil kullanım hedefiyle optimize edilen yayın yapısı ve düzenli destek süreci.',
                 },
                 {
                   icon: '🛡️',
-                  title: '7/24 Teknik Destek',
-                  desc: 'WhatsApp üzerinden her saat ulaşabileceğiniz uzman destek ekibi.',
+                  title: 'Kurulum Yardımı',
+                  desc: 'Uygulama seçimi, giriş bilgileri ve temel ayarlarda destek.',
                 },
                 {
                   icon: '📱',
-                  title: 'Tüm Cihazlarda',
-                  desc: 'Smart TV, telefon, tablet, PC, MAG Box ve daha fazla cihazda çalışır.',
+                  title: 'Tüm Cihazlarla Uyum',
+                  desc: 'Smart TV, mobil cihazlar, TV Box, bilgisayar ve daha fazlası.',
                 },
                 {
                   icon: '🆓',
-                  title: 'Ücretsiz Test',
-                  desc: '24 saatlik ücretsiz test ile satın almadan önce hizmetimizi deneyin.',
+                  title: 'Önce Test Sonra Karar',
+                  desc: 'Satın almadan önce hizmeti deneyerek daha rahat seçim yapma imkânı.',
                 },
-              ].map((f) => (
-                <div key={f.title} className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                  <div className="text-3xl mb-3">{f.icon}</div>
-                  <h3 className="font-bold text-lg mb-2">{f.title}</h3>
-                  <p className="text-gray-400 text-sm">{f.desc}</p>
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-xl border border-gray-800 bg-gray-900 p-6 transition-colors hover:border-purple-800"
+                >
+                  <div className="mb-3 text-3xl">{item.icon}</div>
+                  <h3 className="mb-2 text-lg font-bold">{item.title}</h3>
+                  <p className="text-sm text-gray-400">{item.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* FAQ */}
-        <section id="sss" className="py-20 px-4">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Sıkça Sorulan Sorular</h2>
+        <section className="px-4 py-20">
+          <div className="mx-auto max-w-5xl">
+            <h2 className="mb-10 text-center text-3xl font-bold md:text-4xl">
+              IPTV Donma Sorununu Azaltmak İçin 4 Temel Nokta
+            </h2>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {[
+                {
+                  title: 'Yeterli İnternet Hızı',
+                  desc: 'Özellikle Full HD ve 4K yayınlarda stabil bağlantı büyük fark yaratır. Yoğun saatlerde bağlantı kalitenizi kontrol etmek gerekir.',
+                },
+                {
+                  title: 'Doğru Uygulama Seçimi',
+                  desc: 'Her cihazda aynı uygulama en iyi sonucu vermez. Doğru player seçimi kanal geçişi ve yayın akıcılığı açısından önemlidir.',
+                },
+                {
+                  title: 'Cihaz Performansı',
+                  desc: 'Eski veya düşük performanslı cihazlarda uygulama açılış süresi ve yayın stabilitesi zayıf olabilir.',
+                },
+                {
+                  title: 'Kurulum ve Ağ Ayarları',
+                  desc: 'Wi-Fi yerine kablolu bağlantı, modem konumu ve DNS gibi detaylar kullanım kalitesini etkileyebilir.',
+                },
+              ].map((item) => (
+                <div key={item.title} className="rounded-2xl border border-gray-800 bg-gray-900/50 p-6">
+                  <h3 className="mb-2 text-xl font-bold">{item.title}</h3>
+                  <p className="text-gray-400">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10 rounded-2xl border border-purple-800/40 bg-purple-950/20 p-8">
+              <h3 className="mb-3 text-2xl font-bold">Doğru Paket, Doğru Kurulum, Daha İyi Deneyim</h3>
+              <p className="leading-relaxed text-gray-300">
+                Kullanıcıların çoğu yalnızca “en ucuz paket” arayışıyla karar veriyor; sonra da yayın deneyimi
+                beklentiyi karşılamayınca sorun yaşıyor. Oysa eski usul mantık hâlâ doğrudur: önce ihtiyacı doğru
+                belirle, sonra uygun sistemi kur. Galya IPTV tarafında bu yüzden hem paket seçimi hem de kurulum
+                desteği birlikte düşünülür. Böylece sadece bir üyelik değil, baştan sona daha düzenli bir kullanım
+                deneyimi elde edersiniz.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="sss" className="px-4 py-20">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="mb-12 text-center text-3xl font-bold md:text-4xl">Sıkça Sorulan Sorular</h2>
             <div className="space-y-4">
               {faqs.map((faq) => (
-                <details key={faq.q} className="bg-gray-900 border border-gray-800 rounded-xl p-5 group">
-                  <summary className="font-semibold cursor-pointer list-none flex justify-between items-center">
+                <details key={faq.q} className="group rounded-xl border border-gray-800 bg-gray-900 p-5">
+                  <summary className="flex cursor-pointer list-none items-center justify-between font-semibold">
                     {faq.q}
-                    <span className="text-purple-400 group-open:rotate-180 transition-transform">▼</span>
+                    <span className="text-purple-400 transition-transform group-open:rotate-180">▼</span>
                   </summary>
-                  <p className="mt-3 text-gray-400 text-sm leading-relaxed">{faq.a}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-gray-400">{faq.a}</p>
                 </details>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Blog Preview */}
-        <section className="py-20 px-4 bg-gray-900/30">
-          <div className="max-w-5xl mx-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Son Blog Yazıları</h2>
-              <Link href="/blog" className="text-purple-400 hover:text-purple-300 text-sm">
+        <section className="bg-gray-900/30 px-4 py-20">
+          <div className="mx-auto max-w-5xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Rehber İçerikler</h2>
+              <Link href="/blog" className="text-sm text-purple-400 hover:text-purple-300">
                 Tümünü Gör →
               </Link>
             </div>
 
-            {/* İç link (iptv satın al anchor) */}
-            <p className="text-gray-400 text-sm mb-8">
-              Rehberlerimizi okuyun; ardından{' '}
-              <Link className="text-purple-400 hover:text-purple-300" href="/#paketler">
-                iptv satın al
-              </Link>{' '}
-              işlemini paketler bölümünden tamamlayın.
+            <p className="mb-8 max-w-3xl text-sm text-gray-400">
+              IPTV kurulumu, cihaz uyumluluğu, yayın kalitesi ve paket seçimi gibi konularda hazırladığımız rehberleri
+              inceleyin. Karar vermeden önce bilgi almak her zaman daha sağlamdır.
             </p>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid gap-6 md:grid-cols-3">
               {[
                 {
                   slug: 'iptv-nedir',
                   title: 'IPTV Nedir? Nasıl Çalışır?',
                   excerpt:
-                    'Internet üzerinden TV yayını almanın en iyi yolu olan IPTV teknolojisini detaylıca açıklıyoruz.',
-                  date: '2025-01-15',
+                    'IPTV sisteminin temel mantığını, kullanım alanlarını ve hangi cihazlarda çalıştığını adım adım öğrenin.',
                 },
                 {
-                  slug: 'en-iyi-iptv-player',
-                  title: 'En İyi IPTV Player Uygulamaları 2025',
-                  excerpt: 'TiviMate, IPTV Smarters, GSE Smart IPTV... Hangisi sizin için en iyi seçenek?',
-                  date: '2025-01-10',
+                  slug: 'iptv-donma-sorunu',
+                  title: 'IPTV Donma Sorunu Neden Olur?',
+                  excerpt:
+                    'Yayın akıcılığını etkileyen temel nedenleri ve daha stabil kullanım için dikkat edilmesi gerekenleri inceleyin.',
                 },
                 {
                   slug: 'smart-tv-iptv-kurulum',
                   title: "Smart TV'ye IPTV Nasıl Kurulur?",
-                  excerpt: 'Samsung, LG ve diğer Smart TV modellerine adım adım IPTV kurulum rehberi.',
-                  date: '2025-01-05',
+                  excerpt:
+                    'Samsung, LG ve diğer Smart TV modelleri için kurulum mantığını sade şekilde öğrenin.',
                 },
               ].map((post) => (
                 <Link
                   key={post.slug}
                   href={`/blog/${post.slug}`}
-                  className="bg-gray-900 border border-gray-800 hover:border-purple-700 rounded-xl p-5 transition-colors group"
+                  className="group rounded-xl border border-gray-800 bg-gray-900 p-5 transition-colors hover:border-purple-700"
                 >
-                  <div className="text-xs text-gray-500 mb-2">{post.date}</div>
-                  <h3 className="font-bold mb-2 group-hover:text-purple-400 transition-colors">{post.title}</h3>
-                  <p className="text-gray-400 text-sm">{post.excerpt}</p>
+                  <h3 className="mb-2 font-bold transition-colors group-hover:text-purple-400">{post.title}</h3>
+                  <p className="text-sm text-gray-400">{post.excerpt}</p>
                 </Link>
               ))}
+            </div>
+
+            <div className="mt-10 rounded-2xl border border-gray-800 bg-gray-900/50 p-6 text-gray-300">
+              <h3 className="mb-3 text-xl font-bold">Anahtar kelimeyi değil, kullanıcı niyetini hedefleyen yapı</h3>
+              <p className="leading-relaxed text-gray-400">
+                Bu sayfa yalnızca “iptv al” ifadesini tekrar eden bir satış metni olmak yerine, kullanıcının gerçekten
+                bilmek istediği sorulara cevap verecek şekilde kurgulandı: hangi cihazlarda çalışır, nasıl kurulur,
+                fiyatlar neden değişir, yayın kalitesi neye bağlıdır, test neden önemlidir. İşte güçlü sayfa dediğin
+                böyle olur; kuru kalabalık değil, derli toplu iş.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="py-20 px-4 text-center">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold mb-4">Hemen Başlayın!</h2>
-            <p className="text-gray-400 mb-8">
-              Ücretsiz test ile Galya IPTV&apos;yi deneyin. Memnun kalırsanız en uygun paketi seçin.
+        <section className="px-4 py-20 text-center">
+          <div className="mx-auto max-w-2xl">
+            <h2 className="mb-4 text-3xl font-bold">Size Uygun IPTV Paketini Hemen Seçin</h2>
+            <p className="mb-8 text-gray-400">
+              Paketleri karşılaştırın, ücretsiz test isteyin ve cihazınıza uygun kurulum desteği ile kullanıma hızlıca
+              başlayın. Kararsızsanız önce test alın, sonra gönül rahatlığıyla seçim yapın.
             </p>
-            <a
-              href="https://wa.me/447441921660?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-10 py-4 rounded-xl text-lg transition-colors"
-            >
-              💬 WhatsApp ile Bağlan
-            </a>
+            <div className="flex flex-col justify-center gap-4 sm:flex-row">
+              <a
+                href="https://wa.me/447441921660?text=Merhaba,%20IPTV%20test%20almak%20istiyorum"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block rounded-xl bg-green-600 px-10 py-4 text-lg font-bold text-white shadow-lg shadow-green-900/20 transition-colors hover:bg-green-700"
+              >
+                WhatsApp ile Test Talep Et
+              </a>
+              <Link
+                href="/#paketler"
+                className="inline-block rounded-xl border border-purple-500 px-10 py-4 text-lg font-bold text-purple-300 transition-colors hover:bg-purple-900/30"
+              >
+                Fiyatları Gör
+              </Link>
+            </div>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-800 py-10 px-4 text-center text-gray-500 text-sm">
+      <footer className="border-t border-gray-800 px-4 py-10 text-center text-sm text-gray-500">
         <p className="mb-2 font-semibold text-gray-300">Galya IPTV</p>
         <p>© {new Date().getFullYear()} Galya IPTV. Tüm hakları saklıdır.</p>
-        <div className="flex justify-center gap-6 mt-4">
-          <Link href="/blog" className="hover:text-white transition-colors">
+
+        <div className="mt-4 flex justify-center gap-6">
+          <Link href="/blog" className="transition-colors hover:text-white">
             Blog
           </Link>
-          <Link href="/paketler" className="hover:text-white transition-colors">
+          <Link href="/#paketler" className="transition-colors hover:text-white">
             Paketler
           </Link>
-          <Link href="/iletisim" className="hover:text-white transition-colors">
+          <Link href="/#sss" className="transition-colors hover:text-white">
+            S.S.S
+          </Link>
+          <Link href="/iletisim" className="transition-colors hover:text-white">
             İletişim
           </Link>
         </div>
