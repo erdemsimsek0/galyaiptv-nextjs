@@ -521,18 +521,19 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div className="mt-10 rounded-2xl border border-gray-800 bg-gray-900/50 p-6 text-gray-300">
-              <h3 className="mb-3 text-xl font-bold">Anahtar kelimeyi değil, kullanıcı niyetini hedefleyen yapı</h3>
-              <p className="leading-relaxed text-gray-400">
-                Bu sayfa yalnızca “iptv al” ifadesini tekrar eden bir satış metni olmak yerine, kullanıcının gerçekten
-                bilmek istediği sorulara cevap verecek şekilde kurgulandı: hangi cihazlarda çalışır, nasıl kurulur,
-                fiyatlar neden değişir, yayın kalitesi neye bağlıdır, test neden önemlidir. İşte güçlü sayfa dediğin
-                böyle olur; kuru kalabalık değil, derli toplu iş.
-              </p>
-            </div>
-          </div>
-        </section>
-
+<div className="mt-10 rounded-2xl border border-purple-900/30 bg-gray-900/50 p-6 text-gray-300 backdrop-blur-sm">
+  <h3 className="mb-3 text-xl font-bold text-white flex items-center gap-2">
+    <span className="text-purple-400">✦</span> 
+    Neden Galya IPTV'yi Seçmelisiniz?
+  </h3>
+  <p className="leading-relaxed text-gray-400 text-sm md:text-base">
+    Sadece bir <strong>IPTV satın al</strong> hizmeti değil, kesintisiz bir eğlence deneyimi sunuyoruz. 
+    Yayınlarımızda <strong>donma sorunu</strong> yaşanmaması için yüksek kapasiteli sunucular kullanıyor, 
+    <strong>Smart TV, Android ve iOS</strong> cihazlarınız için adım adım <strong>ücretsiz kurulum desteği</strong> sağlıyoruz. 
+    Gerçek 4K ve Full HD yayın kalitesini test etmek için hemen bizimle iletişime geçin; 
+    çünkü biz kuru vaatler değil, 7/24 teknik destek ve %99.9 uptime garantisi veriyoruz.
+  </p>
+</div>
         <section className="px-4 py-20 text-center">
           <div className="mx-auto max-w-2xl">
             <h2 className="mb-4 text-3xl font-bold">Size Uygun IPTV Paketini Hemen Seçin</h2>
