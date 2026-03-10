@@ -173,34 +173,53 @@ async function createTrialUser() {
     await new Promise((r) => setTimeout(r, 500));
 
     // Package dropdown'ı aç (Select2)
-    const pkgResult = await trialPage.evaluate(() => {
-      const sel2 = document.querySelector('.select2-selection--single, .select2-container');
-      if (sel2) {
-        (sel2 as HTMLElement).click();
-        return 'select2';
-      }
-      // Fallback: normal select
-      const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
-      for (const sel of selects) {
-        const opt = Array.from(sel.options).find((o) =>
-          /12 saat/i.test(o.text)
-        );
-        if (opt) {
-          sel.value = opt.value;
-          sel.dispatchEvent(new Event('change', { bubbles: true }));
-          return 'done';
-        }
-      }
-      return 'notfound';
-    });
+const pkgResult = await trialPage.evaluate(() => {
+  // Önce hidden select'te direkt value set etmeyi dene
+  const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
+  for (const sel of selects) {
+    const opt = Array.from(sel.options).find((o) =>
+      /12 saat/i.test(o.text)
+    );
+    if (opt) {
+      sel.value = opt.value;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      sel.dispatchEvent(new Event('select2:select', { bubbles: true }));
+      return 'done';
+    }
+  }
+  // Select2 görsel elementini tıkla
+  const sel2 = document.querySelector('.select2-selection--single');
+  if (sel2) {
+    (sel2 as HTMLElement).click();
+    return 'select2';
+  }
+  return 'notfound';
+});
 
-    if (pkgResult === 'select2') {
-      await new Promise((r) => setTimeout(r, 1000));
-      // Arama kutusuna yaz
-      await trialPage.keyboard.type('12 SAAT');
+if (pkgResult === 'select2') {
+  await new Promise((r) => setTimeout(r, 1200));
+
+  // Dropdown açıldıktan sonra option'ları direkt tıkla (keyboard.type kullanma)
+  const found = await trialPage.evaluate(() => {
+    const items = Array.from(document.querySelectorAll('.select2-results__option'));
+    const item = items.find((i) =>
+      /12 saat/i.test((i as HTMLElement).innerText || i.textContent || '')
+    );
+    if (item) {
+      (item as HTMLElement).click();
+      return true;
+    }
+    return false;
+  });
+
+  if (!found) {
+    // Arama inputuna puppeteer ile yaz (keyboard.type yerine)
+    const searchInput = await trialPage.$('.select2-search__field');
+    if (searchInput) {
+      await searchInput.type('12', { delay: 100 });
       await new Promise((r) => setTimeout(r, 800));
 
-      const found = await trialPage.evaluate(() => {
+      const found2 = await trialPage.evaluate(() => {
         const items = Array.from(document.querySelectorAll('.select2-results__option'));
         const item = items.find((i) =>
           /12 saat/i.test((i as HTMLElement).innerText || i.textContent || '')
@@ -212,12 +231,14 @@ async function createTrialUser() {
         return false;
       });
 
-      if (!found) {
-        throw new Error('12 SAAT TEST paketi seçilemedi.');
-      }
-    } else if (pkgResult === 'notfound') {
-      throw new Error('Package dropdown bulunamadı.');
+      if (!found2) throw new Error('12 SAAT TEST paketi seçilemedi.');
+    } else {
+      throw new Error('Select2 arama kutusu bulunamadı.');
     }
+  }
+} else if (pkgResult === 'notfound') {
+  throw new Error('Package dropdown bulunamadı.');
+}
 
     await new Promise((r) => setTimeout(r, 800));
 
