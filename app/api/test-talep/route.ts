@@ -125,17 +125,20 @@ async function createTrialUser() {
     // 2. Paket Oluşturma Sayfasına Git
     await trialPage.goto(`${PANEL_URL}/lines/create/1/line`, { waitUntil: 'networkidle2' });
 
+    // --- ADIM 1: Seçeneklerin yüklenmesi için 2 saniye bekle ---
+    await new Promise(r => setTimeout(r, 2000));
+
     // Paket Seçimi
     const pkgSelected = await trialPage.evaluate(() => {
-      const selectElement = document.querySelector('select[name="package_id"], select') as HTMLSelectElement;
+      // id="package", name="package_id" veya direkt select etiketini ara
+      const selectElement = document.querySelector('select[name="package_id"], select#package, select') as HTMLSelectElement;
       if (!selectElement) return false;
 
-      // Görseldeki metinlere göre (12 SAAT, 24 SAAT veya TEST içeren en uygun olanı seçer)
       const options = Array.from(selectElement.options);
+      
+      // 24 SAAT, 12 SAAT veya TEST içeren, boş olmayan ilk seçeneği bul
       const targetOption = options.find(o => 
-        o.text.includes('12 SAAT') || 
-        o.text.includes('24 SAAT') || 
-        o.text.toLowerCase().includes('test')
+        o.value && (o.text.toUpperCase().includes('24 SAAT') || o.text.toUpperCase().includes('12 SAAT') || o.text.toUpperCase().includes('TEST'))
       );
 
       if (targetOption) {
@@ -145,7 +148,7 @@ async function createTrialUser() {
         // JQuery/Select2 desteği varsa tetikle
         const $ = (window as any).$;
         if ($ && $(selectElement).data('select2')) {
-            $(selectElement).trigger('change');
+            $(selectElement).val(targetOption.value).trigger('change');
         }
         return true;
       }
@@ -154,13 +157,12 @@ async function createTrialUser() {
 
     if (!pkgSelected) throw new Error('Uygun test paketi bulunamadı veya seçilemedi.');
 
-    // --- ADIM: 5 Saniye Bekle ---
+    // --- ADIM 2: Paketi seçtikten sonra 5 Saniye Bekle ---
     await new Promise(r => setTimeout(r, 5000));
 
     // 3. Save Butonuna Tıkla
     await Promise.all([
       trialPage.evaluate(() => {
-        // Görseldeki mavi "Save" butonunu bulur
         const buttons = Array.from(document.querySelectorAll('button, input[type="submit"], a.btn'));
         const saveBtn = buttons.find((b: any) => 
           /save|kaydet|create/i.test(b.innerText || b.value) || b.classList.contains('btn-primary')
@@ -180,16 +182,16 @@ async function createTrialUser() {
       const rows = Array.from(document.querySelectorAll('table tbody tr'));
       if (rows.length === 0) return null;
 
-      // En üstteki satırı al
-      const firstRow = rows[0];
-      const cells = Array.from(firstRow.querySelectorAll('td')).map(c => c.textContent?.trim() || "");
+      const cells = Array.from(rows[0].querySelectorAll('td'));
+      
+      // Kullanıcı adı (Index 1) - "TRIAL", "ISP OFF" gibi etiketleri atlamak için sadece ilk metni alıyoruz
+      const rawUsername = cells[1]?.textContent?.trim() || "";
+      const username = rawUsername.split(/\s+/)[0]; 
 
-      // Panel sütun yapısına göre: Genelde Index 1: Username, Index 2: Password
-      // Eğer veriler boşsa yan hücrelere bak
-      return {
-        username: cells[1] || null,
-        password: cells[2] || null,
-      };
+      // Şifre (Index 2)
+      const password = cells[2]?.textContent?.trim() || "";
+
+      return { username, password };
     });
 
     if (!credentials || !credentials.username || credentials.username.length < 3) {
