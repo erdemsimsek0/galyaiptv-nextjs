@@ -97,7 +97,6 @@ async function sendTrialMail(email: string, username: string, password: string) 
 
 async function createTrialUser() {
   let browser: any = null;
-  let trialPage: any = null;
 
   try {
     browser = await puppeteer.launch({
@@ -107,7 +106,7 @@ async function createTrialUser() {
       headless: chromium.headless as any,
     });
 
-    trialPage = await browser.newPage();
+    const trialPage = await browser.newPage();
 
     // 1. Giriş İşlemi
     await trialPage.goto(`${PANEL_URL}/dashboard`, { waitUntil: 'networkidle2', timeout: 60000 });
@@ -118,63 +117,124 @@ async function createTrialUser() {
       await trialPage.type('input[name="password"], #password', PANEL_PASS);
       await Promise.all([
         trialPage.click('button[type="submit"], .btn-primary'),
-        trialPage.waitForNavigation({ waitUntil: 'networkidle2' })
+        trialPage.waitForNavigation({ waitUntil: 'networkidle2' }),
       ]);
     }
 
     // 2. Paket Oluşturma Sayfasına Git
     await trialPage.goto(`${PANEL_URL}/lines/create/1/line`, { waitUntil: 'networkidle2' });
 
-    // --- ADIM 1: Seçeneklerin yüklenmesi için 2 saniye bekle ---
-    await new Promise(r => setTimeout(r, 2000));
+    // Sayfanın ve Select2'nin tamamen yüklenmesi için bekle
+    await new Promise(r => setTimeout(r, 3000));
 
-    // Paket Seçimi
-    const pkgSelected = await trialPage.evaluate(() => {
-      // id="package", name="package_id" veya direkt select etiketini ara
-      const selectElement = document.querySelector('select[name="package_id"], select#package, select') as HTMLSelectElement;
-      if (!selectElement) return false;
+    // 3. Select2 ile Paket Seçimi
+    // Önce jQuery + Select2 yöntemiyle dene
+    const pkgSelectedViaJQuery = await trialPage.evaluate(() => {
+      const $ = (window as any).$;
+      if (!$) return false;
 
-      const options = Array.from(selectElement.options);
-      
-      // 24 SAAT, 12 SAAT veya TEST içeren, boş olmayan ilk seçeneği bul
-      const targetOption = options.find(o => 
-        o.value && (o.text.toUpperCase().includes('24 SAAT') || o.text.toUpperCase().includes('12 SAAT') || o.text.toUpperCase().includes('TEST'))
-      );
-
-      if (targetOption) {
-        selectElement.value = targetOption.value;
-        selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-        
-        // JQuery/Select2 desteği varsa tetikle
-        const $ = (window as any).$;
-        if ($ && $(selectElement).data('select2')) {
-            $(selectElement).val(targetOption.value).trigger('change');
+      let done = false;
+      $('select').each(function (this: HTMLSelectElement) {
+        if (done) return;
+        const options = Array.from(this.options) as HTMLOptionElement[];
+        const opt = options.find(
+          o => o.value && /12 SAAT|24 SAAT|TEST/i.test(o.text)
+        );
+        if (opt) {
+          // Select2 instance varsa
+          if ($(this).data('select2')) {
+            $(this).val(opt.value).trigger('change');
+          } else {
+            this.value = opt.value;
+            this.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          done = true;
         }
-        return true;
-      }
-      return false;
+      });
+      return done;
     });
 
-    if (!pkgSelected) throw new Error('Uygun test paketi bulunamadı veya seçilemedi.');
+    if (!pkgSelectedViaJQuery) {
+      // Fallback: Select2 görsel dropdown'unu tıklayarak seç
+      // Package label'ına yakın Select2 container'ı bul ve tıkla
+      const select2Opened = await trialPage.evaluate(() => {
+        // "Package" labelı içeren container'ı bul
+        const labels = Array.from(document.querySelectorAll('label, .control-label, th, td'));
+        const pkgLabel = labels.find((el: any) => /package/i.test(el.textContent));
+        
+        if (pkgLabel) {
+          // Label'ın yakınındaki Select2 container'ı bul
+          const container = pkgLabel.closest('tr, .form-group, .row');
+          const select2 = container?.querySelector('.select2-container, .select2-selection');
+          if (select2) {
+            (select2 as HTMLElement).click();
+            return true;
+          }
+        }
 
-    // --- ADIM 2: Paketi seçtikten sonra 5 Saniye Bekle ---
+        // Genel: sayfadaki ilk Select2 container'ı dene
+        const allSelect2 = document.querySelectorAll('.select2-container');
+        if (allSelect2.length > 0) {
+          // Son Select2 büyük ihtimalle Package dropdown'u
+          const lastSelect2 = allSelect2[allSelect2.length - 1] as HTMLElement;
+          lastSelect2.click();
+          return true;
+        }
+        return false;
+      });
+
+      if (!select2Opened) {
+        throw new Error('Select2 dropdown açılamadı.');
+      }
+
+      // Dropdown açılmasını bekle
+      await new Promise(r => setTimeout(r, 1500));
+
+      // Dropdown seçeneklerinden uygun olanı tıkla
+      const optionClicked = await trialPage.evaluate(() => {
+        const items = Array.from(
+          document.querySelectorAll('.select2-results__option, .select2-dropdown li')
+        );
+        const target = items.find((el: any) =>
+          /12 SAAT|24 SAAT|TEST/i.test(el.textContent)
+        );
+        if (target) {
+          (target as HTMLElement).click();
+          return (target as HTMLElement).textContent?.trim() || 'seçildi';
+        }
+        return null;
+      });
+
+      if (!optionClicked) {
+        throw new Error('Uygun test paketi dropdown içinde bulunamadı.');
+      }
+    }
+
+    // 4. Paketin seçilip sayfanın güncellenmesi için bekle
     await new Promise(r => setTimeout(r, 5000));
 
-    // 3. Save Butonuna Tıkla
+    // 5. Save Butonuna Tıkla
     await Promise.all([
       trialPage.evaluate(() => {
-        const buttons = Array.from(document.querySelectorAll('button, input[type="submit"], a.btn'));
-        const saveBtn = buttons.find((b: any) => 
-          /save|kaydet|create/i.test(b.innerText || b.value) || b.classList.contains('btn-primary')
+        const buttons = Array.from(
+          document.querySelectorAll('button, input[type="submit"], a.btn')
+        );
+        const saveBtn = buttons.find(
+          (b: any) =>
+            /save|kaydet|create/i.test(b.innerText || b.value || '') ||
+            b.classList.contains('btn-primary')
         );
         if (saveBtn) (saveBtn as HTMLElement).click();
       }),
-      trialPage.waitForNavigation({ waitUntil: 'networkidle2' }).catch(() => {})
+      trialPage.waitForNavigation({ waitUntil: 'networkidle2' }).catch(() => {}),
     ]);
 
-    // 4. Bilgileri Çekme (Lines Sayfası)
-    await trialPage.goto(`https://pa.ipguzel.com/lines`, { waitUntil: 'networkidle2' });
-    
+    // Yönlendirme/işlem tamamlanması için bekle
+    await new Promise(r => setTimeout(r, 2000));
+
+    // 6. Bilgileri Çekme (Lines Sayfası)
+    await trialPage.goto(`${PANEL_URL}/lines`, { waitUntil: 'networkidle2' });
+
     // Tablonun yüklenmesini bekle
     await trialPage.waitForSelector('table tbody tr', { timeout: 15000 });
 
@@ -183,13 +243,13 @@ async function createTrialUser() {
       if (rows.length === 0) return null;
 
       const cells = Array.from(rows[0].querySelectorAll('td'));
-      
-      // Kullanıcı adı (Index 1) - "TRIAL", "ISP OFF" gibi etiketleri atlamak için sadece ilk metni alıyoruz
-      const rawUsername = cells[1]?.textContent?.trim() || "";
-      const username = rawUsername.split(/\s+/)[0]; 
+
+      // Kullanıcı adı (Index 1) - "TRIAL", "ISP OFF" gibi etiketleri atlamak için sadece ilk metni al
+      const rawUsername = cells[1]?.textContent?.trim() || '';
+      const username = rawUsername.split(/\s+/)[0];
 
       // Şifre (Index 2)
-      const password = cells[2]?.textContent?.trim() || "";
+      const password = cells[2]?.textContent?.trim() || '';
 
       return { username, password };
     });
@@ -216,7 +276,11 @@ export async function POST(req: NextRequest) {
     if (action === 'send_otp') {
       const generatedOtp = generateOtp();
       const generatedToken = generateToken();
-      otpStore.set(generatedToken, { email, otp: generatedOtp, expiresAt: Date.now() + 10 * 60 * 1000 });
+      otpStore.set(generatedToken, {
+        email,
+        otp: generatedOtp,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      });
       await sendOtpMail(email, generatedOtp);
       return NextResponse.json({ success: true, token: generatedToken });
     }
@@ -224,7 +288,10 @@ export async function POST(req: NextRequest) {
     if (action === 'verify') {
       const record = otpStore.get(token || '');
       if (!record || record.otp !== otp || Date.now() > record.expiresAt) {
-        return NextResponse.json({ success: false, error: 'Doğrulama başarısız veya süresi dolmuş.' }, { status: 400 });
+        return NextResponse.json(
+          { success: false, error: 'Doğrulama başarısız veya süresi dolmuş.' },
+          { status: 400 }
+        );
       }
 
       otpStore.delete(token!);
@@ -236,6 +303,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: false, error: 'Geçersiz işlem.' }, { status: 400 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error?.message || 'Hata oluştu.' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error?.message || 'Hata oluştu.' },
+      { status: 500 }
+    );
   }
 }
