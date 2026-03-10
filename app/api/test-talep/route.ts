@@ -113,6 +113,8 @@ async function createTrialUser() {
     });
 
     trialPage = await browser.newPage();
+
+    // Dashboard'a git ve login ol
     await trialPage.goto(`${PANEL_URL}/dashboard`, {
       waitUntil: 'networkidle2',
       timeout: 30000,
@@ -139,10 +141,8 @@ async function createTrialUser() {
 
       await userField.click({ clickCount: 3 });
       await userField.type(PANEL_USER);
-
       await passField.click({ clickCount: 3 });
       await passField.type(PANEL_PASS);
-
       await trialPage.keyboard.press('Enter');
       await trialPage.waitForNavigation({
         waitUntil: 'networkidle2',
@@ -151,123 +151,105 @@ async function createTrialUser() {
       await new Promise((r) => setTimeout(r, 2000));
     }
 
+    // Create line sayfasına git
     await trialPage.goto(`${PANEL_URL}/lines/create/1/line`, {
       waitUntil: 'networkidle2',
       timeout: 25000,
     });
+    await new Promise((r) => setTimeout(r, 2000));
 
-    await new Promise((r) => setTimeout(r, 1500));
-
-    // Country Lock'u kapat
+    // Country Lock checkbox'ını kapat
     await trialPage.evaluate(() => {
-      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-      for (const cb of Array.from(checkboxes)) {
-        const label =
-          ((cb.closest('label') || cb.parentElement) as HTMLElement | null)?.innerText || '';
+      const checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+      for (const cb of checkboxes) {
+        const label = ((cb.closest('label') || cb.parentElement) as HTMLElement | null)?.innerText || '';
         if (/country.?lock/i.test(label) && (cb as HTMLInputElement).checked) {
           (cb as HTMLInputElement).click();
         }
       }
     });
-
     await new Promise((r) => setTimeout(r, 500));
 
-    // Package dropdown'ı aç (Select2)
-const pkgResult = await trialPage.evaluate(() => {
-  // Önce hidden select'te direkt value set etmeyi dene
-  const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
-  for (const sel of selects) {
-    const opt = Array.from(sel.options).find((o) =>
-      /12 saat/i.test(o.text)
-    );
-    if (opt) {
-      sel.value = opt.value;
-      sel.dispatchEvent(new Event('change', { bubbles: true }));
-      sel.dispatchEvent(new Event('select2:select', { bubbles: true }));
-      return 'done';
-    }
-  }
-  // Select2 görsel elementini tıkla
-  const sel2 = document.querySelector('.select2-selection--single');
-  if (sel2) {
-    (sel2 as HTMLElement).click();
-    return 'select2';
-  }
-  return 'notfound';
-});
-
-if (pkgResult === 'select2') {
-  await new Promise((r) => setTimeout(r, 1200));
-
-  // Dropdown açıldıktan sonra option'ları direkt tıkla (keyboard.type kullanma)
-  const found = await trialPage.evaluate(() => {
-    const items = Array.from(document.querySelectorAll('.select2-results__option'));
-    const item = items.find((i) =>
-      /12 saat/i.test((i as HTMLElement).innerText || i.textContent || '')
-    );
-    if (item) {
-      (item as HTMLElement).click();
-      return true;
-    }
-    return false;
-  });
-
-  if (!found) {
-    // Arama inputuna puppeteer ile yaz (keyboard.type yerine)
-    const searchInput = await trialPage.$('.select2-search__field');
-    if (searchInput) {
-      await searchInput.type('12', { delay: 100 });
-      await new Promise((r) => setTimeout(r, 800));
-
-      const found2 = await trialPage.evaluate(() => {
-        const items = Array.from(document.querySelectorAll('.select2-results__option'));
-        const item = items.find((i) =>
-          /12 saat/i.test((i as HTMLElement).innerText || i.textContent || '')
-        );
-        if (item) {
-          (item as HTMLElement).click();
-          return true;
+    // Select2'yi jQuery ile set et — en güvenilir yol
+    const pkgSet = await trialPage.evaluate(() => {
+      // Tüm select elementlerini bul
+      const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
+      for (const sel of selects) {
+        const opt = Array.from(sel.options).find((o) => /12 saat/i.test(o.text));
+        if (opt) {
+          // jQuery + Select2 trigger
+          const $ = (window as any).$;
+          if ($) {
+            $(sel).val(opt.value).trigger('change');
+            return { method: 'jquery', value: opt.value, text: opt.text };
+          }
+          // jQuery yoksa native
+          sel.value = opt.value;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+          return { method: 'native', value: opt.value, text: opt.text };
         }
+      }
+      return null;
+    });
+
+    if (!pkgSet) {
+      // jQuery yöntemi işe yaramadı, görsel tıklama dene
+      const sel2El = await trialPage.$('.select2-selection--single');
+      if (!sel2El) throw new Error('Package dropdown bulunamadı.');
+
+      await sel2El.click();
+      await new Promise((r) => setTimeout(r, 1000));
+
+      // Önce direkt option listesine bak
+      let found = await trialPage.evaluate(() => {
+        const items = Array.from(document.querySelectorAll('.select2-results__option'));
+        const item = items.find((i) => /12 saat/i.test((i as HTMLElement).innerText || i.textContent || ''));
+        if (item) { (item as HTMLElement).click(); return true; }
         return false;
       });
 
-      if (!found2) throw new Error('12 SAAT TEST paketi seçilemedi.');
-    } else {
-      throw new Error('Select2 arama kutusu bulunamadı.');
+      if (!found) {
+        // Arama kutusunu bul ve yaz
+        const searchBox = await trialPage.$('.select2-search__field');
+        if (searchBox) {
+          await searchBox.focus();
+          await searchBox.type('12', { delay: 150 });
+          await new Promise((r) => setTimeout(r, 1000));
+          found = await trialPage.evaluate(() => {
+            const items = Array.from(document.querySelectorAll('.select2-results__option'));
+            const item = items.find((i) => /12 saat/i.test((i as HTMLElement).innerText || i.textContent || ''));
+            if (item) { (item as HTMLElement).click(); return true; }
+            return false;
+          });
+        }
+        if (!found) throw new Error('12 SAAT TEST paketi seçilemedi.');
+      }
     }
-  }
-} else if (pkgResult === 'notfound') {
-  throw new Error('Package dropdown bulunamadı.');
-}
 
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 1000));
 
-    // Save butonuna tıkla
-    await trialPage.evaluate(() => {
-      const buttons = Array.from(
-        document.querySelectorAll('button[type="submit"], input[type="submit"], button')
-      ) as HTMLElement[];
-      const btn = buttons.find((b) =>
-        /save|kaydet/i.test(
-          b.innerText || (b as HTMLInputElement).value || b.textContent || ''
-        )
-      );
-      if (!btn) throw new Error('Kaydet butonu bulunamadı.');
-      btn.click();
-    });
+    // Save butonuna tıkla ve navigation'ı bekle
+    await Promise.all([
+      trialPage.waitForNavigation({ waitUntil: 'networkidle2', timeout: 25000 }).catch(() => {}),
+      trialPage.evaluate(() => {
+        const buttons = Array.from(
+          document.querySelectorAll('button[type="submit"], input[type="submit"], button')
+        ) as HTMLElement[];
+        const btn = buttons.find((b) =>
+          /save|kaydet/i.test(b.innerText || (b as HTMLInputElement).value || b.textContent || '')
+        );
+        if (!btn) throw new Error('Kaydet butonu bulunamadı.');
+        btn.click();
+      }),
+    ]);
 
-    await trialPage.waitForNavigation({
-      waitUntil: 'networkidle2',
-      timeout: 20000,
-    }).catch(() => {});
+    await new Promise((r) => setTimeout(r, 3000));
 
-    await new Promise((r) => setTimeout(r, 5000));
-
+    // Lines listesine git
     await trialPage.goto(`${PANEL_URL}/lines`, {
       waitUntil: 'networkidle2',
       timeout: 30000,
     });
-
     await new Promise((r) => setTimeout(r, 2000));
 
     const credentials = await trialPage.evaluate(() => {
@@ -313,13 +295,10 @@ if (pkgResult === 'select2') {
 
     return credentials;
   } finally {
-    if (trialPage) {
-      await trialPage.close().catch(() => {});
-    }
-    if (browser) {
-      await browser.close().catch(() => {});
-    }
+    if (trialPage) await trialPage.close().catch(() => {});
+    if (browser) await browser.close().catch(() => {});
   }
+}
 }
 
 export async function POST(req: NextRequest) {
