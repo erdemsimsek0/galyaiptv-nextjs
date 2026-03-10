@@ -9,7 +9,7 @@ npm run dev
 
 ## ✅ Netlify ile Deploy (Önerilen)
 
-Bu proje Netlify için optimize edilmiştir.
+Bu proje Netlify için optimize      edilmiştir.
 
 ### Yöntem 1 — Dosya Sürükle-Bırak (En Kolay)
 1. Bilgisayarınızda terminali açın ve proje klasörüne gelin
