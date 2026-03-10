@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'İletişim | Galya IPTV 7/24 WhatsApp Destek ve Ücretsiz Test',
+  title: 'İletişim | Galya IPTV 7/24 WhatsApp Destek ve 3 Saat Ücretsiz Test',
   description:
     'Galya IPTV iletişim sayfası. 7/24 WhatsApp destek hattı, ücretsiz IPTV test yayını, hızlı kurulum ve teknik destek için hemen bizimle iletişime geçin.',
   keywords: [
