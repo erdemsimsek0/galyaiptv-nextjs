@@ -102,7 +102,7 @@ async function sendTrialMail(email: string, username: string, password: string) 
 
 async function createTrialUser() {
   let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
-  let trialPage: Awaited<ReturnType<typeof browser.newPage>> | null = null;
+  let trialPage: any = null;
 
   try {
     browser = await puppeteer.launch({
