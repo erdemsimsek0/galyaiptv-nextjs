@@ -101,7 +101,7 @@ async function sendTrialMail(email: string, username: string, password: string) 
 }
 
 async function createTrialUser() {
-  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
+  let browser: any = null;
   let trialPage: any = null;
 
   try {
@@ -158,6 +158,7 @@ async function createTrialUser() {
 
     await new Promise((r) => setTimeout(r, 1500));
 
+    // Country Lock'u kapat
     await trialPage.evaluate(() => {
       const checkboxes = document.querySelectorAll('input[type="checkbox"]');
       for (const cb of Array.from(checkboxes)) {
@@ -171,76 +172,65 @@ async function createTrialUser() {
 
     await new Promise((r) => setTimeout(r, 500));
 
+    // Package dropdown'ı aç (Select2)
     const pkgResult = await trialPage.evaluate(() => {
+      const sel2 = document.querySelector('.select2-selection--single, .select2-container');
+      if (sel2) {
+        (sel2 as HTMLElement).click();
+        return 'select2';
+      }
+      // Fallback: normal select
       const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
-
       for (const sel of selects) {
-        const opt = Array.from(sel.options).find((o) => /12 saat/i.test(o.text));
+        const opt = Array.from(sel.options).find((o) =>
+          /12 saat/i.test(o.text)
+        );
         if (opt) {
           sel.value = opt.value;
           sel.dispatchEvent(new Event('change', { bubbles: true }));
           return 'done';
         }
       }
-
-      const select2Singles = document.querySelectorAll('.select2-selection--single');
-      if (select2Singles.length) {
-        (select2Singles[select2Singles.length - 1] as HTMLElement).click();
-        return 'select2';
-      }
-
       return 'notfound';
     });
 
-    const pkgResult = await trialPage.evaluate(() => {
-  // Select2'yi bul ve tıkla
-  const sel2 = document.querySelector('.select2-selection--single, .select2-container');
-  if (sel2) {
-    (sel2 as HTMLElement).click();
-    return 'select2';
-  }
-  // Fallback: normal select
-  const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
-  for (const sel of selects) {
-    const opt = Array.from(sel.options).find((o) => /12 saat/i.test(o.text));
-    if (opt) {
-      sel.value = opt.value;
-      sel.dispatchEvent(new Event('change', { bubbles: true }));
-      return 'done';
-    }
-  }
-  return 'notfound';
-});
+    if (pkgResult === 'select2') {
+      await new Promise((r) => setTimeout(r, 1000));
+      // Arama kutusuna yaz
+      await trialPage.keyboard.type('12 SAAT');
+      await new Promise((r) => setTimeout(r, 800));
 
-if (pkgResult === 'select2') {
-  await new Promise((r) => setTimeout(r, 1000));
-  // Arama kutusuna yaz
-  await trialPage.keyboard.type('12 SAAT');
-  await new Promise((r) => setTimeout(r, 800));
-  
-  const found = await trialPage.evaluate(() => {
-    const items = Array.from(document.querySelectorAll('.select2-results__option'));
-    const item = items.find((i) => /12 saat/i.test((i as HTMLElement).innerText || i.textContent || ''));
-    if (item) { (item as HTMLElement).click(); return true; }
-    return false;
-  });
-  
-  if (!found) throw new Error('12 SAAT TEST paketi seçilemedi.');
-} else if (pkgResult === 'notfound') {
-  throw new Error('Package dropdown bulunamadı.');
-}
+      const found = await trialPage.evaluate(() => {
+        const items = Array.from(document.querySelectorAll('.select2-results__option'));
+        const item = items.find((i) =>
+          /12 saat/i.test((i as HTMLElement).innerText || i.textContent || '')
+        );
+        if (item) {
+          (item as HTMLElement).click();
+          return true;
+        }
+        return false;
+      });
+
+      if (!found) {
+        throw new Error('12 SAAT TEST paketi seçilemedi.');
+      }
+    } else if (pkgResult === 'notfound') {
+      throw new Error('Package dropdown bulunamadı.');
+    }
 
     await new Promise((r) => setTimeout(r, 800));
 
+    // Save butonuna tıkla
     await trialPage.evaluate(() => {
       const buttons = Array.from(
         document.querySelectorAll('button[type="submit"], input[type="submit"], button')
       ) as HTMLElement[];
-
       const btn = buttons.find((b) =>
-        /save|kaydet/i.test(b.innerText || (b as HTMLInputElement).value || b.textContent || '')
+        /save|kaydet/i.test(
+          b.innerText || (b as HTMLInputElement).value || b.textContent || ''
+        )
       );
-
       if (!btn) throw new Error('Kaydet butonu bulunamadı.');
       btn.click();
     });
