@@ -192,40 +192,43 @@ async function createTrialUser() {
       return 'notfound';
     });
 
-    if (pkgResult === 'select2') {
-      await new Promise((r) => setTimeout(r, 800));
-
-      let found = await trialPage.evaluate(() => {
-        const items = Array.from(document.querySelectorAll('.select2-results__option'));
-        const item = items.find((i) => /12 saat/i.test(i.textContent || ''));
-        if (item) {
-          (item as HTMLElement).click();
-          return true;
-        }
-        return false;
-      });
-
-      if (!found) {
-        await trialPage.keyboard.type('12');
-        await new Promise((r) => setTimeout(r, 600));
-
-        found = await trialPage.evaluate(() => {
-          const items = Array.from(document.querySelectorAll('.select2-results__option'));
-          const item = items.find((i) => /12 saat/i.test(i.textContent || ''));
-          if (item) {
-            (item as HTMLElement).click();
-            return true;
-          }
-          return false;
-        });
-      }
-
-      if (!found) {
-        throw new Error('12 saat paketi seçilemedi.');
-      }
-    } else if (pkgResult === 'notfound') {
-      throw new Error('Package dropdown bulunamadı.');
+    const pkgResult = await trialPage.evaluate(() => {
+  // Select2'yi bul ve tıkla
+  const sel2 = document.querySelector('.select2-selection--single, .select2-container');
+  if (sel2) {
+    (sel2 as HTMLElement).click();
+    return 'select2';
+  }
+  // Fallback: normal select
+  const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
+  for (const sel of selects) {
+    const opt = Array.from(sel.options).find((o) => /12 saat/i.test(o.text));
+    if (opt) {
+      sel.value = opt.value;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      return 'done';
     }
+  }
+  return 'notfound';
+});
+
+if (pkgResult === 'select2') {
+  await new Promise((r) => setTimeout(r, 1000));
+  // Arama kutusuna yaz
+  await trialPage.keyboard.type('12 SAAT');
+  await new Promise((r) => setTimeout(r, 800));
+  
+  const found = await trialPage.evaluate(() => {
+    const items = Array.from(document.querySelectorAll('.select2-results__option'));
+    const item = items.find((i) => /12 saat/i.test((i as HTMLElement).innerText || i.textContent || ''));
+    if (item) { (item as HTMLElement).click(); return true; }
+    return false;
+  });
+  
+  if (!found) throw new Error('12 SAAT TEST paketi seçilemedi.');
+} else if (pkgResult === 'notfound') {
+  throw new Error('Package dropdown bulunamadı.');
+}
 
     await new Promise((r) => setTimeout(r, 800));
 
