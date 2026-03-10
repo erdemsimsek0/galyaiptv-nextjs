@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 import crypto from 'crypto';
 
 type OtpRecord = {
@@ -100,13 +101,15 @@ async function sendTrialMail(email: string, username: string, password: string) 
 }
 
 async function createTrialUser() {
-  let browser: puppeteer.Browser | null = null;
-  let trialPage: puppeteer.Page | null = null;
+  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
+  let trialPage: Awaited<ReturnType<typeof browser.newPage>> | null = null;
 
   try {
     browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     trialPage = await browser.newPage();
