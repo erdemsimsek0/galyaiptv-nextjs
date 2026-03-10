@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
 import crypto from 'crypto';
 
 type OtpRecord = {
@@ -12,7 +10,7 @@ type OtpRecord = {
 
 const otpStore = new Map<string, OtpRecord>();
 
-const PANEL_URL = process.env.PANEL_URL!;
+const PANEL_URL = process.env.PANEL_URL!;   // örn: https://pa.ipguzel.com
 const PANEL_USER = process.env.PANEL_USER!;
 const PANEL_PASS = process.env.PANEL_PASS!;
 
@@ -33,10 +31,7 @@ function isValidEmail(email: string) {
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS,
-  },
+  auth: { user: EMAIL_USER, pass: EMAIL_PASS },
 });
 
 async function sendOtpMail(email: string, otp: string) {
@@ -54,9 +49,7 @@ async function sendOtpMail(email: string, otp: string) {
           <div style="margin:24px 0;padding:18px 24px;background:#1f2937;border-radius:12px;text-align:center;font-size:32px;font-weight:700;letter-spacing:8px;color:#a855f7">
             ${otp}
           </div>
-          <p style="color:#9ca3af;font-size:14px">
-            Bu kod 10 dakika boyunca geçerlidir.
-          </p>
+          <p style="color:#9ca3af;font-size:14px">Bu kod 10 dakika boyunca geçerlidir.</p>
         </div>
       </div>
     `,
@@ -65,7 +58,6 @@ async function sendOtpMail(email: string, otp: string) {
 
 async function sendTrialMail(email: string, username: string, password: string) {
   const m3u = `http://pro4kiptv.xyz:2086/get.php?username=${username}&password=${password}&type=m3u&output=ts`;
-
   await transporter.sendMail({
     from: `"Galya IPTV" <${EMAIL_USER}>`,
     to: email,
@@ -74,9 +66,7 @@ async function sendTrialMail(email: string, username: string, password: string) 
       <div style="font-family:Arial,sans-serif;background:#0b0b0f;padding:24px;color:#fff">
         <div style="max-width:640px;margin:0 auto;background:#111827;border:1px solid #7c3aed;border-radius:16px;padding:32px">
           <h2 style="margin:0 0 16px;color:#fff">12 Saatlik Test Hesabınız Hazır</h2>
-          <p style="color:#d1d5db;line-height:1.7">
-            Aşağıdaki bilgileri IPTV uygulamanıza girerek testinizi başlatabilirsiniz.
-          </p>
+          <p style="color:#d1d5db;line-height:1.7">Aşağıdaki bilgileri IPTV uygulamanıza girerek testinizi başlatabilirsiniz.</p>
           <div style="margin-top:24px;background:#1f2937;border-radius:12px;padding:20px">
             <h3 style="margin:0 0 14px;color:#c084fc">Xtream API</h3>
             <p style="margin:8px 0;color:#e5e7eb"><strong>Sunucu:</strong> http://pro4kiptv.xyz:2086/</p>
@@ -93,192 +83,203 @@ async function sendTrialMail(email: string, username: string, password: string) 
   });
 }
 
-async function createTrialUser() {
-  let browser: any = null;
+// ─── Panel API Yardımcıları ───────────────────────────────────────────────────
 
+/**
+ * Panel'e login olup session cookie döner.
+ */
+async function panelLogin(): Promise<string> {
+  const url = `${PANEL_URL}/api/login`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: PANEL_USER, password: PANEL_PASS }),
+    redirect: 'manual',
+  });
+
+  // Cookie'yi al
+  const setCookie = res.headers.get('set-cookie') || '';
+  const sessionMatch = setCookie.match(/(PHPSESSID|laravel_session|remember_web_[^=]*)=([^;]+)/i);
+  if (sessionMatch) return `${sessionMatch[1]}=${sessionMatch[2]}`;
+
+  // Bazı paneller token döner
   try {
-    browser = await puppeteer.launch({
-      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
-      defaultViewport: { width: 1280, height: 900 },
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless as any,
-    });
+    const data = await res.json();
+    if (data?.token) return `token=${data.token}`;
+    if (data?.data?.token) return `token=${data.data.token}`;
+  } catch (_) {}
 
-    const trialPage = await browser.newPage();
+  throw new Error('Panel login başarısız: cookie veya token alınamadı.');
+}
 
-    // 1. Giriş İşlemi
-    await trialPage.goto(`${PANEL_URL}/dashboard`, { waitUntil: 'networkidle2', timeout: 60000 });
+/**
+ * Mevcut paketleri çekip TEST/12 SAAT/24 SAAT içeren ilk paketin ID'sini döner.
+ */
+async function getTestPackageId(cookie: string): Promise<string> {
+  // XtreamCodes standart endpoint'leri
+  const endpoints = [
+    '/api/packages',
+    '/api/get_packages',
+    '/packages/list',
+    '/api/v1/packages',
+  ];
 
-    const needsLogin = await trialPage.evaluate(() => !!document.querySelector('input[type="password"]'));
-    if (needsLogin) {
-      await trialPage.type('input[name="username"], #username', PANEL_USER);
-      await trialPage.type('input[name="password"], #password', PANEL_PASS);
-      await Promise.all([
-        trialPage.click('button[type="submit"], .btn-primary'),
-        trialPage.waitForNavigation({ waitUntil: 'networkidle2' }),
-      ]);
-    }
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(`${PANEL_URL}${ep}`, {
+        headers: { Cookie: cookie, Accept: 'application/json' },
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
 
-    // 2. Paket Oluşturma Sayfasına Git
-    await trialPage.goto(`${PANEL_URL}/lines/create/1/line`, { waitUntil: 'networkidle2' });
-    await new Promise(r => setTimeout(r, 3000));
+      // Farklı panel yapılarına göre array bul
+      const list: any[] = Array.isArray(data)
+        ? data
+        : data?.data ?? data?.packages ?? data?.result ?? [];
 
-    // 3. Sayfadaki select elementlerini debug için logla
-    const selectInfo = await trialPage.evaluate(() => {
-      const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
-      return selects.map(s => ({
-        id: s.id,
-        name: s.name,
-        className: s.className,
-        optionCount: s.options.length,
-        options: Array.from(s.options).slice(0, 10).map(o => ({ value: o.value, text: o.text })),
-      }));
-    });
-    console.log('SELECT ELEMENTS:', JSON.stringify(selectInfo, null, 2));
-
-    // 4. YÖNTEM 1: Native setter + jQuery + Select2 ile doğrudan değer ata
-    const method1 = await trialPage.evaluate(() => {
-      const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
-      for (const sel of selects) {
-        const opt = Array.from(sel.options).find(
-          o => o.value && /12 SAAT|24 SAAT|TEST/i.test(o.text)
-        );
-        if (!opt) continue;
-
-        // Native setter (React/framework-aware)
-        const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set;
-        setter ? setter.call(sel, opt.value) : (sel.value = opt.value);
-
-        sel.dispatchEvent(new Event('input', { bubbles: true }));
-        sel.dispatchEvent(new Event('change', { bubbles: true }));
-
-        const $ = (window as any).$;
-        if ($) {
-          $(sel).val(opt.value).trigger('change');
-          if ($(sel).data('select2')) {
-            $(sel).trigger('select2:select');
-          }
-        }
-        return { ok: true, text: opt.text, value: opt.value };
-      }
-      return { ok: false };
-    });
-
-    console.log('METHOD1:', JSON.stringify(method1));
-
-    if (!method1.ok) {
-      // 5. YÖNTEM 2: Her Select2 container'a tek tek tıkla, dropdown açılana kadar dene
-      const containers = await trialPage.$$('.select2-container, .select2-selection--single, .select2-selection');
-      console.log(`Found ${containers.length} Select2 containers`);
-
-      let dropdownOpened = false;
-
-      for (let i = containers.length - 1; i >= 0; i--) {
-        try {
-          await containers[i].click();
-          await new Promise(r => setTimeout(r, 1500));
-
-          dropdownOpened = await trialPage.evaluate(() => {
-            const dd = document.querySelector('.select2-dropdown');
-            return !!(dd && (dd as HTMLElement).offsetHeight > 0);
-          });
-
-          if (dropdownOpened) {
-            console.log(`Dropdown opened at container index ${i}`);
-            break;
-          }
-        } catch (_) {}
-      }
-
-      if (!dropdownOpened) {
-        // 6. YÖNTEM 3: Select2 search input'una doğrudan yaz
-        try {
-          await trialPage.click('.select2-search__field');
-          await new Promise(r => setTimeout(r, 500));
-        } catch (_) {}
-      }
-
-      // Şu an açık dropdown'daki seçenekleri tıkla
-      const clicked = await trialPage.evaluate(() => {
-        const items = Array.from(document.querySelectorAll(
-          '.select2-results__option, [role="option"], .select2-dropdown li'
-        ));
-        const target = items.find((el: any) => /12 SAAT|24 SAAT|TEST/i.test(el.textContent));
-        if (target) {
-          (target as HTMLElement).click();
-          return (target as HTMLElement).textContent?.trim() ?? 'clicked';
-        }
-        return null;
+      const pkg = list.find((p: any) => {
+        const name: string = p?.package_name ?? p?.name ?? p?.title ?? '';
+        return /12 SAAT|24 SAAT|TEST/i.test(name);
       });
 
-      console.log('DROPDOWN CLICK:', clicked);
-
-      if (!clicked) {
-        // 7. YÖNTEM 4: Search input'a "TEST" yaz, sonuçtan seç
-        try {
-          const searchInput = await trialPage.$('.select2-search__field');
-          if (searchInput) {
-            await searchInput.type('TEST');
-            await new Promise(r => setTimeout(r, 1500));
-            const typed = await trialPage.evaluate(() => {
-              const items = Array.from(document.querySelectorAll('.select2-results__option'));
-              if (items[0]) { (items[0] as HTMLElement).click(); return items[0].textContent?.trim(); }
-              return null;
-            });
-            console.log('SEARCH RESULT:', typed);
-            if (!typed) throw new Error('Paket seçilemedi: dropdown seçenekleri boş.');
-          } else {
-            throw new Error('Paket seçilemedi: select2 search input bulunamadı.');
-          }
-        } catch (e: any) {
-          throw new Error(`Paket seçilemedi: ${e.message}`);
-        }
+      if (pkg) {
+        const id = pkg?.id ?? pkg?.package_id ?? pkg?._id;
+        console.log(`Package found via ${ep}: id=${id}, name=${pkg.package_name ?? pkg.name}`);
+        return String(id);
       }
+    } catch (e) {
+      console.log(`${ep} failed:`, e);
     }
-
-    // 8. Paket seçimi sonrası yükleme için bekle
-    await new Promise(r => setTimeout(r, 5000));
-
-    // 9. Save butonuna tıkla
-    await Promise.all([
-      trialPage.evaluate(() => {
-        const btns = Array.from(
-          document.querySelectorAll('button, input[type="submit"], a.btn')
-        ) as HTMLElement[];
-        const save = btns.find(b =>
-          /save|kaydet|create/i.test(b.innerText || (b as HTMLInputElement).value || '')
-          || b.classList.contains('btn-success')
-          || b.classList.contains('btn-primary')
-        );
-        if (save) save.click();
-      }),
-      trialPage.waitForNavigation({ waitUntil: 'networkidle2' }).catch(() => {}),
-    ]);
-
-    await new Promise(r => setTimeout(r, 2000));
-
-    // 10. Lines sayfasından credentials al
-    await trialPage.goto(`${PANEL_URL}/lines`, { waitUntil: 'networkidle2' });
-    await trialPage.waitForSelector('table tbody tr', { timeout: 15000 });
-
-    const credentials = await trialPage.evaluate(() => {
-      const rows = Array.from(document.querySelectorAll('table tbody tr'));
-      if (!rows.length) return null;
-      const cells = Array.from(rows[0].querySelectorAll('td'));
-      const username = (cells[1]?.textContent?.trim() || '').split(/\s+/)[0];
-      const password = cells[2]?.textContent?.trim() || '';
-      return { username, password };
-    });
-
-    if (!credentials?.username || credentials.username.length < 3) {
-      throw new Error('Kullanıcı listesinden bilgiler okunamadı.');
-    }
-
-    return credentials;
-  } finally {
-    if (browser) await browser.close();
   }
+
+  throw new Error('Test paketi API üzerinden bulunamadı.');
 }
+
+/**
+ * Trial kullanıcı oluşturur, { username, password } döner.
+ */
+async function createTrialUserViaApi(): Promise<{ username: string; password: string }> {
+  // 1. Login
+  const cookie = await panelLogin();
+  console.log('Login OK, cookie:', cookie.substring(0, 30));
+
+  // 2. Paket ID'si
+  const packageId = await getTestPackageId(cookie);
+
+  // 3. Trial user oluştur
+  const createEndpoints = [
+    { url: '/api/lines/create', method: 'POST' },
+    { url: '/api/create_trial',  method: 'POST' },
+    { url: '/lines/store',       method: 'POST' },
+    { url: '/api/v1/lines',      method: 'POST' },
+  ];
+
+  const payload = {
+    package_id: packageId,
+    line_type: 1,       // 1 = Line
+    isp_lock: 0,
+    country_lock: 1,
+  };
+
+  for (const ep of createEndpoints) {
+    try {
+      const res = await fetch(`${PANEL_URL}${ep.url}`, {
+        method: ep.method,
+        headers: {
+          Cookie: cookie,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const text = await res.text();
+      console.log(`${ep.url} response (${res.status}):`, text.substring(0, 300));
+
+      if (!res.ok) continue;
+
+      let data: any;
+      try { data = JSON.parse(text); } catch (_) { continue; }
+
+      // Farklı response yapıları
+      const username =
+        data?.username ?? data?.data?.username ?? data?.line?.username ?? data?.user?.username;
+      const password =
+        data?.password ?? data?.data?.password ?? data?.line?.password ?? data?.user?.password;
+
+      if (username && password) {
+        return { username: String(username), password: String(password) };
+      }
+
+      // Bazı paneller sadece id döner, lines listesinden çek
+      const lineId = data?.id ?? data?.data?.id ?? data?.line_id;
+      if (lineId) {
+        return await getLineById(cookie, String(lineId));
+      }
+    } catch (e) {
+      console.log(`${ep.url} error:`, e);
+    }
+  }
+
+  // 4. Hiçbir create endpoint çalışmadıysa lines listesinin başından al
+  console.log('Create endpoints failed, falling back to lines list...');
+  return await getLatestLine(cookie);
+}
+
+/**
+ * Belirli bir line ID'sinden username/password çeker.
+ */
+async function getLineById(
+  cookie: string,
+  lineId: string
+): Promise<{ username: string; password: string }> {
+  const res = await fetch(`${PANEL_URL}/api/lines/${lineId}`, {
+    headers: { Cookie: cookie, Accept: 'application/json' },
+  });
+  const data = await res.json();
+  const username = data?.username ?? data?.data?.username;
+  const password = data?.password ?? data?.data?.password;
+  if (!username) throw new Error('Line detayı alınamadı.');
+  return { username: String(username), password: String(password) };
+}
+
+/**
+ * Lines listesinin ilk satırından (en son eklenen) credentials alır.
+ */
+async function getLatestLine(cookie: string): Promise<{ username: string; password: string }> {
+  const endpoints = [
+    '/api/lines?page=1&limit=1&order=id&dir=desc',
+    '/api/lines?per_page=1',
+    '/api/get_lines',
+  ];
+
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(`${PANEL_URL}${ep}`, {
+        headers: { Cookie: cookie, Accept: 'application/json' },
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const list: any[] = Array.isArray(data)
+        ? data
+        : data?.data ?? data?.lines ?? data?.result ?? [];
+
+      if (list.length > 0) {
+        const line = list[0];
+        const username = line?.username ?? line?.user;
+        const password = line?.password ?? line?.pass;
+        if (username && password) return { username: String(username), password: String(password) };
+      }
+    } catch (e) {
+      console.log(`${ep} error:`, e);
+    }
+  }
+
+  throw new Error('Lines listesinden kullanıcı bilgisi alınamadı.');
+}
+
+// ─── Route Handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   try {
@@ -311,14 +312,15 @@ export async function POST(req: NextRequest) {
       }
 
       otpStore.delete(token!);
-      const creds = await createTrialUser();
-      await sendTrialMail(email, creds.username!, creds.password!);
+      const creds = await createTrialUserViaApi();
+      await sendTrialMail(email, creds.username, creds.password);
 
       return NextResponse.json({ success: true, ...creds });
     }
 
     return NextResponse.json({ success: false, error: 'Geçersiz işlem.' }, { status: 400 });
   } catch (error: any) {
+    console.error('API Error:', error);
     return NextResponse.json(
       { success: false, error: error?.message || 'Hata oluştu.' },
       { status: 500 }
