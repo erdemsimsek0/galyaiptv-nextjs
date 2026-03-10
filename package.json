@@ -8,14 +8,15 @@
     "start": "next start",
     "lint": "next lint"
   },
-  "dependencies": {
+"dependencies": {
     "nodemailer": "^6.9.9",
-    "puppeteer": "^24.16.2",
+    "@sparticuz/chromium": "^133.0.0",
+    "puppeteer-core": "^24.0.0",
     "openai": "^4.47.1",
     "next": "16.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
-  },
+},
   "devDependencies": {
     "@types/nodemailer": "^6.4.14",
     "@types/node": "22.13.10",
