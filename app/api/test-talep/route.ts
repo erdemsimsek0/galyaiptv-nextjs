@@ -89,11 +89,6 @@ async function sendTrialMail(email: string, username: string, password: string) 
             <h3 style="margin:0 0 14px;color:#c084fc">M3U Linki</h3>
             <p style="margin:0;color:#e5e7eb;word-break:break-all">${m3u}</p>
           </div>
-
-          <div style="margin-top:20px;color:#9ca3af;font-size:14px;line-height:1.7">
-            Uygulama olarak IPTV Smarters, TiviMate veya SS IPTV kullanabilirsiniz.
-            Gereksiz/Spam klasörünü de kontrol etmeyi unutmayın.
-          </div>
         </div>
       </div>
     `,
@@ -106,7 +101,7 @@ async function createTrialUser() {
 
   try {
     browser = await puppeteer.launch({
-      args: chromium.args,
+      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless as any,
@@ -127,53 +122,70 @@ async function createTrialUser() {
       ]);
     }
 
-    // 2. Paket Oluşturma Sayfası
+    // 2. Paket Oluşturma Sayfasına Git
     await trialPage.goto(`${PANEL_URL}/lines/create/1/line`, { waitUntil: 'networkidle2' });
 
-    // Paket Seçimi (Daha garantici yöntem)
+    // Paket Seçimi
     const pkgSelected = await trialPage.evaluate(() => {
-      const sel = document.querySelector('select') as HTMLSelectElement;
-      if (!sel) return false;
-      const opt = Array.from(sel.options).find(o => /12 saat|test|trial/i.test(o.text));
-      if (opt) {
-        sel.value = opt.value;
-        sel.dispatchEvent(new Event('change', { bubbles: true }));
-        // Eğer Select2 kullanılıyorsa:
+      const selectElement = document.querySelector('select[name="package_id"], select') as HTMLSelectElement;
+      if (!selectElement) return false;
+
+      // Görseldeki metinlere göre (12 SAAT, 24 SAAT veya TEST içeren en uygun olanı seçer)
+      const options = Array.from(selectElement.options);
+      const targetOption = options.find(o => 
+        o.text.includes('12 SAAT') || 
+        o.text.includes('24 SAAT') || 
+        o.text.toLowerCase().includes('test')
+      );
+
+      if (targetOption) {
+        selectElement.value = targetOption.value;
+        selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+        
+        // JQuery/Select2 desteği varsa tetikle
         const $ = (window as any).$;
-        if ($ && $(sel).data('select2')) $(sel).trigger('change');
+        if ($ && $(selectElement).data('select2')) {
+            $(selectElement).trigger('change');
+        }
         return true;
       }
       return false;
     });
 
-    if (!pkgSelected) throw new Error('12 Saatlik paket bulunamadı veya seçilemedi.');
+    if (!pkgSelected) throw new Error('Uygun test paketi bulunamadı veya seçilemedi.');
 
-    // 3. Kaydet ve Bekle
+    // --- ADIM: 5 Saniye Bekle ---
+    await new Promise(r => setTimeout(r, 5000));
+
+    // 3. Save Butonuna Tıkla
     await Promise.all([
       trialPage.evaluate(() => {
-        const btn = Array.from(document.querySelectorAll('button, input[type="submit"]'))
-          .find((b: any) => /save|kaydet|create/i.test(b.innerText || b.value));
-        if (btn) (btn as HTMLElement).click();
+        // Görseldeki mavi "Save" butonunu bulur
+        const buttons = Array.from(document.querySelectorAll('button, input[type="submit"], a.btn'));
+        const saveBtn = buttons.find((b: any) => 
+          /save|kaydet|create/i.test(b.innerText || b.value) || b.classList.contains('btn-primary')
+        );
+        if (saveBtn) (saveBtn as HTMLElement).click();
       }),
       trialPage.waitForNavigation({ waitUntil: 'networkidle2' }).catch(() => {})
     ]);
 
-    // 4. Bilgileri Çekme (Kritik Bölge)
-    await trialPage.goto(`${PANEL_URL}/lines`, { waitUntil: 'networkidle2' });
+    // 4. Bilgileri Çekme (Lines Sayfası)
+    await trialPage.goto(`https://pa.ipguzel.com/lines`, { waitUntil: 'networkidle2' });
     
     // Tablonun yüklenmesini bekle
-    await trialPage.waitForSelector('table tbody tr', { timeout: 10000 });
+    await trialPage.waitForSelector('table tbody tr', { timeout: 15000 });
 
     const credentials = await trialPage.evaluate(() => {
       const rows = Array.from(document.querySelectorAll('table tbody tr'));
       if (rows.length === 0) return null;
 
-      // En üstteki (en yeni) satırı al
+      // En üstteki satırı al
       const firstRow = rows[0];
       const cells = Array.from(firstRow.querySelectorAll('td')).map(c => c.textContent?.trim() || "");
 
-      // Sütun isimlerine göre bulmaya çalış (Index 1-2 genelde username/pass olur)
-      // Panelinin yapısına göre burayı manuel kontrol etmen gerekebilir.
+      // Panel sütun yapısına göre: Genelde Index 1: Username, Index 2: Password
+      // Eğer veriler boşsa yan hücrelere bak
       return {
         username: cells[1] || null,
         password: cells[2] || null,
@@ -181,7 +193,7 @@ async function createTrialUser() {
     });
 
     if (!credentials || !credentials.username || credentials.username.length < 3) {
-      throw new Error('Panel tablosunda kullanıcı bilgileri okunamadı.');
+      throw new Error('Kullanıcı listesinden bilgiler okunamadı.');
     }
 
     return credentials;
@@ -196,100 +208,32 @@ export async function POST(req: NextRequest) {
     const { action, email, otp, token } = body || {};
 
     if (!email || !isValidEmail(email)) {
-      return NextResponse.json(
-        { success: false, error: 'Geçerli bir e-posta adresi girin.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Geçersiz e-posta.' }, { status: 400 });
     }
 
     if (action === 'send_otp') {
       const generatedOtp = generateOtp();
       const generatedToken = generateToken();
-
-      otpStore.set(generatedToken, {
-        email,
-        otp: generatedOtp,
-        expiresAt: Date.now() + 10 * 60 * 1000,
-      });
-
+      otpStore.set(generatedToken, { email, otp: generatedOtp, expiresAt: Date.now() + 10 * 60 * 1000 });
       await sendOtpMail(email, generatedOtp);
-
-      return NextResponse.json({
-        success: true,
-        token: generatedToken,
-      });
+      return NextResponse.json({ success: true, token: generatedToken });
     }
 
     if (action === 'verify') {
-      if (!otp || !token) {
-        return NextResponse.json(
-          { success: false, error: 'Kod veya token eksik.' },
-          { status: 400 }
-        );
+      const record = otpStore.get(token || '');
+      if (!record || record.otp !== otp || Date.now() > record.expiresAt) {
+        return NextResponse.json({ success: false, error: 'Doğrulama başarısız veya süresi dolmuş.' }, { status: 400 });
       }
 
-      const record = otpStore.get(token);
-
-      if (!record) {
-        return NextResponse.json(
-          { success: false, error: 'Doğrulama kaydı bulunamadı.' },
-          { status: 400 }
-        );
-      }
-
-      if (record.email !== email) {
-        return NextResponse.json(
-          { success: false, error: 'E-posta eşleşmedi.' },
-          { status: 400 }
-        );
-      }
-
-      if (Date.now() > record.expiresAt) {
-        otpStore.delete(token);
-        return NextResponse.json(
-          { success: false, error: 'Kodun süresi dolmuş.' },
-          { status: 400 }
-        );
-      }
-
-      if (record.otp !== otp) {
-        return NextResponse.json(
-          { success: false, error: 'Doğrulama kodu hatalı.' },
-          { status: 400 }
-        );
-      }
-
-      otpStore.delete(token);
-
+      otpStore.delete(token!);
       const creds = await createTrialUser();
+      await sendTrialMail(email, creds.username!, creds.password!);
 
-      if (!creds?.username || !creds?.password) {
-        return NextResponse.json(
-          { success: false, error: 'Panelden test hesabı oluşturulamadı.' },
-          { status: 500 }
-        );
-      }
-
-      await sendTrialMail(email, creds.username, creds.password);
-
-      return NextResponse.json({
-        success: true,
-        username: creds.username,
-        password: creds.password,
-      });
+      return NextResponse.json({ success: true, ...creds });
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Geçersiz işlem.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ success: false, error: 'Geçersiz işlem.' }, { status: 400 });
   } catch (error: any) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: error?.message || 'Sunucu hatası oluştu.',
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error?.message || 'Hata oluştu.' }, { status: 500 });
   }
 }
