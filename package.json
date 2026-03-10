@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "puppeteer": "^24.16.2",
     "nodemailer": "^6.9.9",
+    "puppeteer": "^24.16.2",
     "openai": "^4.47.1",
     "next": "16.1.6",
     "react": "^19.2.4",
