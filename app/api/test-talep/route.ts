@@ -77,14 +77,12 @@ async function sendTrialMail(email: string, username: string, password: string) 
           <p style="color:#d1d5db;line-height:1.7">
             Aşağıdaki bilgileri IPTV uygulamanıza girerek testinizi başlatabilirsiniz.
           </p>
-
           <div style="margin-top:24px;background:#1f2937;border-radius:12px;padding:20px">
             <h3 style="margin:0 0 14px;color:#c084fc">Xtream API</h3>
             <p style="margin:8px 0;color:#e5e7eb"><strong>Sunucu:</strong> http://pro4kiptv.xyz:2086/</p>
             <p style="margin:8px 0;color:#e5e7eb"><strong>Kullanıcı Adı:</strong> ${username}</p>
             <p style="margin:8px 0;color:#e5e7eb"><strong>Şifre:</strong> ${password}</p>
           </div>
-
           <div style="margin-top:20px;background:#1f2937;border-radius:12px;padding:20px">
             <h3 style="margin:0 0 14px;color:#c084fc">M3U Linki</h3>
             <p style="margin:0;color:#e5e7eb;word-break:break-all">${m3u}</p>
@@ -101,7 +99,7 @@ async function createTrialUser() {
   try {
     browser = await puppeteer.launch({
       args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
-      defaultViewport: chromium.defaultViewport,
+      defaultViewport: { width: 1280, height: 900 },
       executablePath: await chromium.executablePath(),
       headless: chromium.headless as any,
     });
@@ -110,8 +108,8 @@ async function createTrialUser() {
 
     // 1. Giriş İşlemi
     await trialPage.goto(`${PANEL_URL}/dashboard`, { waitUntil: 'networkidle2', timeout: 60000 });
-    const needsLogin = await trialPage.evaluate(() => !!document.querySelector('input[type="password"]'));
 
+    const needsLogin = await trialPage.evaluate(() => !!document.querySelector('input[type="password"]'));
     if (needsLogin) {
       await trialPage.type('input[name="username"], #username', PANEL_USER);
       await trialPage.type('input[name="password"], #password', PANEL_PASS);
@@ -123,138 +121,156 @@ async function createTrialUser() {
 
     // 2. Paket Oluşturma Sayfasına Git
     await trialPage.goto(`${PANEL_URL}/lines/create/1/line`, { waitUntil: 'networkidle2' });
-
-    // Sayfanın ve Select2'nin tamamen yüklenmesi için bekle
     await new Promise(r => setTimeout(r, 3000));
 
-    // 3. Select2 ile Paket Seçimi
-    // Önce jQuery + Select2 yöntemiyle dene
-    const pkgSelectedViaJQuery = await trialPage.evaluate(() => {
-      const $ = (window as any).$;
-      if (!$) return false;
+    // 3. Sayfadaki select elementlerini debug için logla
+    const selectInfo = await trialPage.evaluate(() => {
+      const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
+      return selects.map(s => ({
+        id: s.id,
+        name: s.name,
+        className: s.className,
+        optionCount: s.options.length,
+        options: Array.from(s.options).slice(0, 10).map(o => ({ value: o.value, text: o.text })),
+      }));
+    });
+    console.log('SELECT ELEMENTS:', JSON.stringify(selectInfo, null, 2));
 
-      let done = false;
-      $('select').each(function (this: HTMLSelectElement) {
-        if (done) return;
-        const options = Array.from(this.options) as HTMLOptionElement[];
-        const opt = options.find(
+    // 4. YÖNTEM 1: Native setter + jQuery + Select2 ile doğrudan değer ata
+    const method1 = await trialPage.evaluate(() => {
+      const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
+      for (const sel of selects) {
+        const opt = Array.from(sel.options).find(
           o => o.value && /12 SAAT|24 SAAT|TEST/i.test(o.text)
         );
-        if (opt) {
-          // Select2 instance varsa
-          if ($(this).data('select2')) {
-            $(this).val(opt.value).trigger('change');
-          } else {
-            this.value = opt.value;
-            this.dispatchEvent(new Event('change', { bubbles: true }));
+        if (!opt) continue;
+
+        // Native setter (React/framework-aware)
+        const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set;
+        setter ? setter.call(sel, opt.value) : (sel.value = opt.value);
+
+        sel.dispatchEvent(new Event('input', { bubbles: true }));
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+
+        const $ = (window as any).$;
+        if ($) {
+          $(sel).val(opt.value).trigger('change');
+          if ($(sel).data('select2')) {
+            $(sel).trigger('select2:select');
           }
-          done = true;
         }
-      });
-      return done;
+        return { ok: true, text: opt.text, value: opt.value };
+      }
+      return { ok: false };
     });
 
-    if (!pkgSelectedViaJQuery) {
-      // Fallback: Select2 görsel dropdown'unu tıklayarak seç
-      // Package label'ına yakın Select2 container'ı bul ve tıkla
-      const select2Opened = await trialPage.evaluate(() => {
-        // "Package" labelı içeren container'ı bul
-        const labels = Array.from(document.querySelectorAll('label, .control-label, th, td'));
-        const pkgLabel = labels.find((el: any) => /package/i.test(el.textContent));
-        
-        if (pkgLabel) {
-          // Label'ın yakınındaki Select2 container'ı bul
-          const container = pkgLabel.closest('tr, .form-group, .row');
-          const select2 = container?.querySelector('.select2-container, .select2-selection');
-          if (select2) {
-            (select2 as HTMLElement).click();
-            return true;
+    console.log('METHOD1:', JSON.stringify(method1));
+
+    if (!method1.ok) {
+      // 5. YÖNTEM 2: Her Select2 container'a tek tek tıkla, dropdown açılana kadar dene
+      const containers = await trialPage.$$('.select2-container, .select2-selection--single, .select2-selection');
+      console.log(`Found ${containers.length} Select2 containers`);
+
+      let dropdownOpened = false;
+
+      for (let i = containers.length - 1; i >= 0; i--) {
+        try {
+          await containers[i].click();
+          await new Promise(r => setTimeout(r, 1500));
+
+          dropdownOpened = await trialPage.evaluate(() => {
+            const dd = document.querySelector('.select2-dropdown');
+            return !!(dd && (dd as HTMLElement).offsetHeight > 0);
+          });
+
+          if (dropdownOpened) {
+            console.log(`Dropdown opened at container index ${i}`);
+            break;
           }
-        }
-
-        // Genel: sayfadaki ilk Select2 container'ı dene
-        const allSelect2 = document.querySelectorAll('.select2-container');
-        if (allSelect2.length > 0) {
-          // Son Select2 büyük ihtimalle Package dropdown'u
-          const lastSelect2 = allSelect2[allSelect2.length - 1] as HTMLElement;
-          lastSelect2.click();
-          return true;
-        }
-        return false;
-      });
-
-      if (!select2Opened) {
-        throw new Error('Select2 dropdown açılamadı.');
+        } catch (_) {}
       }
 
-      // Dropdown açılmasını bekle
-      await new Promise(r => setTimeout(r, 1500));
+      if (!dropdownOpened) {
+        // 6. YÖNTEM 3: Select2 search input'una doğrudan yaz
+        try {
+          await trialPage.click('.select2-search__field');
+          await new Promise(r => setTimeout(r, 500));
+        } catch (_) {}
+      }
 
-      // Dropdown seçeneklerinden uygun olanı tıkla
-      const optionClicked = await trialPage.evaluate(() => {
-        const items = Array.from(
-          document.querySelectorAll('.select2-results__option, .select2-dropdown li')
-        );
-        const target = items.find((el: any) =>
-          /12 SAAT|24 SAAT|TEST/i.test(el.textContent)
-        );
+      // Şu an açık dropdown'daki seçenekleri tıkla
+      const clicked = await trialPage.evaluate(() => {
+        const items = Array.from(document.querySelectorAll(
+          '.select2-results__option, [role="option"], .select2-dropdown li'
+        ));
+        const target = items.find((el: any) => /12 SAAT|24 SAAT|TEST/i.test(el.textContent));
         if (target) {
           (target as HTMLElement).click();
-          return (target as HTMLElement).textContent?.trim() || 'seçildi';
+          return (target as HTMLElement).textContent?.trim() ?? 'clicked';
         }
         return null;
       });
 
-      if (!optionClicked) {
-        throw new Error('Uygun test paketi dropdown içinde bulunamadı.');
+      console.log('DROPDOWN CLICK:', clicked);
+
+      if (!clicked) {
+        // 7. YÖNTEM 4: Search input'a "TEST" yaz, sonuçtan seç
+        try {
+          const searchInput = await trialPage.$('.select2-search__field');
+          if (searchInput) {
+            await searchInput.type('TEST');
+            await new Promise(r => setTimeout(r, 1500));
+            const typed = await trialPage.evaluate(() => {
+              const items = Array.from(document.querySelectorAll('.select2-results__option'));
+              if (items[0]) { (items[0] as HTMLElement).click(); return items[0].textContent?.trim(); }
+              return null;
+            });
+            console.log('SEARCH RESULT:', typed);
+            if (!typed) throw new Error('Paket seçilemedi: dropdown seçenekleri boş.');
+          } else {
+            throw new Error('Paket seçilemedi: select2 search input bulunamadı.');
+          }
+        } catch (e: any) {
+          throw new Error(`Paket seçilemedi: ${e.message}`);
+        }
       }
     }
 
-    // 4. Paketin seçilip sayfanın güncellenmesi için bekle
+    // 8. Paket seçimi sonrası yükleme için bekle
     await new Promise(r => setTimeout(r, 5000));
 
-    // 5. Save Butonuna Tıkla
+    // 9. Save butonuna tıkla
     await Promise.all([
       trialPage.evaluate(() => {
-        const buttons = Array.from(
+        const btns = Array.from(
           document.querySelectorAll('button, input[type="submit"], a.btn')
+        ) as HTMLElement[];
+        const save = btns.find(b =>
+          /save|kaydet|create/i.test(b.innerText || (b as HTMLInputElement).value || '')
+          || b.classList.contains('btn-success')
+          || b.classList.contains('btn-primary')
         );
-        const saveBtn = buttons.find(
-          (b: any) =>
-            /save|kaydet|create/i.test(b.innerText || b.value || '') ||
-            b.classList.contains('btn-primary')
-        );
-        if (saveBtn) (saveBtn as HTMLElement).click();
+        if (save) save.click();
       }),
       trialPage.waitForNavigation({ waitUntil: 'networkidle2' }).catch(() => {}),
     ]);
 
-    // Yönlendirme/işlem tamamlanması için bekle
     await new Promise(r => setTimeout(r, 2000));
 
-    // 6. Bilgileri Çekme (Lines Sayfası)
+    // 10. Lines sayfasından credentials al
     await trialPage.goto(`${PANEL_URL}/lines`, { waitUntil: 'networkidle2' });
-
-    // Tablonun yüklenmesini bekle
     await trialPage.waitForSelector('table tbody tr', { timeout: 15000 });
 
     const credentials = await trialPage.evaluate(() => {
       const rows = Array.from(document.querySelectorAll('table tbody tr'));
-      if (rows.length === 0) return null;
-
+      if (!rows.length) return null;
       const cells = Array.from(rows[0].querySelectorAll('td'));
-
-      // Kullanıcı adı (Index 1) - "TRIAL", "ISP OFF" gibi etiketleri atlamak için sadece ilk metni al
-      const rawUsername = cells[1]?.textContent?.trim() || '';
-      const username = rawUsername.split(/\s+/)[0];
-
-      // Şifre (Index 2)
+      const username = (cells[1]?.textContent?.trim() || '').split(/\s+/)[0];
       const password = cells[2]?.textContent?.trim() || '';
-
       return { username, password };
     });
 
-    if (!credentials || !credentials.username || credentials.username.length < 3) {
+    if (!credentials?.username || credentials.username.length < 3) {
       throw new Error('Kullanıcı listesinden bilgiler okunamadı.');
     }
 
