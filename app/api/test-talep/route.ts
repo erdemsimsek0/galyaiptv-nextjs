@@ -148,18 +148,28 @@ async function sendOtpMail(email: string, otp: string) {
     to: email,
     subject: 'Galya IPTV Doğrulama Kodunuz',
     html: `
-      <div style="font-family:Arial,sans-serif;background:#0b0b0f;padding:24px;color:#fff">
-        <div style="max-width:560px;margin:0 auto;background:#111827;border:1px solid #7c3aed;border-radius:16px;padding:32px">
-          <h2 style="margin:0 0 16px;color:#fff">E-posta Doğrulama Kodu</h2>
-          <p style="color:#d1d5db;font-size:15px;line-height:1.6">
-            Ücretsiz test talebinizi doğrulamak için aşağıdaki 6 haneli kodu kullanın:
-          </p>
-          <div style="margin:24px 0;padding:18px 24px;background:#1f2937;border-radius:12px;text-align:center;font-size:32px;font-weight:700;letter-spacing:8px;color:#a855f7">
-            ${otp}
+      <!DOCTYPE html>
+      <html lang="tr">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="color-scheme" content="light">
+        <meta name="supported-color-schemes" content="light">
+      </head>
+      <body style="margin:0; padding:20px; background-color:#f3f4f6;">
+        <div style="font-family:Arial,sans-serif;background:#0b0b0f;padding:24px;color:#fff; border-radius:16px;">
+          <div style="max-width:560px;margin:0 auto;background:#111827;border:1px solid #7c3aed;border-radius:16px;padding:32px">
+            <h2 style="margin:0 0 16px;color:#fff">E-posta Doğrulama Kodu</h2>
+            <p style="color:#d1d5db;font-size:15px;line-height:1.6">
+              Ücretsiz test talebinizi doğrulamak için aşağıdaki 6 haneli kodu kullanın:
+            </p>
+            <div style="margin:24px 0;padding:18px 24px;background:#1f2937;border-radius:12px;text-align:center;font-size:32px;font-weight:700;letter-spacing:8px;color:#a855f7">
+              ${otp}
+            </div>
+            <p style="color:#9ca3af;font-size:14px">Bu kod 10 dakika boyunca geçerlidir.</p>
           </div>
-          <p style="color:#9ca3af;font-size:14px">Bu kod 10 dakika boyunca geçerlidir.</p>
         </div>
-      </div>
+      </body>
+      </html>
     `,
   });
 }
@@ -173,68 +183,82 @@ async function sendTrialMail(email: string, username: string, password: string) 
     to: email,
     subject: 'Galya IPTV Test Bilgileriniz Hazır',
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background-color:#ffffff;border:1px solid #e0e6ed;">
+      <!DOCTYPE html>
+      <html lang="tr">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="color-scheme" content="light">
+        <meta name="supported-color-schemes" content="light">
+        <style>
+          /* Karanlık mod zorlamalarını ezmek için basit CSS */
+          :root { color-scheme: light; }
+        </style>
+      </head>
+      <body style="margin:0; padding:20px; background-color:#f3f4f6;">
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background-color:#ffffff !important;border:1px solid #e0e6ed; color:#333333;">
 
-        <div style="text-align:center;padding-bottom:20px;border-bottom:1px solid #e0e6ed;margin-bottom:20px;">
-          <h1 style="color:#7c3aed;margin:0;font-size:28px;letter-spacing:1px;">Galya Media</h1>
-          <p style="color:#666;margin:5px 0 0;font-size:14px;">Kaliteli IPTV Deneyimi</p>
-        </div>
-
-        <div style="background:linear-gradient(135deg,#512da8,#7c3aed);color:#ffffff;padding:30px;text-align:center;border-radius:8px;">
-          <h2 style="margin:0;font-size:26px;color:#ffffff;">Test Hesabınız Hazır! 🎉</h2>
-          <p style="font-size:15px;margin:15px 0;color:#ffffff;">12 saatlik premium test erişiminiz başladı.<br>Aşağıdaki bilgilerle hemen izlemeye başlayın.</p>
-          <a href="${whatsappUrl}" style="background-color:#25d366;color:#ffffff;padding:12px 28px;text-decoration:none;border-radius:25px;font-weight:bold;font-size:15px;display:inline-block;margin-top:10px;">
-            💬 WhatsApp ile Satın Al
-          </a>
-        </div>
-
-        <div style="margin-top:20px;background-color:#ffffff;padding:20px;border-radius:8px;border:1px solid #e0e6ed;">
-          <h3 style="color:#512da8;margin:0 0 15px;border-bottom:2px solid #7c3aed;padding-bottom:5px;font-size:18px;">Giriş Yöntemi 1: Xtream API</h3>
-          <p style="color:#555;margin:0 0 15px;font-size:14px;">En yaygın yöntemdir. Uygulamanızda bu alanları doldurun.</p>
-          <table style="width:100%;font-size:15px;border-collapse:collapse;">
-            <tr>
-              <td style="width:35%;color:#666;padding:8px 0;"><strong>Sunucu:</strong></td>
-              <td style="font-family:monospace;color:#333;font-size:13px;">http://pro4kiptv.xyz:2086/</td>
-            </tr>
-            <tr style="background-color:#f9f5ff;">
-              <td style="color:#666;padding:8px;border-radius:4px 0 0 4px;"><strong>Kullanıcı Adı:</strong></td>
-              <td style="font-family:monospace;color:#512da8;font-size:14px;font-weight:bold;padding:8px;background:#f0ebff;border-radius:0 4px 4px 0;">${username}</td>
-            </tr>
-            <tr>
-              <td style="color:#666;padding:8px 0;"><strong>Şifre:</strong></td>
-              <td style="font-family:monospace;color:#512da8;font-size:14px;font-weight:bold;padding:8px;background:#f0ebff;border-radius:4px;">${password}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div style="margin-top:16px;background-color:#ffffff;padding:20px;border-radius:8px;border:1px solid #e0e6ed;">
-          <h3 style="color:#512da8;margin:0 0 15px;border-bottom:2px solid #7c3aed;padding-bottom:5px;font-size:18px;">Giriş Yöntemi 2: M3U Linki</h3>
-          <p style="color:#555;margin:0 0 12px;font-size:14px;">Bazı uygulamalar için tek bir link kullanabilirsiniz.</p>
-          <div style="background:#f0ebff;padding:12px;border-radius:6px;word-break:break-all;">
-            <a href="${m3u}" style="color:#7c3aed;font-family:monospace;font-size:12px;text-decoration:none;">${m3u}</a>
+          <div style="text-align:center;padding-bottom:20px;border-bottom:1px solid #e0e6ed;margin-bottom:20px;">
+            <h1 style="color:#7c3aed;margin:0;font-size:28px;letter-spacing:1px;">Galya Media</h1>
+            <p style="color:#666666;margin:5px 0 0;font-size:14px;">Kaliteli IPTV Deneyimi</p>
           </div>
-        </div>
 
-        <div style="margin-top:20px;text-align:center;background:#ffffff;padding:16px;border-radius:8px;border:1px solid #e0e6ed;">
-          <p style="font-size:15px;margin:0 0 6px;color:#333;"><strong>📱 Önerilen Uygulamalar</strong></p>
-          <p style="font-size:14px;margin:0;color:#666;">IPTV Smarters &nbsp;•&nbsp; TiviMate &nbsp;•&nbsp; Hot IPTV</p>
-        </div>
+          <div style="background:linear-gradient(135deg,#512da8,#7c3aed);color:#ffffff;padding:30px;text-align:center;border-radius:8px;">
+            <h2 style="margin:0;font-size:26px;color:#ffffff;">Test Hesabınız Hazır! 🎉</h2>
+            <p style="font-size:15px;margin:15px 0;color:#ffffff;">12 saatlik premium test erişiminiz başladı.<br>Aşağıdaki bilgilerle hemen izlemeye başlayın.</p>
+            <a href="${whatsappUrl}" style="background-color:#25d366;color:#ffffff;padding:12px 28px;text-decoration:none;border-radius:25px;font-weight:bold;font-size:15px;display:inline-block;margin-top:10px;">
+              💬 WhatsApp ile Satın Al
+            </a>
+          </div>
 
-        <div style="margin-top:20px;background:linear-gradient(135deg,#512da8,#7c3aed);padding:24px;border-radius:8px;text-align:center;">
-          <p style="color:#ffffff;font-size:16px;margin:0 0 16px;"><strong>Beğendiniz mi? Hemen satın alın! 🚀</strong></p>
-          <p style="color:#e9d5ff;font-size:13px;margin:0 0 16px;">Paket seçenekleri ve fiyatlar için WhatsApp'tan bize ulaşın.</p>
-          <a href="${whatsappUrl}" style="background-color:#25d366;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:25px;font-weight:bold;font-size:16px;display:inline-block;">
-            💬 WhatsApp: +44 7441 921660
-          </a>
-        </div>
+          <div style="margin-top:20px;background-color:#ffffff;padding:20px;border-radius:8px;border:1px solid #e0e6ed;">
+            <h3 style="color:#512da8;margin:0 0 15px;border-bottom:2px solid #7c3aed;padding-bottom:5px;font-size:18px;">Giriş Yöntemi 1: Xtream API</h3>
+            <p style="color:#555555;margin:0 0 15px;font-size:14px;">En yaygın yöntemdir. Uygulamanızda bu alanları doldurun.</p>
+            <table style="width:100%;font-size:15px;border-collapse:collapse;">
+              <tr>
+                <td style="width:35%;color:#666666;padding:8px 0;"><strong>Sunucu:</strong></td>
+                <td style="font-family:monospace;color:#333333;font-size:13px;">http://pro4kiptv.xyz:2086/</td>
+              </tr>
+              <tr style="background-color:#f9f5ff;">
+                <td style="color:#666666;padding:8px;border-radius:4px 0 0 4px;"><strong>Kullanıcı Adı:</strong></td>
+                <td style="font-family:monospace;color:#512da8;font-size:14px;font-weight:bold;padding:8px;background:#f0ebff;border-radius:0 4px 4px 0;">${username}</td>
+              </tr>
+              <tr>
+                <td style="color:#666666;padding:8px 0;"><strong>Şifre:</strong></td>
+                <td style="font-family:monospace;color:#512da8;font-size:14px;font-weight:bold;padding:8px;background:#f0ebff;border-radius:4px;">${password}</td>
+              </tr>
+            </table>
+          </div>
 
-        <div style="text-align:center;margin-top:30px;border-top:1px solid #e0e6ed;padding-top:20px;">
-          <p style="font-size:13px;color:#7c3aed;font-weight:bold;margin:0;">Galya Media</p>
-          <p style="font-size:12px;color:#999;margin:6px 0 0;">© 2026 Galya Media. Tüm hakları saklıdır.</p>
-          <p style="font-size:12px;color:#999;margin:4px 0 0;">Bu test hesabı 12 saat sonra otomatik devre dışı kalacaktır.</p>
-        </div>
+          <div style="margin-top:16px;background-color:#ffffff;padding:20px;border-radius:8px;border:1px solid #e0e6ed;">
+            <h3 style="color:#512da8;margin:0 0 15px;border-bottom:2px solid #7c3aed;padding-bottom:5px;font-size:18px;">Giriş Yöntemi 2: M3U Linki</h3>
+            <p style="color:#555555;margin:0 0 12px;font-size:14px;">M3U destekleyen uygulamalar için aşağıdaki linki kullanın. <em>(Kopyalamak için linkin üzerine basılı tutun)</em></p>
+            <div style="background:#f0ebff;padding:16px;border-radius:6px;word-break:break-all;border:2px dashed #a855f7;text-align:center;">
+              <a href="${m3u}" style="color:#7c3aed;font-family:monospace;font-size:13px;text-decoration:none;display:block;font-weight:bold;">${m3u}</a>
+            </div>
+          </div>
 
-      </div>
+          <div style="margin-top:20px;text-align:center;background:#ffffff;padding:16px;border-radius:8px;border:1px solid #e0e6ed;">
+            <p style="font-size:15px;margin:0 0 6px;color:#333333;"><strong>📱 Önerilen Uygulamalar</strong></p>
+            <p style="font-size:14px;margin:0;color:#666666;">IPTV Smarters &nbsp;•&nbsp; TiviMate &nbsp;•&nbsp; Hot IPTV</p>
+          </div>
+
+          <div style="margin-top:20px;background:linear-gradient(135deg,#512da8,#7c3aed);padding:24px;border-radius:8px;text-align:center;">
+            <p style="color:#ffffff;font-size:16px;margin:0 0 16px;"><strong>Beğendiniz mi? Hemen satın alın! 🚀</strong></p>
+            <p style="color:#e9d5ff;font-size:13px;margin:0 0 16px;">Paket seçenekleri ve fiyatlar için WhatsApp'tan bize ulaşın.</p>
+            <a href="${whatsappUrl}" style="background-color:#25d366;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:25px;font-weight:bold;font-size:16px;display:inline-block;">
+              💬 WhatsApp: +44 7441 921660
+            </a>
+          </div>
+
+          <div style="text-align:center;margin-top:30px;border-top:1px solid #e0e6ed;padding-top:20px;">
+            <p style="font-size:13px;color:#7c3aed;font-weight:bold;margin:0;">Galya Media</p>
+            <p style="font-size:12px;color:#999999;margin:6px 0 0;">© 2026 Galya Media. Tüm hakları saklıdır.</p>
+            <p style="font-size:12px;color:#999999;margin:4px 0 0;">Bu test hesabı 12 saat sonra otomatik devre dışı kalacaktır.</p>
+          </div>
+
+        </div>
+      </body>
+      </html>
     `,
   });
 }
