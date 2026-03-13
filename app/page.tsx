@@ -108,7 +108,74 @@ const organizationSchema = {
   contactPoint: [{ '@type': 'ContactPoint', contactType: 'customer support', url: 'https://wa.me/447441921660', availableLanguage: ['Turkish'] }],
 };
 
-type ModalStep = 1 | 2 | 3 | 4 | 5;
+type ModalStep = 1 | 1.5 | 2 | 3 | 4 | 5;
+
+// ─── Cihaz ve kurulum rehberi verileri ───────────────────────────────────────
+const DEVICES = [
+  { id: 'smarttv', label: 'Smart TV', sub: 'Samsung, LG, Vestel...', icon: '📺' },
+  { id: 'mobile', label: 'Telefon / Tablet', sub: 'Android, iPhone...', icon: '📱' },
+  { id: 'tvbox', label: 'TV Box / MAG', sub: 'Android Box, MAG...', icon: '📦' },
+  { id: 'pc', label: 'Bilgisayar', sub: 'Windows, Mac...', icon: '💻' },
+] as const;
+type DeviceId = typeof DEVICES[number]['id'];
+
+const PURPOSES = [
+  { id: 'sports', label: 'Spor', sub: 'beIN Sports, S Sport, Exxen...', icon: '⚽' },
+  { id: 'movies', label: 'Film & Dizi', sub: 'Netflix, Disney+ içerikleri dahil', icon: '🎬' },
+  { id: 'livetv', label: 'Canlı TV & Haberler', sub: 'Yerli ve yabancı kanallar', icon: '📡' },
+  { id: 'foreign', label: 'Yurt Dışı Kanallar', sub: 'Almanya, Hollanda, İngiltere...', icon: '🌍' },
+];
+
+const INSTALL_GUIDES: Record<DeviceId, { app: string; steps: string[]; note?: string }> = {
+  smarttv: {
+    app: 'Hot IPTV Player',
+    steps: [
+      'Smart TV\'nizde uygulama mağazasını açın (Samsung Apps / LG Content Store).',
+      '"Hot IPTV Player" uygulamasını arayın ve indirin.',
+      'Uygulamayı açın — ekranda bir aktivasyon kodu göreceksiniz.',
+      'Bilgisayar veya telefondan hot-iptv.net adresine gidip kodu girin.',
+      'Aynı sayfada sunucu bilgilerini (kullanıcı adı & şifre) ekleyin.',
+      'TV\'deki uygulamayı yenileyin — kanallar otomatik yüklenecektir.',
+    ],
+    note: 'Samsung TV\'niz Tizen işletim sistemi kullanıyorsa otomatik güncellemeyi kapatmanız önerilir.',
+  },
+  mobile: {
+    app: 'IPTV Smarters Pro (Android) · GSE Smart IPTV (iPhone)',
+    steps: [
+      'Android: Play Store\'dan "IPTV Smarters Pro" indirin.',
+      'iPhone: App Store\'dan "GSE Smart IPTV" indirin.',
+      'Uygulamayı açın ve "Xtream Codes API ile Giriş" seçeneğini seçin.',
+      'Sunucu alanına: http://pro4kiptv.xyz:2086 yazın.',
+      'Kullanıcı adı ve şifrenizi girin, "Kullanıcı Ekle" butonuna basın.',
+      'Uygulama kanal listenizi otomatik olarak yükleyecektir.',
+    ],
+    note: 'iPhone\'dan TV\'ye AirPlay veya HDMI adaptörü ile büyük ekranda da izleyebilirsiniz.',
+  },
+  tvbox: {
+    app: '9Xtream',
+    steps: [
+      'Android Box\'ınızda Play Store\'u açın ve "9Xtream" uygulamasını indirin.',
+      'MAG cihazlarda: Menü → Media → Xtream Codes Ayarları yolunu izleyin.',
+      'Uygulamayı açın ve "Add Xtream Codes API" seçeneğine tıklayın.',
+      'Sunucu: http://pro4kiptv.xyz:2086 girin.',
+      'Kullanıcı adı ve şifrenizi giriş ekranına yazın.',
+      '"Ekle" butonuna basın — canlı TV, film ve diziler yüklenecektir.',
+    ],
+    note: 'TV Box\'ınız Play Store\'suz geliyorsa APK olarak da kurabilirsiniz. WhatsApp üzerinden yardım alabilirsiniz.',
+  },
+  pc: {
+    app: 'Smarters Player Pro',
+    steps: [
+      'Windows veya Mac için smarters.live adresinden "Smarters Player Pro" indirin.',
+      'Uygulamayı kurun ve açın.',
+      '"Login with Xtream Codes API" seçeneğini seçin.',
+      'Sunucu: http://pro4kiptv.xyz:2086 girin.',
+      'Kullanıcı adı ve şifrenizi girin, "Add User" butonuna tıklayın.',
+      'Kanal listeniz yüklenecek — Live TV, Film ve Dizi bölümlerinden izleyebilirsiniz.',
+    ],
+    note: 'Alternatif olarak VLC Media Player\'da da kullanabilirsiniz: Ortam → Ağ Akışı Aç → M3U linkini yapıştırın.',
+  },
+};
 
 // ─── Yıldız bileşeni ──────────────────────────────────────────────────────────
 function Stars({ count = 5 }: { count?: number }) {
@@ -170,9 +237,9 @@ function Countdown({ startedAt }: { startedAt: number }) {
 }
 
 // ─── Stepper ──────────────────────────────────────────────────────────────────
-const STEP_LABELS = ['Paket', 'E-posta', 'Doğrula', 'Hazır'];
+const STEP_LABELS = ['Cihaz', 'E-posta', 'Doğrula', 'Hazır'];
 function Stepper({ step }: { step: ModalStep }) {
-  const active = Math.min(step, 4);
+  const active = step === 1 ? 1 : step === 1.5 ? 1 : Math.min(step as number, 4);
   return (
     <div className="mb-5 flex items-center justify-center gap-1">
       {STEP_LABELS.map((label, i) => {
@@ -229,6 +296,8 @@ export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [step, setStep] = useState<ModalStep>(1);
   const [selectedPackage, setSelectedPackage] = useState('');
+  const [selectedDevice, setSelectedDevice] = useState<DeviceId | ''>('');
+  const [selectedPurposes, setSelectedPurposes] = useState<string[]>([]);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [otpToken, setOtpToken] = useState('');
@@ -256,6 +325,7 @@ export default function HomePage() {
 
   const handleOpenModal = (pkg?: string) => {
     setIsModalOpen(true); setStep(1); setSelectedPackage(pkg || '');
+    setSelectedDevice(''); setSelectedPurposes([]);
     setEmail(''); setOtp(''); setOtpToken('');
     setStatusMsg(''); setAlreadyUsedMsg('');
     setResendCooldown(0); setIsRecovery(false);
@@ -264,6 +334,7 @@ export default function HomePage() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false); setStep(1); setSelectedPackage('');
+    setSelectedDevice(''); setSelectedPurposes([]);
     setEmail(''); setOtp(''); setOtpToken('');
     setStatusMsg(''); setAlreadyUsedMsg('');
     setLoading(false); setResendCooldown(0); setIsRecovery(false);
@@ -276,7 +347,7 @@ export default function HomePage() {
     try {
       const res = await fetch('/api/test-talep', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send_otp', email, selectedPackage }),
+        body: JSON.stringify({ action: 'send_otp', email, selectedPackage, selectedDevice, selectedPurposes }),
       });
       const data = await res.json();
       if (data.alreadyUsed) { if (recoveryMode) { setIsRecovery(true); } else { setAlreadyUsedMsg(data.error); setStep(5); return; } }
@@ -762,37 +833,72 @@ export default function HomePage() {
 
             {step !== 5 && <Stepper step={step} />}
 
-            {/* ── ADIM 1: Paket seç ──────────────────────────────────────── */}
+            {/* ── ADIM 1: Cihaz seç ──────────────────────────────────────── */}
             {step === 1 && (
               <div className="space-y-3">
                 <div>
-                  <h3 className="text-xl font-bold text-white">Ücretsiz Test Al</h3>
-                  <p className="mt-1 text-sm text-zinc-500">Hangi paketi düşünüyorsunuz? <span className="text-zinc-700">(İsteğe bağlı)</span></p>
+                  <h3 className="text-xl font-bold text-white">Hangi cihazda izleyeceksiniz?</h3>
+                  <p className="mt-1 text-sm text-zinc-500">Size özel kurulum rehberi gönderelim.</p>
                 </div>
-                <div className="space-y-1.5">
-                  {modalPackages.map((pkg) => (
-                    <button key={pkg.label} onClick={() => setSelectedPackage(pkg.label)}
-                      className={`flex w-full items-center gap-3 rounded-xl border px-4 py-2.5 text-sm transition-colors ${
-                        selectedPackage === pkg.label
-                          ? 'border-[#7c3aed]/60 bg-[#7c3aed]/10 text-white'
-                          : 'border-white/5 bg-white/[0.02] text-zinc-400 hover:border-white/10 hover:text-white'
+                <div className="grid grid-cols-2 gap-2">
+                  {DEVICES.map((device) => (
+                    <button key={device.id} onClick={() => setSelectedDevice(device.id)}
+                      className={`flex flex-col items-start rounded-xl border p-3 text-left transition-colors ${
+                        selectedDevice === device.id
+                          ? 'border-[#7c3aed]/60 bg-[#7c3aed]/10'
+                          : 'border-white/5 bg-white/[0.02] hover:border-white/10'
                       }`}>
-                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition-all ${
-                        selectedPackage === pkg.label ? 'border-[#7c3aed] bg-[#7c3aed] text-white' : 'border-white/10'
-                      }`}>
-                        {selectedPackage === pkg.label ? '✓' : ''}
-                      </span>
-                      <span className={pkg.label === 'Henüz bilmiyorum' ? 'italic text-zinc-600' : ''}>{pkg.label}</span>
-                      {pkg.popular && <span className="rounded bg-[#7c3aed] px-1.5 py-0.5 text-[10px] font-bold text-white">POPÜLER</span>}
-                      {pkg.price && <span className="ml-auto font-semibold text-zinc-400">{pkg.price}</span>}
+                      <span className="mb-1 text-xl">{device.icon}</span>
+                      <span className={`text-sm font-semibold ${selectedDevice === device.id ? 'text-white' : 'text-zinc-300'}`}>{device.label}</span>
+                      <span className="text-[11px] text-zinc-600">{device.sub}</span>
                     </button>
                   ))}
                 </div>
-                <button onClick={() => setStep(2)}
-                  className="w-full rounded-xl bg-[#7c3aed] py-3 font-semibold text-white transition-colors hover:bg-[#6d28d9]">
+                <button onClick={() => setStep(1.5 as ModalStep)} disabled={!selectedDevice}
+                  className="w-full rounded-xl bg-[#7c3aed] py-3 font-semibold text-white transition-colors hover:bg-[#6d28d9] disabled:opacity-40">
                   Devam Et →
                 </button>
-                <div className="border-t border-white/5 pt-3"><WaButton /></div>
+                <p className="text-center text-xs text-zinc-700">Kredi kartı gerekmez · 12 saatlik ücretsiz erişim</p>
+              </div>
+            )}
+
+            {/* ── ADIM 1.5: İzleme amacı ──────────────────────────────────── */}
+            {step === (1.5 as ModalStep) && (
+              <div className="space-y-3">
+                <div>
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.03] px-2.5 py-1 text-xs text-zinc-500">
+                    {DEVICES.find(d => d.id === selectedDevice)?.icon} {DEVICES.find(d => d.id === selectedDevice)?.label} seçildi
+                  </div>
+                  <h3 className="text-xl font-bold text-white">En çok ne izleyeceksiniz?</h3>
+                  <p className="mt-1 text-sm text-zinc-500">Birden fazla seçebilirsiniz.</p>
+                </div>
+                <div className="space-y-2">
+                  {PURPOSES.map((p) => {
+                    const selected = selectedPurposes.includes(p.id);
+                    return (
+                      <button key={p.id} onClick={() => setSelectedPurposes(prev =>
+                        prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id]
+                      )}
+                        className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+                          selected ? 'border-[#7c3aed]/60 bg-[#7c3aed]/10' : 'border-white/5 bg-white/[0.02] hover:border-white/10'
+                        }`}>
+                        <span className="text-lg">{p.icon}</span>
+                        <div className="flex-1">
+                          <div className={`text-sm font-semibold ${selected ? 'text-white' : 'text-zinc-300'}`}>{p.label}</div>
+                          <div className="text-[11px] text-zinc-600">{p.sub}</div>
+                        </div>
+                        <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-all ${
+                          selected ? 'border-[#7c3aed] bg-[#7c3aed] text-white' : 'border-white/10'
+                        }`}>{selected ? '✓' : ''}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button onClick={() => setStep(2)}
+                  className="w-full rounded-xl bg-[#7c3aed] py-3 font-semibold text-white transition-colors hover:bg-[#6d28d9]">
+                  Testi Başlat →
+                </button>
+                <button onClick={() => setStep(1)} className="w-full text-xs text-zinc-700 transition-colors hover:text-zinc-400">← Geri dön</button>
               </div>
             )}
 
@@ -803,8 +909,20 @@ export default function HomePage() {
                   <h3 className="text-xl font-bold text-white">E-posta Adresiniz</h3>
                   <p className="mt-1 text-sm text-zinc-500">Test bilgilerini göndereceğimiz e-posta adresinizi girin.</p>
                 </div>
-                {selectedPackage && selectedPackage !== 'Henüz bilmiyorum' && (
-                  <div className="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2 text-xs text-zinc-500">📦 {selectedPackage}</div>
+                {selectedDevice && (
+                  <div className="flex flex-wrap gap-2">
+                    <div className="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-1.5 text-xs text-zinc-500">
+                      {DEVICES.find(d => d.id === selectedDevice)?.icon} {DEVICES.find(d => d.id === selectedDevice)?.label}
+                    </div>
+                    {selectedPurposes.map(pid => {
+                      const p = PURPOSES.find(x => x.id === pid);
+                      return p ? (
+                        <div key={pid} className="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-1.5 text-xs text-zinc-500">
+                          {p.icon} {p.label}
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
                 )}
                 <input ref={emailInputRef} type="email" placeholder="ornek@email.com"
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-600 transition-colors focus:border-[#7c3aed]/60"
@@ -816,7 +934,7 @@ export default function HomePage() {
                 </button>
                 {statusMsg && <p className="text-center text-xs text-amber-400">{statusMsg}</p>}
                 <div className="flex justify-between text-xs">
-                  <button onClick={() => setStep(1)} className="text-zinc-600 transition-colors hover:text-zinc-400">← Geri dön</button>
+                  <button onClick={() => setStep(1.5 as ModalStep)} className="text-zinc-600 transition-colors hover:text-zinc-400">← Geri dön</button>
                   <button onClick={() => handleSendOtp(true)} disabled={loading} className="text-zinc-600 transition-colors hover:text-zinc-400">
                     Daha önce test aldım →
                   </button>
@@ -924,6 +1042,35 @@ export default function HomePage() {
                 )}
 
                 <WaButton label="💬 Beğendiyseniz Satın Alın" />
+
+                {/* ── Kurulum Rehberi ── */}
+                {selectedDevice && INSTALL_GUIDES[selectedDevice as DeviceId] && (() => {
+                  const guide = INSTALL_GUIDES[selectedDevice as DeviceId];
+                  return (
+                    <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4">
+                      <div className="mb-3 flex items-center gap-2">
+                        <span className="text-base">{DEVICES.find(d => d.id === selectedDevice)?.icon}</span>
+                        <div>
+                          <p className="text-xs font-semibold text-zinc-300">Kurulum Rehberi</p>
+                          <p className="text-[11px] text-[#a78bfa]">{guide.app}</p>
+                        </div>
+                      </div>
+                      <ol className="space-y-1.5">
+                        {guide.steps.map((s, i) => (
+                          <li key={i} className="flex gap-2.5 text-xs text-zinc-400">
+                            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#7c3aed]/20 text-[10px] font-bold text-[#a78bfa]">{i + 1}</span>
+                            <span>{s}</span>
+                          </li>
+                        ))}
+                      </ol>
+                      {guide.note && (
+                        <p className="mt-3 rounded-lg border border-amber-900/30 bg-amber-950/20 px-3 py-2 text-[11px] leading-relaxed text-amber-400/80">
+                          💡 {guide.note}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
                 <button onClick={handleCloseModal}
                   className="w-full rounded-lg border border-white/5 py-2.5 text-sm text-zinc-600 transition-colors hover:border-white/10 hover:text-zinc-300">
                   Pencereyi Kapat
