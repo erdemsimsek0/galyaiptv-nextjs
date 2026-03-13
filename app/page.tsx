@@ -18,12 +18,9 @@ const packages = [
 
 // DEĞİŞİKLİK 3: Modal paketlerde de popular 12 aylığa taşındı
 const modalPackages = [
-  { label: '1 Aylık Paket', price: '₺500' },
   { label: '3 Aylık Paket', price: '₺700' },
   { label: '6 Aylık Paket', price: '₺1.000' },
   { label: '12 Aylık Paket', price: '₺1.400', popular: true },
-  { label: '24 Aylık Paket', price: '₺2.200' },
-  { label: 'Süresiz Paket', price: '₺6.900' },
   { label: 'Henüz bilmiyorum', price: '' },
 ];
 
@@ -720,14 +717,16 @@ export default function HomePage() {
 
                     <div className="divide-y divide-white/5">
                       <div className="flex items-center justify-between py-2">
-                        <span className="text-xs text-zinc-600">Sunucu</span>
+                        <span className="text-xs text-zinc-500">Sunucu</span>
                         <div className="flex items-center">
-                          <span className="font-mono text-xs text-zinc-400">pro4kiptv.xyz:2086</span>
+                          <span className="rounded-md bg-[#7c3aed]/10 px-2 py-0.5 font-mono text-xs font-bold text-[#a78bfa]">
+                            http://pro4kiptv.xyz:2086
+                          </span>
                           <CopyButton value="http://pro4kiptv.xyz:2086/" />
                         </div>
                       </div>
                       <div className="flex items-center justify-between py-2">
-                        <span className="text-xs text-zinc-600">Kullanıcı Adı</span>
+                        <span className="text-xs text-zinc-500">Kullanıcı Adı</span>
                         <div className="flex items-center">
                           <span className="rounded-md bg-[#7c3aed]/10 px-2 py-0.5 font-mono text-sm font-bold text-[#a78bfa]">
                             {trialCredentials.username}
@@ -736,7 +735,7 @@ export default function HomePage() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between py-2">
-                        <span className="text-xs text-zinc-600">Şifre</span>
+                        <span className="text-xs text-zinc-500">Şifre</span>
                         <div className="flex items-center">
                           <span className="rounded-md bg-[#7c3aed]/10 px-2 py-0.5 font-mono text-sm font-bold text-[#a78bfa]">
                             {trialCredentials.password}
@@ -746,17 +745,17 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <div className="mt-3 rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-                      <div className="mb-1 flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-wider text-zinc-700">M3U Linki</span>
+                    <div className="mt-3 rounded-lg border border-[#7c3aed]/20 bg-[#7c3aed]/5 p-2.5">
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">M3U Linki</span>
                         <CopyButton value={m3uLink} />
                       </div>
-                      <p className="break-all font-mono text-[10px] leading-relaxed text-zinc-600">{m3uLink}</p>
+                      <p className="break-all font-mono text-[10px] leading-relaxed text-zinc-300">{m3uLink}</p>
                     </div>
 
                     <div className="mt-3 flex gap-2">
                       {['IPTV Smarters', 'TiviMate', 'Hot IPTV'].map((app) => (
-                        <span key={app} className="flex-1 rounded-lg border border-white/5 py-1 text-center text-[10px] text-zinc-700">
+                        <span key={app} className="flex-1 rounded-lg border border-white/10 bg-white/[0.04] py-1.5 text-center text-[10px] font-medium text-zinc-300">
                           {app}
                         </span>
                       ))}
