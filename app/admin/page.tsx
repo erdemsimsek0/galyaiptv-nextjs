@@ -200,7 +200,7 @@ export default function AdminPage() {
         {/* İstatistik kartları */}
         {data && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Toplam Test"  value={data.totalEmails} icon="🧪" variant="purple" />
+            <StatCard label="Toplam Açılan Test"  value={data.totalEmails} icon="🧪" variant="purple" />
             <StatCard label="Son 24 Saat"  value={today24h}         icon="📅" variant="blue"   />
             <StatCard label="Aktif Kayıt"  value={records.length}   icon="📊" variant="green"  />
             <StatCard label="Redis Kayıt"  value={data.totalIPs + data.totalEmails} icon="🗄️" variant="orange" />
