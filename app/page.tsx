@@ -15,13 +15,10 @@ const packages = [
 ];
 
 const modalPackages = [
-  { label: '1 Aylık Paket', price: '₺500' },
   { label: '3 Aylık Paket', price: '₺700', popular: true },
   { label: '6 Aylık Paket', price: '₺1.000' },
   { label: '12 Aylık Paket', price: '₺1.400' },
-  { label: '24 Aylık Paket', price: '₺2.200' },
-  { label: 'Süresiz Paket', price: '₺6.900' },
-  { label: 'Henüz bilmiyorum', price: '' },
+  { label: 'Henüz karar vermedim', price: '' },
 ];
 
 const faqs = [
