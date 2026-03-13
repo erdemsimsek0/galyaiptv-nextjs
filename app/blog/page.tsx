@@ -15,15 +15,15 @@ const posts = [
     title: 'IPTV Nedir? Nasıl Çalışır? Kapsamlı Rehber',
     excerpt:
       'Internet üzerinden TV yayını almanın en iyi yolu olan IPTV teknolojisini detaylıca açıklıyoruz. Avantajları, dezavantajları ve nasıl kullanılacağı.',
-    date: '2025-01-15',
+    date: '2026-01-15',
     category: 'Rehber',
   },
   {
     slug: 'en-iyi-iptv-player',
-    title: 'En İyi IPTV Player Uygulamaları 2025',
+    title: 'En İyi IPTV Player Uygulamaları 2026',
     excerpt:
       'TiviMate, IPTV Smarters, GSE Smart IPTV ve daha fazlası. Her platform için en iyi IPTV player uygulamalarını karşılaştırdık.',
-    date: '2025-01-10',
+    date: '2026-01-10',
     category: 'Uygulama',
   },
   {
@@ -31,7 +31,7 @@ const posts = [
     title: "Smart TV'ye IPTV Nasıl Kurulur? Adım Adım",
     excerpt:
       'Samsung, LG, Sony ve diğer Smart TV modellerine adım adım IPTV kurulum rehberi. Sorunsuz kurulum için tüm ipuçları.',
-    date: '2025-01-05',
+    date: '2026-01-05',
     category: 'Kurulum',
   },
   {
@@ -64,7 +64,7 @@ const posts = [
     title: 'IPTV Fiyatları 2026: Güncel Paket Ücretleri ve Karşılaştırma Rehberi',
     excerpt:
       'Piyasada farklılık gösteren IPTV fiyatlarını analiz ediyor, fiyat/performans açısından en mantıklı seçimi nasıl yapacağınızı anlatıyoruz.',
-    date: '2025-02-01',
+    date: '2026-02-01',
     category: 'Rehber',
   },
   {
@@ -72,7 +72,7 @@ const posts = [
     title: 'IPTV Satın Almadan Önce Bilmeniz Gereken 10 Kritik Soru',
     excerpt:
       'IPTV satın alma rehberi: doğru hizmeti seçerken internet hızı, cihaz uyumluluğu, sunucu kalitesi ve daha fazlasına dikkat etmeniz gerekenler.',
-    date: '2025-02-03',
+    date: '2026-02-03',
     category: 'Rehber',
   },
   {
@@ -80,7 +80,7 @@ const posts = [
     title: 'IPTV Ne Kadar? Aylık, 3 Aylık ve Yıllık Abonelik Maliyetleri',
     excerpt:
       'Aylık, 3 aylık, 6 aylık ve yıllık IPTV abonelik maliyetleri, fiyat karşılaştırması ve bütçe dostu seçenekler.',
-    date: '2025-02-05',
+    date: '2026-02-05',
     category: 'Rehber',
   },
   {
@@ -88,7 +88,7 @@ const posts = [
     title: 'En Ucuz IPTV Paketleri: Kaliteden Ödün Vermeden Tasarruf Etme Rehberi',
     excerpt:
       'Bütçe dostu IPTV seçenekleri, tasarruf etmenin yolları ve ucuz IPTV alırken dikkat edilmesi gerekenler.',
-    date: '2025-02-07',
+    date: '2026-02-07',
     category: 'Rehber',
   },
   {
@@ -96,7 +96,7 @@ const posts = [
     title: 'IPTV Ücretleri Neden Değişir? Fiyatları Etkileyen 7 Faktör',
     excerpt:
       'Aynı hizmet gibi görünen IPTV paketleri arasındaki fiyat farklarının nedenlerini 7 temel faktörle açıklıyoruz.',
-    date: '2025-02-09',
+    date: '2026-02-09',
     category: 'Rehber',
   },
   {
@@ -104,7 +104,7 @@ const posts = [
     title: 'IPTV Nasıl Kurulur? Adım Adım Kurulum Rehberi 2026',
     excerpt:
       'Smart TV, telefon, tablet ve bilgisayarda IPTV kurulumunu adım adım anlatan kapsamlı rehber.',
-    date: '2025-02-11',
+    date: '2026-02-11',
     category: 'Kurulum',
   },
   {
@@ -112,7 +112,7 @@ const posts = [
     title: "Smart TV'ye IPTV Nasıl Yüklenir? Tüm Markalar İçin Rehber",
     excerpt:
       "Samsung, LG, Sony, Philips, Vestel, Arçelik ve diğer markalar için detaylı IPTV yükleme rehberi.",
-    date: '2025-02-13',
+    date: '2026-02-13',
     category: 'Kurulum',
   },
   {
@@ -120,7 +120,7 @@ const posts = [
     title: 'Telefonda IPTV İzleme: iOS ve Android İçin En İyi Uygulamalar',
     excerpt:
       'iPhone ve Android için en iyi IPTV uygulamaları, kurulum adımları ve mobil IPTV izleme ipuçları.',
-    date: '2025-02-15',
+    date: '2026-02-15',
     category: 'Uygulama',
   },
   {
@@ -128,7 +128,7 @@ const posts = [
     title: 'IPTV Kanal Listesi Nasıl Güncellenir? M3U Link Ekleme Rehberi',
     excerpt:
       'M3U link ekleme, playlist güncelleme ve kanal listesi yönetimi hakkında detaylı bilgiler.',
-    date: '2025-02-17',
+    date: '2026-02-17',
     category: 'Rehber',
   },
   {
@@ -136,7 +136,7 @@ const posts = [
     title: "IPTV'de Donma ve Buffering Sorunu Çözümü: 12 Etkili Yöntem",
     excerpt:
       'IPTV donma ve buffering sorunlarını gidermek için 12 etkili yöntem. Kesintisiz IPTV izleme için adım adım rehber.',
-    date: '2025-02-19',
+    date: '2026-02-19',
     category: 'Sorun Giderme',
   },
   {
@@ -144,7 +144,7 @@ const posts = [
     title: 'IPTV vs Netflix: Hangisi Daha Avantajlı? Detaylı Karşılaştırma',
     excerpt:
       'Canlı TV, spor yayınları, güncel filmler ve fiyat açısından IPTV ile Netflix arasındaki farkları analiz ediyoruz.',
-    date: '2025-02-21',
+    date: '2026-02-21',
     category: 'Karşılaştırma',
   },
   {
@@ -152,7 +152,7 @@ const posts = [
     title: "2026'nın En İyi IPTV Uygulamaları: TiviMate, IPTV Smarters ve Daha Fazlası",
     excerpt:
       'TiviMate, IPTV Smarters, GSE Smart IPTV ve diğer popüler uygulamaların karşılaştırması ve özellikleri.',
-    date: '2025-02-23',
+    date: '2026-02-23',
     category: 'Uygulama',
   },
   {
@@ -160,7 +160,7 @@ const posts = [
     title: 'Yasal IPTV vs Kaçak IPTV: Farklar, Riskler ve Bilmeniz Gerekenler',
     excerpt:
       'Yasal ve kaçak IPTV arasındaki farklar, hukuki riskler ve güvenilir IPTV seçimi hakkında detaylı bilgiler.',
-    date: '2025-02-25',
+    date: '2026-02-25',
     category: 'Rehber',
   },
   {
@@ -168,7 +168,7 @@ const posts = [
     title: 'IPTV ve Uydu TV Karşılaştırması: Hangisi Daha İyi?',
     excerpt:
       'Fiyat, kalite, içerik ve kullanım kolaylığı açısından IPTV ve uydu TV arasındaki farkları inceliyoruz.',
-    date: '2025-02-27',
+    date: '2026-02-27',
     category: 'Karşılaştırma',
   },
   {
@@ -176,7 +176,7 @@ const posts = [
     title: 'IPTV Spor Paketleri: Tüm Süper Lig Maçlarını Kaçırma Rehberi',
     excerpt:
       'IPTV spor paketlerinin içeriği, hangi liglerin ve spor kanallarının bulunduğu ve maçları 4K izlemenin yolları.',
-    date: '2025-03-01',
+    date: '2026-03-01',
     category: 'İçerik',
   },
   {
@@ -184,7 +184,7 @@ const posts = [
     title: 'VIP Dizi ve Film Arşivi Olan IPTV Hizmetleri: İçerik Rehberi',
     excerpt:
       '50.000+ içerik, Türkçe dublaj, altyazı seçenekleri ve VOD arşivi sunan IPTV hizmetleri hakkında detaylı bilgiler.',
-    date: '2025-03-03',
+    date: '2026-03-03',
     category: 'İçerik',
   },
   {
@@ -192,7 +192,7 @@ const posts = [
     title: '4K IPTV İzleme: Ultra HD Kalite İçin Gerekenler',
     excerpt:
       'Ultra HD kalite için gerekli internet hızı, cihaz gereksinimleri ve 4K IPTV ayarları hakkında kapsamlı rehber.',
-    date: '2025-03-05',
+    date: '2026-03-05',
     category: 'Rehber',
   },
   {
@@ -200,7 +200,7 @@ const posts = [
     title: "IPTV Kullanımı Yasal mı? Türkiye'de IPTV Hukuki Durumu 2026",
     excerpt:
       "Türkiye'de IPTV hukuki durumu, yasal sınırlar, kullanıcı sorumlulukları ve dikkat edilmesi gerekenler.",
-    date: '2025-03-07',
+    date: '2026-03-07',
     category: 'Rehber',
   },
   {
@@ -208,7 +208,7 @@ const posts = [
     title: 'Güvenilir IPTV Sağlayıcısı Nasıl Seçilir? 8 Önemli Kriter',
     excerpt:
       '8 önemli kriter, dolandırıcılıktan korunma yöntemleri ve güvenli IPTV satın alma rehberi.',
-    date: '2025-03-09',
+    date: '2026-03-09',
     category: 'Rehber',
   },
   {
@@ -216,7 +216,7 @@ const posts = [
     title: "IPTV'de Güvenlik: VPN Kullanımı ve IP Koruma Rehberi",
     excerpt:
       'VPN kullanımı, IP koruma, güvenli IPTV izleme ve veri güvenliği hakkında detaylı bilgiler.',
-    date: '2025-03-11',
+    date: '2026-03-11',
     category: 'Rehber',
   },
   // ─── Yeni Makale ────────────────────────────────────────────────────────────
@@ -225,7 +225,7 @@ const posts = [
     title: 'IPTV Satın Al: Donmasız 4K Premium IPTV Aboneliği – Galya IPTV',
     excerpt:
       'IPTV satın almadan önce bilmeniz gereken her şey: paket fiyatları, donmasız 4K yayın altyapısı, Xtream & M3U kurulumu ve ücretsiz test yayını rehberi.',
-    date: '2025-03-13',
+    date: '2026-03-13',
     category: 'Rehber',
   },
 ];
