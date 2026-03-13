@@ -2,13 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'IPTV Blog - Rehberler, İpuçları ve Haberler',
+  title: 'IPTV Blog - Rehberler, İpuçları ve Haberler | Galya IPTV',
   description:
     'IPTV hakkında her şey: kurulum rehberleri, en iyi player uygulamaları, cihaz uyumluluğu, kanal listeleri ve daha fazlası.',
   alternates: { canonical: 'https://galyaiptv.com.tr/blog' },
 };
 
 const posts = [
+  // ─── Mevcut 6 yazı ──────────────────────────────────────────────────────────
   {
     slug: 'iptv-nedir',
     title: 'IPTV Nedir? Nasıl Çalışır? Kapsamlı Rehber',
@@ -218,7 +219,25 @@ const posts = [
     date: '2025-03-11',
     category: 'Rehber',
   },
+  // ─── Yeni Makale ────────────────────────────────────────────────────────────
+  {
+    slug: 'iptv-satin-al',
+    title: 'IPTV Satın Al: Donmasız 4K Premium IPTV Aboneliği – Galya IPTV',
+    excerpt:
+      'IPTV satın almadan önce bilmeniz gereken her şey: paket fiyatları, donmasız 4K yayın altyapısı, Xtream & M3U kurulumu ve ücretsiz test yayını rehberi.',
+    date: '2025-03-13',
+    category: 'Rehber',
+  },
 ];
+
+const categoryColors: Record<string, string> = {
+  Rehber:          'bg-purple-900/50 text-purple-300',
+  Kurulum:         'bg-blue-900/50 text-blue-300',
+  Uygulama:        'bg-pink-900/50 text-pink-300',
+  'Sorun Giderme': 'bg-red-900/50 text-red-300',
+  Karşılaştırma:   'bg-yellow-900/50 text-yellow-300',
+  İçerik:          'bg-green-900/50 text-green-300',
+};
 
 const blogListSchema = {
   '@context': 'https://schema.org',
@@ -242,51 +261,134 @@ export default function BlogPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogListSchema) }}
       />
 
+      {/* ── Header ── */}
       <header className="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-sm border-b border-gray-800">
         <nav className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+          <Link
+            href="/"
+            className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"
+          >
             Galya IPTV
           </Link>
           <div className="flex items-center gap-6 text-sm text-gray-300">
-            <Link href="/#paketler" className="hover:text-white transition-colors">Paketler</Link>
-            <Link href="/blog" className="text-white font-medium">Blog</Link>
-            <Link href="/iletisim" className="hover:text-white transition-colors">İletişim</Link>
+            <Link href="/#paketler" className="hover:text-white transition-colors">
+              Paketler
+            </Link>
+            <Link href="/blog" className="text-white font-medium">
+              Blog
+            </Link>
+            <Link href="/iletisim" className="hover:text-white transition-colors">
+              İletişim
+            </Link>
           </div>
         </nav>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-16">
+
+        {/* ── Hero ── */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-4">IPTV Blog</h1>
-          <p className="text-gray-400 text-lg">
-            IPTV kurulum rehberleri, en iyi uygulamalar, ipuçları ve haberler.
+          <div className="inline-flex items-center gap-2 bg-purple-900/30 border border-purple-800/50 text-purple-300 text-xs px-3 py-1.5 rounded-full mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+            {posts.length} makale
+          </div>
+          <h1 className="text-4xl font-bold mb-4 text-white">IPTV Blog</h1>
+          <p className="text-gray-400 text-lg max-w-2xl">
+            IPTV kurulum rehberleri, en iyi uygulamalar, fiyat karşılaştırmaları ve güncel haberler.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
-            <article key={post.slug}>
-              <Link
-                href={`/blog/${post.slug}`}
-                className="block bg-gray-900 border border-gray-800 hover:border-purple-700 rounded-xl p-5 h-full transition-colors group"
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="bg-purple-900/50 text-purple-300 text-xs px-2 py-1 rounded">
-                    {post.category}
-                  </span>
-                  <span className="text-gray-600 text-xs">{post.date}</span>
-                </div>
-                <h2 className="font-bold text-lg mb-2 group-hover:text-purple-400 transition-colors leading-snug">
-                  {post.title}
-                </h2>
-                <p className="text-gray-400 text-sm leading-relaxed">{post.excerpt}</p>
-                <div className="mt-4 text-purple-400 text-sm">Devamını Oku →</div>
-              </Link>
-            </article>
-          ))}
+        {/* ── Öne Çıkan Makale (en yeni) ── */}
+        {(() => {
+          const featured = posts[posts.length - 1];
+          return (
+            <Link
+              href={`/blog/${featured.slug}`}
+              className="group block mb-10 bg-gradient-to-br from-purple-900/30 to-pink-900/20 border border-purple-800/40 hover:border-purple-600/70 rounded-2xl p-6 transition-all duration-200"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2.5 py-1 rounded-full font-medium">
+                  ✨ Yeni Makale
+                </span>
+                <span
+                  className={`text-xs px-2 py-1 rounded ${
+                    categoryColors[featured.category] ?? 'bg-gray-800 text-gray-300'
+                  }`}
+                >
+                  {featured.category}
+                </span>
+                <span className="text-gray-600 text-xs ml-auto">{featured.date}</span>
+              </div>
+              <h2 className="font-bold text-xl mb-2 text-white group-hover:text-purple-300 transition-colors leading-snug">
+                {featured.title}
+              </h2>
+              <p className="text-gray-400 text-sm leading-relaxed mb-3">{featured.excerpt}</p>
+              <span className="text-purple-400 text-sm font-medium">Devamını Oku →</span>
+            </Link>
+          );
+        })()}
+
+        {/* ── Makale Izgarası ── */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {posts
+            .slice(0, posts.length - 1) // öne çıkan hariç
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .map((post) => (
+              <article key={post.slug}>
+                <Link
+                  href={`/blog/${post.slug}`}
+                  className="flex flex-col bg-gray-900 border border-gray-800 hover:border-purple-700/60 rounded-xl p-5 h-full transition-all duration-200 group"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <span
+                      className={`text-xs px-2 py-1 rounded ${
+                        categoryColors[post.category] ?? 'bg-gray-800 text-gray-300'
+                      }`}
+                    >
+                      {post.category}
+                    </span>
+                    <span className="text-gray-600 text-xs ml-auto">{post.date}</span>
+                  </div>
+                  <h2 className="font-bold text-base mb-2 group-hover:text-purple-400 transition-colors leading-snug flex-1">
+                    {post.title}
+                  </h2>
+                  <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
+                    {post.excerpt}
+                  </p>
+                  <div className="mt-4 text-purple-400 text-sm font-medium">Devamını Oku →</div>
+                </Link>
+              </article>
+            ))}
+        </div>
+
+        {/* ── CTA Bandı ── */}
+        <div className="mt-16 bg-gradient-to-r from-purple-900/30 to-pink-900/20 border border-purple-800/40 rounded-2xl p-8 text-center">
+          <h3 className="text-xl font-bold text-white mb-2">
+            Donmasız 4K IPTV'yi Ücretsiz Deneyin
+          </h3>
+          <p className="text-gray-400 text-sm mb-5 max-w-md mx-auto">
+            Paketleri inceleyin, 24 saatlik ücretsiz test isteyin ve satın almadan önce kaliteyi kendiniz görün.
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link
+              href="/#paketler"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition-all duration-200"
+            >
+              Paketleri İncele
+            </Link>
+            <a
+              href="https://wa.me/447441921660?text=Merhaba%2C%20%C3%BCcretsiz%20test%20yay%C4%B1n%C4%B1%20istiyorum."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-gray-800 hover:bg-gray-700 text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition-all duration-200 border border-gray-700"
+            >
+              💬 Ücretsiz Test Al
+            </a>
+          </div>
         </div>
       </main>
 
+      {/* ── Footer ── */}
       <footer className="border-t border-gray-800 py-8 px-4 text-center text-gray-500 text-sm mt-8">
         <p>© {new Date().getFullYear()} Galya IPTV. Tüm hakları saklıdır.</p>
       </footer>
