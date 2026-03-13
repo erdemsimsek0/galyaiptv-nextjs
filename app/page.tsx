@@ -826,8 +826,8 @@ export default function HomePage() {
 
       {/* ─── Modal ───────────────────────────────────────────────────────────── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/80 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
-          <div className="flex min-h-full items-start justify-center p-4 sm:items-center sm:py-8" onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/80 backdrop-blur-sm" onClick={(e) => { if (step !== 4 && e.target === e.currentTarget) handleCloseModal(); }}>
+          <div className="flex min-h-full items-start justify-center p-4 sm:items-center sm:py-8" onClick={(e) => { if (step !== 4 && e.target === e.currentTarget) handleCloseModal(); }}>
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1e2030] p-6 shadow-2xl">
             <button onClick={handleCloseModal} className="float-right text-slate-500 transition-colors hover:text-slate-200">✕</button>
 
