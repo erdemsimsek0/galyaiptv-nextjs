@@ -418,6 +418,7 @@ export default function HomePage() {
             <Link href="/#yorumlar" className="transition-colors hover:text-white">Yorumlar</Link>
             <Link href="/#neden-biz" className="transition-colors hover:text-white">Neden Biz</Link>
             <Link href="/#sss" className="transition-colors hover:text-white">S.S.S</Link>
+            <Link href="/araclar" className="transition-colors hover:text-white">Araçlar</Link>
             <Link href="/blog" className="transition-colors hover:text-white">Blog</Link>
             <Link href="/iletisim" className="transition-colors hover:text-white">İletişim</Link>
             <button onClick={() => handleOpenModal()}
@@ -443,6 +444,7 @@ export default function HomePage() {
                 { href: '/#yorumlar', label: 'Yorumlar' },
                 { href: '/#neden-biz', label: 'Neden Biz' },
                 { href: '/#sss', label: 'S.S.S' },
+                { href: '/araclar', label: 'Araçlar' },
                 { href: '/blog', label: 'Blog' },
                 { href: '/iletisim', label: 'İletişim' },
               ].map((item) => (
@@ -451,14 +453,6 @@ export default function HomePage() {
                   {item.label}
                 </Link>
               ))}
-              <button onClick={() => { handleOpenModal(); setMobileMenuOpen(false); }}
-                className="mt-2 w-full rounded-xl bg-[#7c6fcd] py-3 font-semibold text-white">
-                Ücretsiz Test Al
-              </button>
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
-                className="mt-1.5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] py-3 font-semibold text-white">
-                💬 WhatsApp
-              </a>
             </div>
           </div>
         )}
