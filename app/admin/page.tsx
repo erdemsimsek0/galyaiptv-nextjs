@@ -4,10 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 
 type TrialRecord = {
   key: string;
-  type: 'email' | 'ip';
-  identifier: string;
   email: string;
   ip: string;
+  selectedPackage: string;
   createdAt: number;
   createdAtFormatted: string;
   ttlSeconds: number;
@@ -18,19 +17,55 @@ type ApiResponse = {
   success: boolean;
   totalEmails: number;
   totalIPs: number;
+  packageStats: Record<string, number>;
   records: TrialRecord[];
   error?: string;
 };
 
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+
+function StatCard({ label, value, icon, variant }: {
+  label: string; value: number; icon: string;
+  variant: 'purple' | 'blue' | 'green' | 'orange';
+}) {
+  const border = { purple: 'border-purple-800/50', blue: 'border-blue-800/50', green: 'border-green-800/50', orange: 'border-orange-800/50' }[variant];
+  const bg    = { purple: 'bg-purple-900/10',     blue: 'bg-blue-900/10',     green: 'bg-green-900/10',     orange: 'bg-orange-900/10'     }[variant];
+  const text  = { purple: 'text-purple-400',      blue: 'text-blue-400',      green: 'text-green-400',      orange: 'text-orange-400'      }[variant];
+  return (
+    <div className={`rounded-xl border p-4 ${border} ${bg}`}>
+      <div className="text-2xl mb-1">{icon}</div>
+      <div className={`text-2xl font-bold ${text}`}>{value}</div>
+      <div className="text-gray-400 text-xs mt-1">{label}</div>
+    </div>
+  );
+}
+
+// ─── Days Left Badge ──────────────────────────────────────────────────────────
+
+function DaysLeftBadge({ days }: { days: number }) {
+  const cls = days <= 1
+    ? 'bg-red-900/40 text-red-400 border-red-800/50'
+    : days <= 3
+    ? 'bg-yellow-900/40 text-yellow-400 border-yellow-800/50'
+    : 'bg-green-900/40 text-green-400 border-green-800/50';
+  return (
+    <span className={`text-xs px-2 py-1 rounded-lg border font-medium ${cls}`}>
+      {days} gün
+    </span>
+  );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
 export default function AdminPage() {
-  const [secret, setSecret] = useState('');
-  const [authed, setAuthed] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<ApiResponse | null>(null);
-  const [error, setError] = useState('');
-  const [deletingEmail, setDeletingEmail] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | 'email' | 'ip'>('all');
+  const [secret, setSecret]         = useState('');
+  const [authed, setAuthed]         = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [data, setData]             = useState<ApiResponse | null>(null);
+  const [error, setError]           = useState('');
+  const [deletingEmail, setDeleting] = useState<string | null>(null);
+  const [search, setSearch]         = useState('');
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   const fetchData = useCallback(async (adminSecret: string) => {
     setLoading(true);
@@ -45,6 +80,7 @@ export default function AdminPage() {
         if (res.status === 401) setAuthed(false);
       } else {
         setData(json);
+        setLastRefresh(new Date());
       }
     } catch {
       setError('Sunucuya bağlanılamadı.');
@@ -61,54 +97,52 @@ export default function AdminPage() {
 
   const handleDelete = async (email: string) => {
     if (!confirm(`"${email}" için 7 günlük limiti sıfırlamak istediğinize emin misiniz?`)) return;
-    setDeletingEmail(email);
+    setDeleting(email);
     try {
       const res = await fetch('/api/admin', {
         method: 'DELETE',
-        headers: {
-          'x-admin-secret': secret,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'x-admin-secret': secret, 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
       const json = await res.json();
       if (json.success) {
         await fetchData(secret);
       } else {
-        alert(json.error || 'Silme işlemi başarısız.');
+        alert(json.error || 'Silme başarısız.');
       }
     } catch {
       alert('Sunucuya bağlanılamadı.');
     } finally {
-      setDeletingEmail(null);
+      setDeleting(null);
     }
   };
 
+  // 30 saniyede bir otomatik yenile
   useEffect(() => {
-    if (authed && secret) {
-      const interval = setInterval(() => fetchData(secret), 30000);
-      return () => clearInterval(interval);
-    }
+    if (!authed || !secret) return;
+    const id = setInterval(() => fetchData(secret), 30000);
+    return () => clearInterval(id);
   }, [authed, secret, fetchData]);
 
-  // Sadece email kayıtlarını al (her kullanıcı için tekil)
-  const emailRecords = data?.records.filter((r) => r.type === 'email') ?? [];
+  const records = data?.records ?? [];
+  const filtered = records.filter((r) =>
+    search === '' ||
+    r.email.toLowerCase().includes(search.toLowerCase()) ||
+    r.ip.includes(search) ||
+    r.selectedPackage.toLowerCase().includes(search.toLowerCase())
+  );
 
-  const filtered = emailRecords.filter((r) => {
-    const matchSearch =
-      search === '' ||
-      r.email.toLowerCase().includes(search.toLowerCase()) ||
-      r.ip.includes(search);
-    return matchSearch;
-  });
+  const today24h = records.filter((r) => Date.now() - r.createdAt < 86400000).length;
+  const packageStats = data?.packageStats ?? {};
+  const maxPkg = Math.max(...Object.values(packageStats), 1);
 
-  // ─── Login ekranı ─────────────────────────────────────────────────────────
+  // ─── Login ──────────────────────────────────────────────────────────────────
 
-  if (!authed || error === 'Yetkisiz erişim.') {
+  if (!authed) {
     return (
       <div className="min-h-screen bg-[#0b0b0f] flex items-center justify-center p-4">
         <div className="w-full max-w-sm bg-[#111827] border border-[#7c3aed] rounded-2xl p-8">
-          <h1 className="text-2xl font-bold text-white mb-2 text-center">Admin Paneli</h1>
+          <h1 className="text-2xl font-bold text-white mb-1 text-center">Admin Paneli</h1>
           <p className="text-gray-400 text-sm text-center mb-6">Galya IPTV</p>
           <form onSubmit={handleLogin} className="space-y-4">
             <input
@@ -118,9 +152,7 @@ export default function AdminPage() {
               onChange={(e) => setSecret(e.target.value)}
               className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-3 outline-none focus:border-[#7c3aed] transition-colors"
             />
-            {error && (
-              <p className="text-red-400 text-sm text-center">{error}</p>
-            )}
+            {error && <p className="text-red-400 text-sm text-center">{error}</p>}
             <button
               type="submit"
               disabled={loading || !secret}
@@ -134,29 +166,31 @@ export default function AdminPage() {
     );
   }
 
-  // ─── Admin paneli ──────────────────────────────────────────────────────────
+  // ─── Panel ──────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-[#0b0b0f] text-white p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto space-y-6">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-bold">Admin Paneli</h1>
-            <p className="text-gray-400 text-sm mt-1">Galya IPTV — Trial Yönetimi</p>
+            <p className="text-gray-500 text-xs mt-1">
+              {lastRefresh ? `Son güncelleme: ${lastRefresh.toLocaleTimeString('tr-TR')}` : 'Yükleniyor...'}
+            </p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => fetchData(secret)}
               disabled={loading}
-              className="bg-[#1f2937] hover:bg-[#374151] disabled:opacity-50 text-white px-4 py-2 rounded-xl text-sm transition-colors border border-[#374151]"
+              className="bg-[#1f2937] hover:bg-[#374151] disabled:opacity-50 text-white px-4 py-2 rounded-xl text-sm border border-[#374151] transition-colors"
             >
               {loading ? '⟳ Yükleniyor...' : '⟳ Yenile'}
             </button>
             <button
               onClick={() => { setAuthed(false); setData(null); setSecret(''); }}
-              className="bg-red-900/40 hover:bg-red-900/60 text-red-400 px-4 py-2 rounded-xl text-sm transition-colors border border-red-800/50"
+              className="bg-red-900/40 hover:bg-red-900/60 text-red-400 px-4 py-2 rounded-xl text-sm border border-red-800/50 transition-colors"
             >
               Çıkış
             </button>
@@ -165,77 +199,78 @@ export default function AdminPage() {
 
         {/* İstatistik kartları */}
         {data && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <StatCard
-              label="Toplam Test"
-              value={data.totalEmails}
-              icon="🧪"
-              color="purple"
-            />
-            <StatCard
-              label="Son 24 Saat"
-              value={emailRecords.filter(r => Date.now() - r.createdAt < 86400000).length}
-              icon="📅"
-              color="blue"
-            />
-            <StatCard
-              label="Son 7 Gün"
-              value={emailRecords.length}
-              icon="📊"
-              color="green"
-            />
-            <StatCard
-              label="Redis Kayıt"
-              value={data.records.length}
-              icon="🗄️"
-              color="orange"
-            />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard label="Toplam Test"  value={data.totalEmails} icon="🧪" variant="purple" />
+            <StatCard label="Son 24 Saat"  value={today24h}         icon="📅" variant="blue"   />
+            <StatCard label="Aktif Kayıt"  value={records.length}   icon="📊" variant="green"  />
+            <StatCard label="Redis Kayıt"  value={data.totalIPs + data.totalEmails} icon="🗄️" variant="orange" />
           </div>
         )}
 
-        {/* Arama ve filtre */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <input
-            type="text"
-            placeholder="Email veya IP ile ara..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 outline-none focus:border-[#7c3aed] transition-colors text-sm"
-          />
-          <div className="flex gap-2">
-            {(['all', 'email', 'ip'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  filter === f
-                    ? 'bg-[#7c3aed] text-white'
-                    : 'bg-[#1f2937] text-gray-400 hover:text-white border border-[#374151]'
-                }`}
-              >
-                {f === 'all' ? 'Tümü' : f === 'email' ? 'Email' : 'IP'}
-              </button>
-            ))}
+        {/* Paket ilgi grafiği */}
+        {Object.keys(packageStats).length > 0 && (
+          <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-6">
+            <h2 className="text-lg font-bold mb-5">📦 Paket İlgisi</h2>
+            <div className="space-y-3">
+              {Object.entries(packageStats)
+                .sort((a, b) => b[1] - a[1])
+                .map(([pkg, count]) => (
+                  <div key={pkg} className="flex items-center gap-3">
+                    <div className="w-40 shrink-0 text-sm text-gray-300 truncate" title={pkg}>{pkg}</div>
+                    <div className="flex-1 bg-[#1f2937] rounded-full h-7 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#7c3aed] to-[#a855f7] rounded-full flex items-center justify-end pr-3 transition-all duration-500"
+                        style={{ width: `${Math.max((count / maxPkg) * 100, 8)}%` }}
+                      >
+                        <span className="text-xs font-bold text-white">{count}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Arama */}
+        <input
+          type="text"
+          placeholder="Email, IP veya paket adı ile ara..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-3 outline-none focus:border-[#7c3aed] transition-colors text-sm"
+        />
+
+        {/* Hata */}
+        {error && (
+          <div className="bg-red-900/30 border border-red-800/50 text-red-400 rounded-xl px-4 py-3 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Yükleniyor */}
+        {loading && !data && (
+          <div className="text-center py-20 text-gray-400">Yükleniyor...</div>
+        )}
+
+        {/* Boş */}
+        {!loading && data && filtered.length === 0 && (
+          <div className="text-center py-20 text-gray-500">
+            {search ? 'Arama sonucu bulunamadı.' : 'Henüz test kaydı yok.'}
+          </div>
+        )}
 
         {/* Tablo */}
-        {loading && !data ? (
-          <div className="text-center py-20 text-gray-400">Yükleniyor...</div>
-        ) : error ? (
-          <div className="text-center py-20 text-red-400">{error}</div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">Kayıt bulunamadı.</div>
-        ) : (
+        {filtered.length > 0 && (
           <div className="bg-[#111827] border border-[#1f2937] rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[#1f2937] text-gray-400 text-xs uppercase tracking-wider">
+                  <tr className="border-b border-[#1f2937] text-gray-400 text-xs uppercase tracking-wider bg-[#0f172a]">
                     <th className="text-left px-4 py-3">Email</th>
+                    <th className="text-left px-4 py-3">Seçilen Paket</th>
                     <th className="text-left px-4 py-3">IP Adresi</th>
                     <th className="text-left px-4 py-3">Tarih</th>
-                    <th className="text-left px-4 py-3">Kalan Süre</th>
+                    <th className="text-left px-4 py-3">Kalan</th>
                     <th className="text-left px-4 py-3">İşlem</th>
                   </tr>
                 </thead>
@@ -243,19 +278,22 @@ export default function AdminPage() {
                   {filtered.map((record, i) => (
                     <tr
                       key={record.key}
-                      className={`border-b border-[#1f2937] last:border-0 hover:bg-[#1f2937]/50 transition-colors ${
-                        i % 2 === 0 ? '' : 'bg-[#0f172a]/30'
-                      }`}
+                      className={`border-b border-[#1f2937] last:border-0 hover:bg-[#1f2937]/60 transition-colors ${i % 2 === 0 ? '' : 'bg-[#0f172a]/40'}`}
                     >
                       <td className="px-4 py-3">
                         <span className="text-white font-medium">{record.email}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs bg-purple-900/40 text-purple-300 border border-purple-800/50 px-2 py-1 rounded-lg whitespace-nowrap">
+                          {record.selectedPackage}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-mono text-gray-400 text-xs bg-[#1f2937] px-2 py-1 rounded">
                           {record.ip}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-400 text-xs">
+                      <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
                         {record.createdAtFormatted}
                       </td>
                       <td className="px-4 py-3">
@@ -265,9 +303,9 @@ export default function AdminPage() {
                         <button
                           onClick={() => handleDelete(record.email)}
                           disabled={deletingEmail === record.email}
-                          className="bg-red-900/40 hover:bg-red-900/70 disabled:opacity-40 text-red-400 text-xs px-3 py-1.5 rounded-lg transition-colors border border-red-800/50"
+                          className="bg-red-900/40 hover:bg-red-900/70 disabled:opacity-40 text-red-400 text-xs px-3 py-1.5 rounded-lg border border-red-800/50 transition-colors whitespace-nowrap"
                         >
-                          {deletingEmail === record.email ? 'Siliniyor...' : 'Limiti Sıfırla'}
+                          {deletingEmail === record.email ? '...' : 'Limiti Sıfırla'}
                         </button>
                       </td>
                     </tr>
@@ -275,19 +313,20 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
-            <div className="px-4 py-3 border-t border-[#1f2937] text-xs text-gray-500">
-              {filtered.length} kayıt gösteriliyor · Her 30 saniyede otomatik yenilenir
+            <div className="px-4 py-3 border-t border-[#1f2937] text-xs text-gray-500 flex justify-between">
+              <span>{filtered.length} kayıt gösteriliyor</span>
+              <span>Her 30 saniyede otomatik yenilenir</span>
             </div>
           </div>
         )}
 
-        {/* Ham Redis verileri */}
+        {/* Ham Redis verisi */}
         {data && (
-          <details className="mt-6 bg-[#111827] border border-[#1f2937] rounded-2xl p-4">
+          <details className="bg-[#111827] border border-[#1f2937] rounded-2xl p-4">
             <summary className="cursor-pointer text-gray-400 text-sm hover:text-white transition-colors select-none">
               🗄️ Ham Redis Verileri ({data.records.length} kayıt)
             </summary>
-            <pre className="mt-4 text-xs text-green-400 font-mono overflow-auto max-h-96 bg-[#0b0b0f] p-4 rounded-xl">
+            <pre className="mt-4 text-xs text-green-400 font-mono overflow-auto max-h-96 bg-[#0b0b0f] p-4 rounded-xl leading-relaxed">
               {JSON.stringify(data.records, null, 2)}
             </pre>
           </details>
@@ -295,52 +334,5 @@ export default function AdminPage() {
 
       </div>
     </div>
-  );
-}
-
-// ─── Alt bileşenler ───────────────────────────────────────────────────────────
-
-function StatCard({
-  label, value, icon, color,
-}: {
-  label: string;
-  value: number;
-  icon: string;
-  color: 'purple' | 'blue' | 'green' | 'orange';
-}) {
-  const colors = {
-    purple: 'border-purple-800/50 bg-purple-900/10',
-    blue: 'border-blue-800/50 bg-blue-900/10',
-    green: 'border-green-800/50 bg-green-900/10',
-    orange: 'border-orange-800/50 bg-orange-900/10',
-  };
-  const textColors = {
-    purple: 'text-purple-400',
-    blue: 'text-blue-400',
-    green: 'text-green-400',
-    orange: 'text-orange-400',
-  };
-
-  return (
-    <div className={`rounded-xl border p-4 ${colors[color]}`}>
-      <div className="text-2xl mb-1">{icon}</div>
-      <div className={`text-2xl font-bold ${textColors[color]}`}>{value}</div>
-      <div className="text-gray-400 text-xs mt-1">{label}</div>
-    </div>
-  );
-}
-
-function DaysLeftBadge({ days }: { days: number }) {
-  const color =
-    days <= 1
-      ? 'bg-red-900/40 text-red-400 border-red-800/50'
-      : days <= 3
-      ? 'bg-yellow-900/40 text-yellow-400 border-yellow-800/50'
-      : 'bg-green-900/40 text-green-400 border-green-800/50';
-
-  return (
-    <span className={`text-xs px-2 py-1 rounded-lg border font-medium ${color}`}>
-      {days} gün
-    </span>
   );
 }
