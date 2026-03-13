@@ -347,7 +347,7 @@ export default function HomePage() {
     try {
       const res = await fetch('/api/test-talep', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send_otp', email, selectedPackage, selectedDevice, selectedPurposes }),
+        body: JSON.stringify({ action: 'send_otp', email, selectedPackage }),
       });
       const data = await res.json();
       if (data.alreadyUsed) { if (recoveryMode) { setIsRecovery(true); } else { setAlreadyUsedMsg(data.error); setStep(5); return; } }
