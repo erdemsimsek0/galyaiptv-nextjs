@@ -200,7 +200,7 @@ function CopyButton({ value }: { value: string }) {
   return (
     <button onClick={handle}
       className={`ml-2 rounded-md border px-2 py-0.5 text-xs transition-all ${
-        copied ? 'border-emerald-600 text-emerald-400' : 'border-[#c4d4c4] text-[#4a6a4a] hover:border-[#2d7a2d]/50 hover:text-[#2d7a2d]'
+        copied ? 'border-emerald-600 text-emerald-400' : 'border-white/[0.08] text-[#9b98b0] hover:border-[#7c6fcd]/50 hover:text-[#7c6fcd]'
       }`}>
       {copied ? '✓ Kopyalandı' : 'Kopyala'}
     </button>
@@ -250,13 +250,13 @@ function Stepper({ step }: { step: ModalStep }) {
           <span key={label} className="flex items-center gap-1">
             <span className="flex flex-col items-center gap-0.5">
               <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold transition-all ${
-                done ? 'bg-[#2d7a2d] text-white' : current ? 'border-2 border-[#2d7a2d] text-[#2d7a2d]' : 'border border-[#c4d4c4] text-[#7a9a7a]'
+                done ? 'bg-[#7c6fcd] text-white' : current ? 'border-2 border-[#7c6fcd] text-[#7c6fcd]' : 'border border-white/[0.08] text-[#6b6880]'
               }`}>
                 {done ? '✓' : idx}
               </span>
-              <span className={`text-[9px] ${current ? 'text-[#2d7a2d]' : done ? 'text-[#4a6a4a]' : 'text-[#c4d4c4]'}`}>{label}</span>
+              <span className={`text-[9px] ${current ? 'text-[#7c6fcd]' : done ? 'text-[#9b98b0]' : 'text-[#c0bdd6]'}`}>{label}</span>
             </span>
-            {i < STEP_LABELS.length - 1 && <span className={`mb-4 h-px w-8 ${done ? 'bg-[#2d7a2d]' : 'bg-[#c4d4c4]'}`} />}
+            {i < STEP_LABELS.length - 1 && <span className={`mb-4 h-px w-8 ${done ? 'bg-[#7c6fcd]' : 'bg-white/[0.05]'}`} />}
           </span>
         );
       })}
@@ -280,13 +280,13 @@ function CreatingProgress() {
   return (
     <div className="space-y-3 py-2">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-[#5a7a5a]">{statuses[statusIndex]}</span>
-        <span className="font-mono text-[#2d7a2d]">{Math.round(progress)}%</span>
+        <span className="text-[#9b98b0]">{statuses[statusIndex]}</span>
+        <span className="font-mono text-[#7c6fcd]">{Math.round(progress)}%</span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-[#c4d4c4]">
-        <div className="h-full rounded-full bg-gradient-to-r from-[#2d7a2d] to-[#2d7a2d] transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
+      <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.05]">
+        <div className="h-full rounded-full bg-gradient-to-r from-[#7c6fcd] to-[#7c6fcd] transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
       </div>
-      <p className="text-center text-[11px] text-[#4a6a4a]">Bu işlem 30–40 saniye sürebilir, lütfen bekleyin.</p>
+      <p className="text-center text-[11px] text-[#9b98b0]">Bu işlem 30–40 saniye sürebilir, lütfen bekleyin.</p>
     </div>
   );
 }
@@ -406,14 +406,14 @@ export default function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
 
       {/* ─── Header ─────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-[#c4d4c4] bg-[#eef2ee]/95 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#18181f]/95 backdrop-blur-md">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link href="/" className="text-lg font-bold tracking-tight text-[#1a2e1a]">
-            Galya <span className="text-[#2d7a2d]">IPTV</span>
+          <Link href="/" className="text-lg font-bold tracking-tight text-[#f1f0f5]">
+            Galya <span className="text-[#7c6fcd]">IPTV</span>
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden items-center gap-7 text-sm text-[#5a7a5a] md:flex">
+          <div className="hidden items-center gap-7 text-sm text-[#9b98b0] md:flex">
             <Link href="/#paketler" className="transition-colors hover:text-white">Paketler</Link>
             <Link href="/#yorumlar" className="transition-colors hover:text-white">Yorumlar</Link>
             <Link href="/#neden-biz" className="transition-colors hover:text-white">Neden Biz</Link>
@@ -421,7 +421,7 @@ export default function HomePage() {
             <Link href="/blog" className="transition-colors hover:text-white">Blog</Link>
             <Link href="/iletisim" className="transition-colors hover:text-white">İletişim</Link>
             <button onClick={() => handleOpenModal()}
-              className="rounded-lg border border-[#2d7a2d]/40 bg-[#2d7a2d]/10 px-4 py-2 text-sm font-medium text-[#2d7a2d] transition-all hover:bg-[#2d7a2d]/20 hover:text-white">
+              className="rounded-lg border border-[#7c6fcd]/40 bg-[#7c6fcd]/10 px-4 py-2 text-sm font-medium text-[#7c6fcd] transition-all hover:bg-[#7c6fcd]/20 hover:text-white">
               Ücretsiz Test
             </button>
           </div>
@@ -436,7 +436,7 @@ export default function HomePage() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="border-t border-[#c4d4c4] bg-[#eef2ee] px-6 pb-4 md:hidden">
+          <div className="border-t border-white/[0.08] bg-[#18181f] px-6 pb-4 md:hidden">
             <div className="flex flex-col gap-1 pt-3 text-sm">
               {[
                 { href: '/#paketler', label: 'Paketler' },
@@ -447,12 +447,12 @@ export default function HomePage() {
                 { href: '/iletisim', label: 'İletişim' },
               ].map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-lg px-3 py-2.5 text-[#5a7a5a] transition-colors hover:bg-[#c4d4c4] hover:text-white">
+                  className="rounded-lg px-3 py-2.5 text-[#9b98b0] transition-colors hover:bg-white/[0.05] hover:text-white">
                   {item.label}
                 </Link>
               ))}
               <button onClick={() => { handleOpenModal(); setMobileMenuOpen(false); }}
-                className="mt-2 w-full rounded-xl bg-[#2d7a2d] py-3 font-semibold text-white">
+                className="mt-2 w-full rounded-xl bg-[#7c6fcd] py-3 font-semibold text-white">
                 Ücretsiz Test Al
               </button>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
@@ -464,54 +464,54 @@ export default function HomePage() {
         )}
       </header>
 
-      <main className="bg-[#eef2ee] text-[#1a2e1a]">
+      <main className="bg-[#18181f] text-[#f1f0f5]">
 
         {/* ─── Hero ──────────────────────────────────────────────────────────── */}
         <section className="relative overflow-hidden px-6 pb-24 pt-20 text-center">
-          <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-[500px] w-[500px] rounded-full bg-[#2d7a2d]/6 blur-3xl" />
+          <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-[500px] w-[500px] rounded-full bg-[#7c6fcd]/6 blur-3xl" />
           <div className="relative mx-auto max-w-4xl">
 
             {/* Canlı aciliyet rozeti */}
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#c4d4c4] bg-[#ffffff] px-4 py-1.5 text-xs text-[#5a7a5a]">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-[#22222c] px-4 py-1.5 text-xs text-[#9b98b0]">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Bu ay <span className="text-[#1a2e1a] font-medium mx-1">847 kişi</span> satın aldı · 4K Yayın · 85.000+ Kanal
+              Bu ay <span className="text-[#f1f0f5] font-medium mx-1">847 kişi</span> satın aldı · 4K Yayın · 85.000+ Kanal
             </div>
 
             {/* H1 — SEO optimize: hedef kelimeler öne */}
             <h1 className="mb-5 text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl">
               IPTV Satın Al –<br />
-              <span className="text-[#2d7a2d]">4K Kalite, 85.000+ Kanal</span>
+              <span className="text-[#7c6fcd]">4K Kalite, 85.000+ Kanal</span>
             </h1>
 
-            <p className="mx-auto mb-4 max-w-2xl text-base leading-relaxed text-[#5a7a5a] md:text-lg">
+            <p className="mx-auto mb-4 max-w-2xl text-base leading-relaxed text-[#9b98b0] md:text-lg">
               En iyi IPTV server ile canlı TV, spor, film ve dizi — tek üyelikle tüm cihazlarda.
-              ₺500'den başlayan fiyatlarla, <strong className="text-[#1f5c1f] font-medium">ücretsiz test</strong> ile başla.
+              ₺500'den başlayan fiyatlarla, <strong className="text-[#6358b8] font-medium">ücretsiz test</strong> ile başla.
             </p>
 
             {/* Micro güven metni */}
-            <p className="mb-8 text-xs text-[#4a6a4a]">
+            <p className="mb-8 text-xs text-[#9b98b0]">
               Kredi kartı gerektirmez · 12 saatlik ücretsiz erişim · Anında kurulum
             </p>
 
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <button onClick={() => handleOpenModal()}
-                className="w-full sm:w-auto rounded-xl bg-[#2d7a2d] px-8 py-4 text-base font-semibold text-white shadow-xl shadow-[#2d7a2d]/25 transition-all hover:bg-[#1f5c1f] hover:shadow-[#2d7a2d]/40 hover:scale-[1.02]">
+                className="w-full sm:w-auto rounded-xl bg-[#7c6fcd] px-8 py-4 text-base font-semibold text-white shadow-xl shadow-[#7c6fcd]/25 transition-all hover:bg-[#6358b8] hover:shadow-[#7c6fcd]/40 hover:scale-[1.02]">
                 ⚡ Ücretsiz Test Al
               </button>
               <Link href="/#paketler"
-                className="w-full sm:w-auto rounded-xl border border-[#c4d4c4] px-8 py-4 text-base font-semibold text-[#1a2e1a] transition-all hover:bg-[#c4d4c4] hover:text-white hover:border-white/20">
+                className="w-full sm:w-auto rounded-xl border border-white/[0.08] px-8 py-4 text-base font-semibold text-[#f1f0f5] transition-all hover:bg-white/[0.05] hover:text-white hover:border-white/20">
                 IPTV Fiyatlarına Bak →
               </Link>
             </div>
 
             {/* Sosyal kanıt şeridi */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-[#5a7a5a]">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-[#9b98b0]">
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> 10.000+ mutlu kullanıcı</span>
-              <span className="hidden sm:block text-[#c4d4c4]">|</span>
+              <span className="hidden sm:block text-[#c0bdd6]">|</span>
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> %99.9 uptime garantisi</span>
-              <span className="hidden sm:block text-[#c4d4c4]">|</span>
+              <span className="hidden sm:block text-[#c0bdd6]">|</span>
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> 7/24 teknik destek</span>
-              <span className="hidden sm:block text-[#c4d4c4]">|</span>
+              <span className="hidden sm:block text-[#c0bdd6]">|</span>
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> Anında kurulum</span>
             </div>
 
@@ -523,9 +523,9 @@ export default function HomePage() {
                 { v: '10.000+', l: 'Aktif Kullanıcı' },
                 { v: '7/24', l: 'Teknik Destek' },
               ].map((s) => (
-                <div key={s.l} className="rounded-xl border border-[#c4d4c4] bg-[#dde5dd] p-4 text-left transition-colors hover:border-[#c4d4c4]">
-                  <div className="text-lg font-bold text-[#1a2e1a]">{s.v}</div>
-                  <div className="mt-0.5 text-xs text-[#5a7a5a]">{s.l}</div>
+                <div key={s.l} className="rounded-xl border border-white/[0.08] bg-[#141418] p-4 text-left transition-colors hover:border-white/[0.08]">
+                  <div className="text-lg font-bold text-[#f1f0f5]">{s.v}</div>
+                  <div className="mt-0.5 text-xs text-[#9b98b0]">{s.l}</div>
                 </div>
               ))}
             </div>
@@ -533,7 +533,7 @@ export default function HomePage() {
         </section>
 
         {/* ─── Güven rozetleri şeridi ─────────────────────────────────────────── */}
-        <section className="border-y border-[#c4d4c4] bg-white/[0.01] px-6 py-5">
+        <section className="border-y border-white/[0.08] bg-white/[0.01] px-6 py-5">
           <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-6 md:gap-10">
             {[
               { icon: '🔒', label: 'SSL Güvenli' },
@@ -543,7 +543,7 @@ export default function HomePage() {
               { icon: '🛡️', label: 'Gizlilik Korumalı' },
               { icon: '↩️', label: 'Sorun Çözme Garantisi' },
             ].map((b) => (
-              <div key={b.label} className="flex items-center gap-2 text-xs text-[#5a7a5a]">
+              <div key={b.label} className="flex items-center gap-2 text-xs text-[#9b98b0]">
                 <span className="text-base">{b.icon}</span>
                 <span>{b.label}</span>
               </div>
@@ -552,54 +552,54 @@ export default function HomePage() {
         </section>
 
         {/* ─── Packages ──────────────────────────────────────────────────────── */}
-        <section id="paketler" className="border-t border-[#c4d4c4] px-6 py-20">
+        <section id="paketler" className="border-t border-white/[0.08] px-6 py-20">
           <div className="mx-auto max-w-6xl">
             <div className="mb-3 text-center">
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">IPTV Paket Fiyatları</h2>
-              <p className="mt-3 text-sm text-[#5a7a5a]">Tek seferlik ödeme, abonelik yok. Uzun vadede büyük tasarruf.</p>
+              <p className="mt-3 text-sm text-[#9b98b0]">Tek seferlik ödeme, abonelik yok. Uzun vadede büyük tasarruf.</p>
             </div>
 
             {/* Paket karşılaştırma toggle */}
             <div className="mb-8 text-center">
               <button onClick={() => setShowCompare(!showCompare)}
-                className="rounded-lg border border-[#c4d4c4] bg-[#eef2ee] px-4 py-2 text-xs font-medium text-[#5a7a5a] transition-all hover:border-white/20 hover:text-white">
+                className="rounded-lg border border-white/[0.08] bg-[#18181f] px-4 py-2 text-xs font-medium text-[#9b98b0] transition-all hover:border-white/20 hover:text-white">
                 {showCompare ? '▲ Tabloyu Gizle' : '⇄ Paketleri Karşılaştır'}
               </button>
             </div>
 
             {/* Karşılaştırma tablosu */}
             {showCompare && (
-              <div className="mb-10 overflow-x-auto rounded-2xl border border-[#c4d4c4]">
+              <div className="mb-10 overflow-x-auto rounded-2xl border border-white/[0.08]">
                 <table className="w-full text-xs md:text-sm">
                   <thead>
-                    <tr className="border-b border-[#c4d4c4] bg-[#eef2ee]">
-                      <th className="px-4 py-3 text-left font-medium text-[#5a7a5a]">Özellik</th>
+                    <tr className="border-b border-white/[0.08] bg-[#18181f]">
+                      <th className="px-4 py-3 text-left font-medium text-[#9b98b0]">Özellik</th>
                       {packages.map((p) => (
-                        <th key={p.name} className={`px-3 py-3 text-center font-semibold ${p.popular ? 'text-[#2d7a2d]' : 'text-[#1a2e1a]'}`}>
+                        <th key={p.name} className={`px-3 py-3 text-center font-semibold ${p.popular ? 'text-[#7c6fcd]' : 'text-[#f1f0f5]'}`}>
                           {p.name.replace(' Paket', '')}
-                          {p.popular && <span className="ml-1 text-[10px] text-[#2d7a2d]">★</span>}
+                          {p.popular && <span className="ml-1 text-[10px] text-[#7c6fcd]">★</span>}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {compareRows.map((row, ri) => (
-                      <tr key={row.label} className={`border-b border-[#c4d4c4] ${ri % 2 === 0 ? '' : 'bg-white/[0.01]'}`}>
-                        <td className="px-4 py-2.5 text-[#5a7a5a]">{row.label}</td>
+                      <tr key={row.label} className={`border-b border-white/[0.08] ${ri % 2 === 0 ? '' : 'bg-white/[0.01]'}`}>
+                        <td className="px-4 py-2.5 text-[#9b98b0]">{row.label}</td>
                         {row.values.map((val, vi) => (
                           <td key={vi} className={`px-3 py-2.5 text-center ${
-                            packages[vi]?.popular ? 'text-[#2d7a2d] font-semibold'
-                            : val === '✗' ? 'text-[#7a9a7a]'
+                            packages[vi]?.popular ? 'text-[#7c6fcd] font-semibold'
+                            : val === '✗' ? 'text-[#6b6880]'
                             : val === '✓' ? 'text-emerald-400'
-                            : 'text-[#1a2e1a]'
+                            : 'text-[#f1f0f5]'
                           }`}>{val}</td>
                         ))}
                       </tr>
                     ))}
-                    <tr className="bg-[#ffffff]">
-                      <td className="px-4 py-3 font-medium text-[#5a7a5a]">Toplam Fiyat</td>
+                    <tr className="bg-[#22222c]">
+                      <td className="px-4 py-3 font-medium text-[#9b98b0]">Toplam Fiyat</td>
                       {packages.map((p) => (
-                        <td key={p.name} className={`px-3 py-3 text-center font-bold ${p.popular ? 'text-[#1f5c1f]' : 'text-[#1a2e1a]'}`}>
+                        <td key={p.name} className={`px-3 py-3 text-center font-bold ${p.popular ? 'text-[#6358b8]' : 'text-[#f1f0f5]'}`}>
                           ₺{p.price}
                         </td>
                       ))}
@@ -614,44 +614,44 @@ export default function HomePage() {
                 <div key={pkg.name}
                   className={`relative flex flex-col rounded-2xl border p-6 transition-all ${
                     pkg.popular
-                      ? 'border-[#2d7a2d]/60 bg-gradient-to-b from-[#2d7a2d]/10 to-[#2d7a2d]/[0.03] shadow-xl shadow-[#2d7a2d]/10'
-                      : 'border-[#c4d4c4] bg-[#dde5dd] hover:border-white/15 hover:bg-[#ffffff]'
+                      ? 'border-[#7c6fcd]/60 bg-gradient-to-b from-[#7c6fcd]/10 to-[#7c6fcd]/[0.03] shadow-xl shadow-[#7c6fcd]/10'
+                      : 'border-white/[0.08] bg-[#141418] hover:border-white/15 hover:bg-[#22222c]'
                   }`}
                 >
                   {pkg.popular && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-[#2d7a2d] to-[#2d7a2d] px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-[#2d7a2d]/30">
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-[#7c6fcd] to-[#7c6fcd] px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-[#7c6fcd]/30">
                       ⭐ En Çok Tercih Edilen
                     </div>
                   )}
                   <div className="mb-4">
-                    <div className="text-[11px] font-semibold uppercase tracking-widest text-[#4a6a4a]">{pkg.duration}</div>
-                    <h3 className="mt-1.5 text-lg font-bold text-[#1a2e1a]">{pkg.name}</h3>
+                    <div className="text-[11px] font-semibold uppercase tracking-widest text-[#9b98b0]">{pkg.duration}</div>
+                    <h3 className="mt-1.5 text-lg font-bold text-[#f1f0f5]">{pkg.name}</h3>
                   </div>
 
                   {/* Fiyat + aylık maliyet + tasarruf */}
                   <div className="mb-2">
-                    <span className="text-4xl font-extrabold text-[#1a2e1a]">₺{pkg.price}</span>
-                    <span className="ml-1.5 text-sm text-[#4a6a4a]">tek ödeme</span>
+                    <span className="text-4xl font-extrabold text-[#f1f0f5]">₺{pkg.price}</span>
+                    <span className="ml-1.5 text-sm text-[#9b98b0]">tek ödeme</span>
                   </div>
                   {pkg.monthlyPrice ? (
                     <div className="mb-5 flex items-center gap-2">
-                      <span className="text-xs text-[#5a7a5a]">
-                        Aylık yalnızca <span className={`font-semibold ${pkg.popular ? 'text-[#2d7a2d]' : 'text-[#1a2e1a]'}`}>₺{pkg.monthlyPrice}</span>
+                      <span className="text-xs text-[#9b98b0]">
+                        Aylık yalnızca <span className={`font-semibold ${pkg.popular ? 'text-[#7c6fcd]' : 'text-[#f1f0f5]'}`}>₺{pkg.monthlyPrice}</span>
                       </span>
                       {pkg.saving && (
-                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${pkg.popular ? 'bg-[#2d7a2d]/20 text-[#2d7a2d]' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${pkg.popular ? 'bg-[#7c6fcd]/20 text-[#7c6fcd]' : 'bg-emerald-500/10 text-emerald-400'}`}>
                           {pkg.saving} tasarruf
                         </span>
                       )}
                     </div>
                   ) : (
-                    <div className="mb-5 text-xs text-[#4a6a4a]">Ömür boyu tek ödeme</div>
+                    <div className="mb-5 text-xs text-[#9b98b0]">Ömür boyu tek ödeme</div>
                   )}
 
                   <ul className="mb-6 flex-1 space-y-2.5">
                     {pkg.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2.5 text-sm text-[#5a7a5a]">
-                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${pkg.popular ? 'bg-[#2d7a2d]/20 text-[#2d7a2d]' : 'bg-emerald-500/10 text-emerald-400'}`}>✓</span>
+                      <li key={f} className="flex items-center gap-2.5 text-sm text-[#9b98b0]">
+                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${pkg.popular ? 'bg-[#7c6fcd]/20 text-[#7c6fcd]' : 'bg-emerald-500/10 text-emerald-400'}`}>✓</span>
                         {f}
                       </li>
                     ))}
@@ -661,60 +661,60 @@ export default function HomePage() {
                     target="_blank" rel="noopener noreferrer"
                     className={`mb-3 flex w-full items-center justify-center rounded-xl py-3 text-center text-sm font-semibold transition-all ${
                       pkg.popular
-                        ? 'bg-[#2d7a2d] text-white shadow-md shadow-[#2d7a2d]/25 hover:bg-[#1f5c1f] hover:shadow-[#2d7a2d]/40'
-                        : 'border border-white/15 bg-[#ffffff] text-white hover:bg-white/[0.08] hover:border-white/25'
+                        ? 'bg-[#7c6fcd] text-white shadow-md shadow-[#7c6fcd]/25 hover:bg-[#6358b8] hover:shadow-[#7c6fcd]/40'
+                        : 'border border-white/15 bg-[#22222c] text-white hover:bg-white/[0.08] hover:border-white/25'
                     }`}>
                     💬 WhatsApp ile Satın Al
                   </a>
                   <button onClick={() => handleOpenModal(pkg.name)}
-                    className="flex w-full items-center justify-center rounded-xl border border-white/20 bg-[#eef2ee] px-3 py-2.5 text-xs font-medium text-white transition-all hover:border-white/30 hover:bg-[#ffffff]">
+                    className="flex w-full items-center justify-center rounded-xl border border-white/20 bg-[#18181f] px-3 py-2.5 text-xs font-medium text-white transition-all hover:border-white/30 hover:bg-[#22222c]">
                     Önce Ücretsiz Test Al
                   </button>
                 </div>
               ))}
             </div>
 
-            <p className="mt-8 text-center text-xs text-[#4a6a4a]">
+            <p className="mt-8 text-center text-xs text-[#9b98b0]">
               💳 Ödeme WhatsApp üzerinden güvenli şekilde gerçekleşir · Kurulum desteği dahil · Sorun yaşarsanız çözüm garantisi
             </p>
           </div>
         </section>
 
         {/* ─── Müşteri Yorumları ──────────────────────────────────────────────── */}
-        <section id="yorumlar" className="border-t border-[#c4d4c4] px-6 py-20">
+        <section id="yorumlar" className="border-t border-white/[0.08] px-6 py-20">
           <div className="mx-auto max-w-6xl">
             <div className="mb-3 text-center">
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Müşteri Yorumları</h2>
               <div className="mt-3 flex items-center justify-center gap-2">
                 <Stars count={5} />
-                <span className="text-sm text-[#5a7a5a]">10.000+ kullanıcı · Ortalama <strong className="text-[#1a2e1a]">5.0</strong>/5</span>
+                <span className="text-sm text-[#9b98b0]">10.000+ kullanıcı · Ortalama <strong className="text-[#f1f0f5]">5.0</strong>/5</span>
               </div>
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {reviews.map((r) => (
-                <div key={r.initials} className="rounded-2xl border border-[#c4d4c4] bg-[#dde5dd] p-5 transition-all hover:border-white/15 hover:bg-[#ffffff]">
+                <div key={r.initials} className="rounded-2xl border border-white/[0.08] bg-[#141418] p-5 transition-all hover:border-white/15 hover:bg-[#22222c]">
                   <div className="mb-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2d7a2d]/20 text-sm font-bold text-[#2d7a2d]">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#7c6fcd]/20 text-sm font-bold text-[#7c6fcd]">
                         {r.initials}
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-white">{r.name}</div>
-                        <div className="text-xs text-[#4a6a4a]">{r.city}</div>
+                        <div className="text-xs text-[#9b98b0]">{r.city}</div>
                       </div>
                     </div>
                     <Stars count={r.stars} />
                   </div>
-                  <p className="text-sm leading-relaxed text-[#5a7a5a]">"{r.text}"</p>
+                  <p className="text-sm leading-relaxed text-[#9b98b0]">"{r.text}"</p>
                 </div>
               ))}
             </div>
 
             <div className="mt-10 text-center">
-              <p className="mb-4 text-sm text-[#5a7a5a]">Siz de denemek ister misiniz? Önce ücretsiz test alın.</p>
+              <p className="mb-4 text-sm text-[#9b98b0]">Siz de denemek ister misiniz? Önce ücretsiz test alın.</p>
               <button onClick={() => handleOpenModal()}
-                className="rounded-xl bg-[#2d7a2d] px-8 py-3.5 font-semibold text-white shadow-lg shadow-[#2d7a2d]/20 transition-all hover:bg-[#1f5c1f] hover:scale-[1.02]">
+                className="rounded-xl bg-[#7c6fcd] px-8 py-3.5 font-semibold text-white shadow-lg shadow-[#7c6fcd]/20 transition-all hover:bg-[#6358b8] hover:scale-[1.02]">
                 Ücretsiz Test Al →
               </button>
             </div>
@@ -722,7 +722,7 @@ export default function HomePage() {
         </section>
 
         {/* ─── Neden Biz ─────────────────────────────────────────────────────── */}
-        <section id="neden-biz" className="border-t border-[#c4d4c4] px-6 py-20">
+        <section id="neden-biz" className="border-t border-white/[0.08] px-6 py-20">
           <div className="mx-auto max-w-5xl">
             <h2 className="mb-12 text-center text-3xl font-bold tracking-tight md:text-4xl">Neden Galya IPTV?</h2>
             <div className="grid gap-4 md:grid-cols-3">
@@ -734,16 +734,16 @@ export default function HomePage() {
                 { icon: '📱', title: 'Tüm Cihazlar', desc: 'Smart TV, mobil, TV Box, bilgisayar, Apple TV ve daha fazlası.' },
                 { icon: '🆓', title: 'Önce Test Et', desc: 'Kredi kartı gerekmez. Satın almadan 12 saatlik ücretsiz test al.' },
               ].map((item) => (
-                <div key={item.title} className="rounded-xl border border-[#c4d4c4] bg-[#ffffff] p-5 transition-all hover:border-[#c4d4c4] hover:bg-white/[0.035]">
+                <div key={item.title} className="rounded-xl border border-white/[0.08] bg-[#22222c] p-5 transition-all hover:border-white/[0.08] hover:bg-white/[0.035]">
                   <div className="mb-3 text-2xl">{item.icon}</div>
                   <h3 className="mb-1.5 font-semibold text-white">{item.title}</h3>
-                  <p className="text-sm leading-relaxed text-[#5a7a5a]">{item.desc}</p>
+                  <p className="text-sm leading-relaxed text-[#9b98b0]">{item.desc}</p>
                 </div>
               ))}
             </div>
             <div className="mt-10 text-center">
               <button onClick={() => handleOpenModal()}
-                className="rounded-xl border border-white/15 bg-[#ffffff] px-8 py-3.5 font-semibold text-white transition-all hover:bg-white/[0.08]">
+                className="rounded-xl border border-white/15 bg-[#22222c] px-8 py-3.5 font-semibold text-white transition-all hover:bg-white/[0.08]">
                 Hemen Test Al →
               </button>
             </div>
@@ -751,18 +751,18 @@ export default function HomePage() {
         </section>
 
         {/* ─── SSS ───────────────────────────────────────────────────────────── */}
-        <section id="sss" className="border-t border-[#c4d4c4] px-6 py-20">
+        <section id="sss" className="border-t border-white/[0.08] px-6 py-20">
           <div className="mx-auto max-w-2xl">
             <h2 className="mb-3 text-center text-3xl font-bold tracking-tight md:text-4xl">Sıkça Sorulan Sorular</h2>
-            <p className="mb-10 text-center text-sm text-[#5a7a5a]">IPTV satın almadan önce merak ettikleriniz</p>
+            <p className="mb-10 text-center text-sm text-[#9b98b0]">IPTV satın almadan önce merak ettikleriniz</p>
             <div className="space-y-2">
               {faqs.map((faq) => (
-                <details key={faq.q} className="group rounded-xl border border-[#c4d4c4] bg-[#ffffff] px-5 py-4 transition-colors hover:border-[#c4d4c4]">
+                <details key={faq.q} className="group rounded-xl border border-white/[0.08] bg-[#22222c] px-5 py-4 transition-colors hover:border-white/[0.08]">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium text-zinc-200">
                     {faq.q}
-                    <span className="shrink-0 text-[10px] text-[#7a9a7a] transition-transform group-open:rotate-180">▼</span>
+                    <span className="shrink-0 text-[10px] text-[#6b6880] transition-transform group-open:rotate-180">▼</span>
                   </summary>
-                  <p className="mt-3 text-sm leading-relaxed text-[#5a7a5a]">{faq.a}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-[#9b98b0]">{faq.a}</p>
                 </details>
               ))}
             </div>
@@ -770,18 +770,18 @@ export default function HomePage() {
         </section>
 
         {/* ─── CTA Final ─────────────────────────────────────────────────────── */}
-        <section className="border-t border-[#c4d4c4] px-6 py-24">
+        <section className="border-t border-white/[0.08] px-6 py-24">
           <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#2d7a2d]/30 bg-[#2d7a2d]/8 px-4 py-1.5 text-xs text-[#2d7a2d]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#2d7a2d] animate-pulse" />
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#7c6fcd]/30 bg-[#7c6fcd]/8 px-4 py-1.5 text-xs text-[#7c6fcd]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#7c6fcd] animate-pulse" />
               Hâlâ kararsız mısınız? Önce ücretsiz deneyin.
             </div>
             <h2 className="mb-3 text-2xl font-bold tracking-tight md:text-4xl">Hemen Başlayın</h2>
-            <p className="mb-2 text-sm text-[#5a7a5a]">Ücretsiz test ile kaliteyi görün, sonra karar verin.</p>
-            <p className="mb-8 text-xs text-[#7a9a7a]">Kredi kartı gerekmez · 12 saatlik erişim · Anında kurulum</p>
+            <p className="mb-2 text-sm text-[#9b98b0]">Ücretsiz test ile kaliteyi görün, sonra karar verin.</p>
+            <p className="mb-8 text-xs text-[#6b6880]">Kredi kartı gerekmez · 12 saatlik erişim · Anında kurulum</p>
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <button onClick={() => handleOpenModal()}
-                className="rounded-xl bg-[#2d7a2d] px-10 py-4 font-semibold text-white shadow-xl shadow-[#2d7a2d]/25 transition-all hover:bg-[#1f5c1f] hover:scale-[1.02]">
+                className="rounded-xl bg-[#7c6fcd] px-10 py-4 font-semibold text-white shadow-xl shadow-[#7c6fcd]/25 transition-all hover:bg-[#6358b8] hover:scale-[1.02]">
                 ⚡ Ücretsiz Test Al
               </button>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
@@ -795,26 +795,26 @@ export default function HomePage() {
       </main>
 
       {/* ─── Footer ──────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-[#c4d4c4] bg-[#dde5dd] px-6 py-12 text-center text-sm text-[#7a9a7a]">
-        <p className="mb-1 font-semibold text-[#5a7a5a]">Galya IPTV</p>
-        <p className="mb-1 text-xs text-[#7a9a7a]">Türkiye'nin en kaliteli 4K IPTV hizmeti · 85.000+ kanal · 10.000+ aktif kullanıcı</p>
+      <footer className="border-t border-white/[0.08] bg-[#141418] px-6 py-12 text-center text-sm text-[#6b6880]">
+        <p className="mb-1 font-semibold text-[#9b98b0]">Galya IPTV</p>
+        <p className="mb-1 text-xs text-[#6b6880]">Türkiye'nin en kaliteli 4K IPTV hizmeti · 85.000+ kanal · 10.000+ aktif kullanıcı</p>
         <p>© {new Date().getFullYear()} Galya IPTV. Tüm hakları saklıdır.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-5 text-xs">
-          <Link href="/blog" className="transition-colors hover:text-[#1a2e1a]">Blog</Link>
-          <Link href="/#paketler" className="transition-colors hover:text-[#1a2e1a]">IPTV Fiyatları</Link>
-          <Link href="/#yorumlar" className="transition-colors hover:text-[#1a2e1a]">Yorumlar</Link>
-          <Link href="/#sss" className="transition-colors hover:text-[#1a2e1a]">S.S.S</Link>
-          <Link href="/iletisim" className="transition-colors hover:text-[#1a2e1a]">İletişim</Link>
-          <Link href="/blog/iptv-nedir" className="transition-colors hover:text-[#1a2e1a]">IPTV Nedir?</Link>
-          <Link href="/blog/iptv-kurulum" className="transition-colors hover:text-[#1a2e1a]">Kurulum Rehberi</Link>
+          <Link href="/blog" className="transition-colors hover:text-[#f1f0f5]">Blog</Link>
+          <Link href="/#paketler" className="transition-colors hover:text-[#f1f0f5]">IPTV Fiyatları</Link>
+          <Link href="/#yorumlar" className="transition-colors hover:text-[#f1f0f5]">Yorumlar</Link>
+          <Link href="/#sss" className="transition-colors hover:text-[#f1f0f5]">S.S.S</Link>
+          <Link href="/iletisim" className="transition-colors hover:text-[#f1f0f5]">İletişim</Link>
+          <Link href="/blog/iptv-nedir" className="transition-colors hover:text-[#f1f0f5]">IPTV Nedir?</Link>
+          <Link href="/blog/iptv-kurulum" className="transition-colors hover:text-[#f1f0f5]">Kurulum Rehberi</Link>
         </div>
       </footer>
 
       {/* ─── Mobil Sticky CTA ───────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#c4d4c4] bg-[#eef2ee]/95 px-3 py-2 backdrop-blur-md md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/[0.08] bg-[#18181f]/95 px-3 py-2 backdrop-blur-md md:hidden">
         <div className="flex gap-2">
           <button onClick={() => handleOpenModal()}
-            className="flex-1 rounded-lg bg-[#2d7a2d] py-2 text-xs font-semibold text-white shadow-lg shadow-[#2d7a2d]/20 transition-colors hover:bg-[#1f5c1f]">
+            className="flex-1 rounded-lg bg-[#7c6fcd] py-2 text-xs font-semibold text-white shadow-lg shadow-[#7c6fcd]/20 transition-colors hover:bg-[#6358b8]">
             ⚡ Ücretsiz Test Al
           </button>
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
@@ -828,8 +828,8 @@ export default function HomePage() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={(e) => { if (step !== 4 && e.target === e.currentTarget) handleCloseModal(); }}>
           <div className="flex min-h-full items-start justify-center p-4 sm:items-center sm:py-8" onClick={(e) => { if (step !== 4 && e.target === e.currentTarget) handleCloseModal(); }}>
-          <div className="w-full max-w-md rounded-2xl border border-[#c4d4c4] bg-[#ffffff] p-6 shadow-2xl">
-            <button onClick={handleCloseModal} className="float-right text-[#4a6a4a] transition-colors hover:text-[#1a2e1a]">✕</button>
+          <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#22222c] p-6 shadow-2xl">
+            <button onClick={handleCloseModal} className="float-right text-[#9b98b0] transition-colors hover:text-[#f1f0f5]">✕</button>
 
             {step !== 5 && <Stepper step={step} />}
 
@@ -838,27 +838,27 @@ export default function HomePage() {
               <div className="space-y-3">
                 <div>
                   <h3 className="text-xl font-bold text-white">Hangi cihazda izleyeceksiniz?</h3>
-                  <p className="mt-1 text-sm text-[#5a7a5a]">Size özel kurulum rehberi gönderelim.</p>
+                  <p className="mt-1 text-sm text-[#9b98b0]">Size özel kurulum rehberi gönderelim.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {DEVICES.map((device) => (
                     <button key={device.id} onClick={() => setSelectedDevice(device.id)}
                       className={`flex flex-col items-start rounded-xl border p-3 text-left transition-colors ${
                         selectedDevice === device.id
-                          ? 'border-[#2d7a2d]/60 bg-[#2d7a2d]/10'
-                          : 'border-[#c4d4c4] bg-[#ffffff] hover:border-[#c4d4c4]'
+                          ? 'border-[#7c6fcd]/60 bg-[#7c6fcd]/10'
+                          : 'border-white/[0.08] bg-[#22222c] hover:border-white/[0.08]'
                       }`}>
                       <span className="mb-1 text-xl">{device.icon}</span>
-                      <span className={`text-sm font-semibold ${selectedDevice === device.id ? 'text-white' : 'text-[#1a2e1a]'}`}>{device.label}</span>
-                      <span className="text-[11px] text-[#4a6a4a]">{device.sub}</span>
+                      <span className={`text-sm font-semibold ${selectedDevice === device.id ? 'text-white' : 'text-[#f1f0f5]'}`}>{device.label}</span>
+                      <span className="text-[11px] text-[#9b98b0]">{device.sub}</span>
                     </button>
                   ))}
                 </div>
                 <button onClick={() => setStep(1.5 as ModalStep)} disabled={!selectedDevice}
-                  className="w-full rounded-xl bg-[#2d7a2d] py-3 font-semibold text-white transition-colors hover:bg-[#1f5c1f] disabled:opacity-40">
+                  className="w-full rounded-xl bg-[#7c6fcd] py-3 font-semibold text-white transition-colors hover:bg-[#6358b8] disabled:opacity-40">
                   Devam Et →
                 </button>
-                <p className="text-center text-xs text-[#7a9a7a]">Kredi kartı gerekmez · 12 saatlik ücretsiz erişim</p>
+                <p className="text-center text-xs text-[#6b6880]">Kredi kartı gerekmez · 12 saatlik ücretsiz erişim</p>
               </div>
             )}
 
@@ -866,11 +866,11 @@ export default function HomePage() {
             {step === (1.5 as ModalStep) && (
               <div className="space-y-3">
                 <div>
-                  <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-[#c4d4c4] bg-[#eef2ee] px-2.5 py-1 text-xs text-[#5a7a5a]">
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#18181f] px-2.5 py-1 text-xs text-[#9b98b0]">
                     {DEVICES.find(d => d.id === selectedDevice)?.icon} {DEVICES.find(d => d.id === selectedDevice)?.label} seçildi
                   </div>
                   <h3 className="text-xl font-bold text-white">En çok ne izleyeceksiniz?</h3>
-                  <p className="mt-1 text-sm text-[#5a7a5a]">Birden fazla seçebilirsiniz.</p>
+                  <p className="mt-1 text-sm text-[#9b98b0]">Birden fazla seçebilirsiniz.</p>
                 </div>
                 <div className="space-y-2">
                   {PURPOSES.map((p) => {
@@ -880,25 +880,25 @@ export default function HomePage() {
                         prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id]
                       )}
                         className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
-                          selected ? 'border-[#2d7a2d]/60 bg-[#2d7a2d]/10' : 'border-[#c4d4c4] bg-[#ffffff] hover:border-[#c4d4c4]'
+                          selected ? 'border-[#7c6fcd]/60 bg-[#7c6fcd]/10' : 'border-white/[0.08] bg-[#22222c] hover:border-white/[0.08]'
                         }`}>
                         <span className="text-lg">{p.icon}</span>
                         <div className="flex-1">
-                          <div className={`text-sm font-semibold ${selected ? 'text-white' : 'text-[#1a2e1a]'}`}>{p.label}</div>
-                          <div className="text-[11px] text-[#4a6a4a]">{p.sub}</div>
+                          <div className={`text-sm font-semibold ${selected ? 'text-white' : 'text-[#f1f0f5]'}`}>{p.label}</div>
+                          <div className="text-[11px] text-[#9b98b0]">{p.sub}</div>
                         </div>
                         <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-all ${
-                          selected ? 'border-[#2d7a2d] bg-[#2d7a2d] text-white' : 'border-[#c4d4c4]'
+                          selected ? 'border-[#7c6fcd] bg-[#7c6fcd] text-white' : 'border-white/[0.08]'
                         }`}>{selected ? '✓' : ''}</div>
                       </button>
                     );
                   })}
                 </div>
                 <button onClick={() => setStep(2)}
-                  className="w-full rounded-xl bg-[#2d7a2d] py-3 font-semibold text-white transition-colors hover:bg-[#1f5c1f]">
+                  className="w-full rounded-xl bg-[#7c6fcd] py-3 font-semibold text-white transition-colors hover:bg-[#6358b8]">
                   Testi Başlat →
                 </button>
-                <button onClick={() => setStep(1)} className="w-full text-xs text-[#7a9a7a] transition-colors hover:text-[#5a7a5a]">← Geri dön</button>
+                <button onClick={() => setStep(1)} className="w-full text-xs text-[#6b6880] transition-colors hover:text-[#9b98b0]">← Geri dön</button>
               </div>
             )}
 
@@ -907,17 +907,17 @@ export default function HomePage() {
               <div className="space-y-4">
                 <div>
                   <h3 className="text-xl font-bold text-white">E-posta Adresiniz</h3>
-                  <p className="mt-1 text-sm text-[#5a7a5a]">Test bilgilerini göndereceğimiz e-posta adresinizi girin.</p>
+                  <p className="mt-1 text-sm text-[#9b98b0]">Test bilgilerini göndereceğimiz e-posta adresinizi girin.</p>
                 </div>
                 {selectedDevice && (
                   <div className="flex flex-wrap gap-2">
-                    <div className="rounded-lg border border-[#c4d4c4] bg-[#eef2ee] px-3 py-1.5 text-xs text-[#5a7a5a]">
+                    <div className="rounded-lg border border-white/[0.08] bg-[#18181f] px-3 py-1.5 text-xs text-[#9b98b0]">
                       {DEVICES.find(d => d.id === selectedDevice)?.icon} {DEVICES.find(d => d.id === selectedDevice)?.label}
                     </div>
                     {selectedPurposes.map(pid => {
                       const p = PURPOSES.find(x => x.id === pid);
                       return p ? (
-                        <div key={pid} className="rounded-lg border border-[#c4d4c4] bg-[#eef2ee] px-3 py-1.5 text-xs text-[#5a7a5a]">
+                        <div key={pid} className="rounded-lg border border-white/[0.08] bg-[#18181f] px-3 py-1.5 text-xs text-[#9b98b0]">
                           {p.icon} {p.label}
                         </div>
                       ) : null;
@@ -925,21 +925,21 @@ export default function HomePage() {
                   </div>
                 )}
                 <input ref={emailInputRef} type="email" placeholder="ornek@email.com"
-                  className="w-full rounded-xl border border-[#c4d4c4] bg-[#c4d4c4] px-4 py-3 text-sm text-white outline-none placeholder:text-[#4a6a4a] transition-colors focus:border-[#2d7a2d]/60"
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-[#9b98b0] transition-colors focus:border-[#7c6fcd]/60"
                   value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()} />
-                <p className="text-xs text-[#7a9a7a]">Geçici e-posta adresleri kabul edilmemektedir.</p>
+                <p className="text-xs text-[#6b6880]">Geçici e-posta adresleri kabul edilmemektedir.</p>
                 <button onClick={() => handleSendOtp(false)} disabled={loading}
-                  className="w-full rounded-xl bg-[#2d7a2d] py-3 font-semibold text-white transition-colors hover:bg-[#1f5c1f] disabled:opacity-50">
+                  className="w-full rounded-xl bg-[#7c6fcd] py-3 font-semibold text-white transition-colors hover:bg-[#6358b8] disabled:opacity-50">
                   {loading ? 'Gönderiliyor...' : 'Doğrulama Kodu Gönder'}
                 </button>
                 {statusMsg && <p className="text-center text-xs text-amber-400">{statusMsg}</p>}
                 <div className="flex justify-between text-xs">
-                  <button onClick={() => setStep(1.5 as ModalStep)} className="text-[#4a6a4a] transition-colors hover:text-[#5a7a5a]">← Geri dön</button>
-                  <button onClick={() => handleSendOtp(true)} disabled={loading} className="text-[#4a6a4a] transition-colors hover:text-[#5a7a5a]">
+                  <button onClick={() => setStep(1.5 as ModalStep)} className="text-[#9b98b0] transition-colors hover:text-[#9b98b0]">← Geri dön</button>
+                  <button onClick={() => handleSendOtp(true)} disabled={loading} className="text-[#9b98b0] transition-colors hover:text-[#9b98b0]">
                     Daha önce test aldım →
                   </button>
                 </div>
-                <div className="border-t border-[#c4d4c4] pt-3"><WaButton /></div>
+                <div className="border-t border-white/[0.08] pt-3"><WaButton /></div>
               </div>
             )}
 
@@ -948,18 +948,18 @@ export default function HomePage() {
               <div className="space-y-4 text-center">
                 <div>
                   <h3 className="text-xl font-bold text-white">Kodu Doğrula</h3>
-                  <p className="mt-1 text-sm text-[#5a7a5a]">
-                    <span className="text-[#1a2e1a]">{email}</span> adresine gönderilen 6 haneli kodu girin.
+                  <p className="mt-1 text-sm text-[#9b98b0]">
+                    <span className="text-[#f1f0f5]">{email}</span> adresine gönderilen 6 haneli kodu girin.
                   </p>
                 </div>
                 <input type="text" placeholder="000000" maxLength={6} inputMode="numeric"
-                  className="w-full rounded-xl border border-[#c4d4c4] bg-[#c4d4c4] px-4 py-4 text-center font-mono text-3xl font-bold tracking-[10px] text-white outline-none transition-colors focus:border-[#2d7a2d]/60"
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-4 text-center font-mono text-3xl font-bold tracking-[10px] text-white outline-none transition-colors focus:border-[#7c6fcd]/60"
                   value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => e.key === 'Enter' && handleVerifyOtp()} />
-                <p className="text-xs text-[#7a9a7a]">Spam klasörünü de kontrol edin.</p>
-                {statusMsg && <p className="text-xs text-[#5a7a5a]">{statusMsg}</p>}
+                <p className="text-xs text-[#6b6880]">Spam klasörünü de kontrol edin.</p>
+                {statusMsg && <p className="text-xs text-[#9b98b0]">{statusMsg}</p>}
 
                 {isCreating ? (
-                  <div className="rounded-xl border border-[#c4d4c4] bg-[#eef2ee] p-4">
+                  <div className="rounded-xl border border-white/[0.08] bg-[#18181f] p-4">
                     <CreatingProgress />
                   </div>
                 ) : (
@@ -971,14 +971,14 @@ export default function HomePage() {
 
                 {!isCreating && (
                   <div className="flex justify-between text-xs">
-                    <button onClick={() => { setStep(2); setOtp(''); }} className="text-[#7a9a7a] transition-colors hover:text-[#5a7a5a]">← Geri dön</button>
+                    <button onClick={() => { setStep(2); setOtp(''); }} className="text-[#6b6880] transition-colors hover:text-[#9b98b0]">← Geri dön</button>
                     <button onClick={() => handleSendOtp(isRecovery)} disabled={loading || resendCooldown > 0}
-                      className="text-[#7a9a7a] transition-colors hover:text-[#5a7a5a] disabled:text-[#c4d4c4]">
+                      className="text-[#6b6880] transition-colors hover:text-[#9b98b0] disabled:text-[#c0bdd6]">
                       {resendCooldown > 0 ? `Tekrar gönder (${resendCooldown}s)` : 'Tekrar gönder'}
                     </button>
                   </div>
                 )}
-                {!isCreating && <div className="border-t border-[#c4d4c4] pt-3"><WaButton /></div>}
+                {!isCreating && <div className="border-t border-white/[0.08] pt-3"><WaButton /></div>}
               </div>
             )}
 
@@ -988,11 +988,11 @@ export default function HomePage() {
                 <div className="text-center">
                   <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-2xl">✅</div>
                   <h3 className="text-xl font-bold text-white">{isRecovery ? 'Bilgileriniz Hazır' : 'Testiniz Açıldı!'}</h3>
-                  <p className="mt-1 text-sm text-[#5a7a5a]">Bilgiler <span className="text-[#1a2e1a]">{email}</span> adresine de gönderildi.</p>
+                  <p className="mt-1 text-sm text-[#9b98b0]">Bilgiler <span className="text-[#f1f0f5]">{email}</span> adresine de gönderildi.</p>
                 </div>
 
                 {trialCredentials && (
-                  <div className="rounded-xl border border-[#c4d4c4] bg-[#ffffff] p-4">
+                  <div className="rounded-xl border border-white/[0.08] bg-[#22222c] p-4">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-1.5">
                         <span className="relative flex h-2 w-2">
@@ -1005,33 +1005,33 @@ export default function HomePage() {
                     </div>
                     <div className="divide-y divide-white/5">
                       <div className="flex items-center justify-between py-2">
-                        <span className="text-xs text-[#5a7a5a]">Sunucu</span>
+                        <span className="text-xs text-[#9b98b0]">Sunucu</span>
                         <div className="flex items-center">
-                          <span className="rounded-md bg-[#2d7a2d]/10 px-2 py-0.5 font-mono text-xs font-bold text-[#2d7a2d]">http://pro4kiptv.xyz:2086</span>
+                          <span className="rounded-md bg-[#7c6fcd]/10 px-2 py-0.5 font-mono text-xs font-bold text-[#7c6fcd]">http://pro4kiptv.xyz:2086</span>
                           <CopyButton value="http://pro4kiptv.xyz:2086/" />
                         </div>
                       </div>
                       <div className="flex items-center justify-between py-2">
-                        <span className="text-xs text-[#5a7a5a]">Kullanıcı Adı</span>
+                        <span className="text-xs text-[#9b98b0]">Kullanıcı Adı</span>
                         <div className="flex items-center">
-                          <span className="rounded-md bg-[#2d7a2d]/10 px-2 py-0.5 font-mono text-sm font-bold text-[#2d7a2d]">{trialCredentials.username}</span>
+                          <span className="rounded-md bg-[#7c6fcd]/10 px-2 py-0.5 font-mono text-sm font-bold text-[#7c6fcd]">{trialCredentials.username}</span>
                           <CopyButton value={trialCredentials.username} />
                         </div>
                       </div>
                       <div className="flex items-center justify-between py-2">
-                        <span className="text-xs text-[#5a7a5a]">Şifre</span>
+                        <span className="text-xs text-[#9b98b0]">Şifre</span>
                         <div className="flex items-center">
-                          <span className="rounded-md bg-[#2d7a2d]/10 px-2 py-0.5 font-mono text-sm font-bold text-[#2d7a2d]">{trialCredentials.password}</span>
+                          <span className="rounded-md bg-[#7c6fcd]/10 px-2 py-0.5 font-mono text-sm font-bold text-[#7c6fcd]">{trialCredentials.password}</span>
                           <CopyButton value={trialCredentials.password} />
                         </div>
                       </div>
                     </div>
-                    <div className="mt-3 rounded-lg border border-[#2d7a2d]/20 bg-[#2d7a2d]/5 p-2.5">
+                    <div className="mt-3 rounded-lg border border-[#7c6fcd]/20 bg-[#7c6fcd]/5 p-2.5">
                       <div className="mb-1.5 flex items-center justify-between">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#5a7a5a]">M3U Linki</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9b98b0]">M3U Linki</span>
                         <CopyButton value={m3uLink} />
                       </div>
-                      <p className="break-all font-mono text-[10px] leading-relaxed text-[#1a2e1a]">{m3uLink}</p>
+                      <p className="break-all font-mono text-[10px] leading-relaxed text-[#f1f0f5]">{m3uLink}</p>
                     </div>
                   </div>
                 )}
@@ -1042,18 +1042,18 @@ export default function HomePage() {
                 {selectedDevice && INSTALL_GUIDES[selectedDevice as DeviceId] && (() => {
                   const guide = INSTALL_GUIDES[selectedDevice as DeviceId];
                   return (
-                    <div className="rounded-xl border border-[#c4d4c4] bg-[#ffffff] p-4">
+                    <div className="rounded-xl border border-white/[0.08] bg-[#22222c] p-4">
                       <div className="mb-3 flex items-center gap-2">
                         <span className="text-base">{DEVICES.find(d => d.id === selectedDevice)?.icon}</span>
                         <div>
-                          <p className="text-xs font-semibold text-[#1a2e1a]">Kurulum Rehberi</p>
-                          <p className="text-[11px] text-[#2d7a2d]">{guide.app}</p>
+                          <p className="text-xs font-semibold text-[#f1f0f5]">Kurulum Rehberi</p>
+                          <p className="text-[11px] text-[#7c6fcd]">{guide.app}</p>
                         </div>
                       </div>
                       <ol className="space-y-1.5">
                         {guide.steps.map((s, i) => (
-                          <li key={i} className="flex gap-2.5 text-xs text-[#5a7a5a]">
-                            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#2d7a2d]/20 text-[10px] font-bold text-[#2d7a2d]">{i + 1}</span>
+                          <li key={i} className="flex gap-2.5 text-xs text-[#9b98b0]">
+                            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#7c6fcd]/20 text-[10px] font-bold text-[#7c6fcd]">{i + 1}</span>
                             <span>{s}</span>
                           </li>
                         ))}
@@ -1067,7 +1067,7 @@ export default function HomePage() {
                   );
                 })()}
                 <button onClick={handleCloseModal}
-                  className="w-full rounded-lg border border-[#c4d4c4] py-2.5 text-sm text-[#4a6a4a] transition-colors hover:border-[#c4d4c4] hover:text-[#1a2e1a]">
+                  className="w-full rounded-lg border border-white/[0.08] py-2.5 text-sm text-[#9b98b0] transition-colors hover:border-white/[0.08] hover:text-[#f1f0f5]">
                   Pencereyi Kapat
                 </button>
               </div>
@@ -1079,14 +1079,14 @@ export default function HomePage() {
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-2xl">⏳</div>
                 <div>
                   <h3 className="text-xl font-bold text-white">Daha Önce Test Aldınız</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[#5a7a5a]">{alreadyUsedMsg}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-[#9b98b0]">{alreadyUsedMsg}</p>
                 </div>
                 <WaButton label="💬 WhatsApp ile Satın Al" />
                 <button onClick={() => { setStep(1); setEmail(''); setAlreadyUsedMsg(''); }}
-                  className="w-full text-xs text-[#7a9a7a] transition-colors hover:text-[#5a7a5a]">
+                  className="w-full text-xs text-[#6b6880] transition-colors hover:text-[#9b98b0]">
                   Farklı e-posta ile dene
                 </button>
-                <button onClick={handleCloseModal} className="w-full text-xs text-[#7a9a7a] transition-colors hover:text-[#5a7a5a]">Kapat</button>
+                <button onClick={handleCloseModal} className="w-full text-xs text-[#6b6880] transition-colors hover:text-[#9b98b0]">Kapat</button>
               </div>
             )}
 
