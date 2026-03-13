@@ -811,14 +811,14 @@ export default function HomePage() {
       </footer>
 
       {/* ─── Mobil Sticky CTA ───────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/8 bg-[#09090b]/95 px-4 py-3 backdrop-blur-md md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/8 bg-[#09090b]/95 px-3 py-2 backdrop-blur-md md:hidden">
         <div className="flex gap-2">
           <button onClick={() => handleOpenModal()}
-            className="flex-1 rounded-xl bg-[#7c3aed] py-3 text-sm font-semibold text-white shadow-lg shadow-[#7c3aed]/20 transition-colors hover:bg-[#6d28d9]">
+            className="flex-1 rounded-lg bg-[#7c3aed] py-2 text-xs font-semibold text-white shadow-lg shadow-[#7c3aed]/20 transition-colors hover:bg-[#6d28d9]">
             🎯 Ücretsiz Test Al
           </button>
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
-            className="flex flex-1 items-center justify-center rounded-xl bg-[#25d366] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1ebe5d]">
+            className="flex flex-1 items-center justify-center rounded-lg bg-[#25d366] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1ebe5d]">
             💬 WhatsApp
           </a>
         </div>
@@ -826,8 +826,8 @@ export default function HomePage() {
 
       {/* ─── Modal ───────────────────────────────────────────────────────────── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-          onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/80 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
+          <div className="flex min-h-full items-start justify-center p-4 sm:items-center sm:py-8" onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111113] p-6 shadow-2xl">
             <button onClick={handleCloseModal} className="float-right text-zinc-600 transition-colors hover:text-zinc-300">✕</button>
 
@@ -1033,11 +1033,6 @@ export default function HomePage() {
                       </div>
                       <p className="break-all font-mono text-[10px] leading-relaxed text-zinc-300">{m3uLink}</p>
                     </div>
-                    <div className="mt-3 flex gap-2">
-                      {['IPTV Smarters', 'TiviMate', 'Hot IPTV'].map((app) => (
-                        <span key={app} className="flex-1 rounded-lg border border-white/10 bg-white/[0.04] py-1.5 text-center text-[10px] font-medium text-zinc-300">{app}</span>
-                      ))}
-                    </div>
                   </div>
                 )}
 
@@ -1095,6 +1090,7 @@ export default function HomePage() {
               </div>
             )}
 
+          </div>
           </div>
         </div>
       )}
