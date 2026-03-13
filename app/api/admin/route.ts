@@ -48,7 +48,6 @@ export async function GET(req: NextRequest) {
       if (!val) continue;
       const record = JSON.parse(val);
       const pkg = record.selectedPackage || 'Belirtilmedi';
-
       packageStats[pkg] = (packageStats[pkg] || 0) + 1;
 
       records.push({
@@ -84,7 +83,8 @@ export async function DELETE(req: NextRequest) {
 
   try {
     const { email } = await req.json();
-    if (!email) return NextResponse.json({ success: false, error: 'Email gerekli.' }, { status: 400 });
+    if (!email)
+      return NextResponse.json({ success: false, error: 'Email gerekli.' }, { status: 400 });
 
     await redisDel(`trial:email:${email}`);
 
