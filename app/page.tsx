@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 // ─── Metadata notu ────────────────────────────────────────────────────────────
-// Bu sayfa 'use client' olduğundan metadata'yı layout tsx e ekle:
+// Bu sayfa 'use client' olduğundan metadata'yı layout.tsx e ekle:
 // export const metadata = {
 //   title: 'IPTV Satın Al | 4K IPTV Paketleri – Galya IPTV',
 //   description: 'Türkiye\'nin en kaliteli IPTV hizmeti. 85.000+ kanal, 4K yayın. ₺500\'den başlayan fiyatlarla en iyi IPTV server. Ücretsiz test al.',
