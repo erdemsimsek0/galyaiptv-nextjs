@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 const WHATSAPP_URL = 'https://wa.me/447441921660?text=Merhaba%2C%20sat%C4%B1n%20almak%20istiyorum.';
@@ -56,6 +56,15 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
   const [alreadyUsedMsg, setAlreadyUsedMsg] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0); // saniye
+  const [isRecovery, setIsRecovery] = useState(false); // credentials kurtarma modu
+
+  // Resend geri sayım
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setInterval(() => setResendCooldown((c) => Math.max(c - 1, 0)), 1000);
+    return () => clearInterval(id);
+  }, [resendCooldown]);
 
   const handleOpenModal = (pkg?: string) => {
     setIsModalOpen(true);
@@ -63,21 +72,20 @@ export default function HomePage() {
     setSelectedPackage(pkg || '');
     setEmail(''); setOtp(''); setOtpToken('');
     setStatusMsg(''); setAlreadyUsedMsg('');
+    setResendCooldown(0); setIsRecovery(false);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setStep(1);
-    setSelectedPackage('');
+    setStep(1); setSelectedPackage('');
     setEmail(''); setOtp(''); setOtpToken('');
     setStatusMsg(''); setAlreadyUsedMsg('');
-    setLoading(false);
+    setLoading(false); setResendCooldown(0); setIsRecovery(false);
   };
 
-  const handleSendOtp = async () => {
+  const handleSendOtp = async (recoveryMode = false) => {
     if (!email) return alert('Lütfen e-posta adresinizi girin.');
-    setLoading(true);
-    setStatusMsg('');
+    setLoading(true); setStatusMsg('');
     try {
       const res = await fetch('/api/test-talep', {
         method: 'POST',
@@ -85,9 +93,28 @@ export default function HomePage() {
         body: JSON.stringify({ action: 'send_otp', email, selectedPackage }),
       });
       const data = await res.json();
-      if (data.alreadyUsed) { setAlreadyUsedMsg(data.error); setStep(5); return; }
-      if (data.success) { setOtpToken(data.token); setStep(3); }
-      else alert(data.error || 'Kod gönderilemedi.');
+      if (data.alreadyUsed) {
+        if (recoveryMode) {
+          // Kurtarma modunda: zaten test var, OTP gönder
+          setIsRecovery(true);
+          // alreadyUsed = true ama biz recovery OTP istiyoruz, backend izin verecek
+        } else {
+          setAlreadyUsedMsg(data.error); setStep(5); return;
+        }
+      }
+      if (data.cooldown) {
+        setResendCooldown(data.retryAfter || 60);
+        setStatusMsg(data.error);
+        return;
+      }
+      if (data.success) {
+        setOtpToken(data.token);
+        setIsRecovery(recoveryMode);
+        setStep(3);
+        setResendCooldown(60);
+      } else {
+        alert(data.error || 'Kod gönderilemedi.');
+      }
     } catch { alert('Sunucuya bağlanılamadı.'); }
     finally { setLoading(false); }
   };
@@ -95,12 +122,13 @@ export default function HomePage() {
   const handleVerifyOtp = async () => {
     if (!otp) return alert('Lütfen doğrulama kodunu girin.');
     setLoading(true);
-    setStatusMsg('Test hesabınız oluşturuluyor, 30-40 saniye sürebilir...');
+    setStatusMsg(isRecovery ? 'Bilgileriniz getiriliyor...' : 'Test hesabınız oluşturuluyor, 30-40 saniye sürebilir...');
     try {
+      const action = isRecovery ? 'recover' : 'verify';
       const res = await fetch('/api/test-talep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email, otp, token: otpToken }),
+        body: JSON.stringify({ action, email, otp, token: otpToken }),
       });
       const data = await res.json();
       if (data.alreadyUsed) { setAlreadyUsedMsg(data.error); setStep(5); setStatusMsg(''); return; }
@@ -343,11 +371,19 @@ export default function HomePage() {
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()}
                 />
-                <button onClick={handleSendOtp} disabled={loading}
+                <button onClick={() => handleSendOtp(false)} disabled={loading}
                   className="w-full rounded-xl bg-purple-600 py-4 font-bold text-white transition-colors hover:bg-purple-700 disabled:opacity-50">
                   {loading ? 'Kod Gönderiliyor...' : 'Doğrulama Kodu Gönder'}
                 </button>
+                {statusMsg && <p className="text-yellow-400 text-xs text-center">{statusMsg}</p>}
                 <button onClick={() => setStep(1)} className="w-full text-gray-500 hover:text-gray-300 text-sm transition-colors">← Geri dön</button>
+                <button
+                  onClick={() => handleSendOtp(true)}
+                  disabled={loading}
+                  className="w-full text-purple-500 hover:text-purple-300 text-xs transition-colors mt-1"
+                >
+                  Test bilgilerimi daha önce aldım, tekrar görmek istiyorum →
+                </button>
                 <div className="pt-2 border-t border-gray-800"><WaButton /></div>
               </div>
             )}
@@ -369,7 +405,14 @@ export default function HomePage() {
                   className="w-full rounded-xl bg-green-600 py-4 font-bold text-white transition-colors hover:bg-green-700 disabled:opacity-50">
                   {loading ? 'Lütfen Bekleyin...' : 'Onayla ve Testi Aç'}
                 </button>
-                <button onClick={() => { setStep(2); setOtp(''); }} className="w-full text-gray-500 hover:text-gray-300 text-sm transition-colors">← Geri dön</button>
+                <button
+                  onClick={() => handleSendOtp(isRecovery)}
+                  disabled={loading || resendCooldown > 0}
+                  className="w-full text-sm text-gray-500 hover:text-gray-300 disabled:text-gray-700 transition-colors"
+                >
+                  {resendCooldown > 0 ? `Yeni kod: ${resendCooldown}s` : 'Kodu tekrar gönder'}
+                </button>
+                <button onClick={() => { setStep(2); setOtp(''); }} className="w-full text-gray-600 hover:text-gray-400 text-xs transition-colors">← Geri dön</button>
                 <div className="pt-2 border-t border-gray-800"><WaButton /></div>
               </div>
             )}
