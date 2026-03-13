@@ -2,28 +2,30 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 const SITE_URL = 'https://galyaiptv.com.tr';
-// Görselin adının public klasöründe "og-image.png" olduğundan emin ol!
 const OG_IMAGE_PATH = '/og-image.png'; 
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Galya IPTV - IPTV Satın Al | Premium IPTV Hizmeti 2025',
+    // page.tsx'teki başlık buraya eklendi
+    default: 'IPTV Satın Al | 4K IPTV Paketleri – Galya IPTV',
     template: '%s | Galya IPTV',
   },
   description:
-    'Galya IPTV ile donmayan, kesintisiz ve 4K kalitesinde yayın keyfini yaşayın. 10.000+ kanal seçeneği ve 7/24 teknik destekle Türkiye’nin en iyi IPTV sağlayıcısıyız.',
+    'Türkiye\'nin en kaliteli IPTV hizmeti. 85.000+ kanal, 4K yayın. ₺500\'den başlayan fiyatlarla en iyi IPTV server. Ücretsiz test al.', // page.tsx'ten alındı
   keywords: [
     'iptv satın al',
+    'iptv fiyat',
+    '4k iptv',
+    'en iyi iptv',
+    'iptv server',
+    'iptv nedir',
     'iptv satın al ucuz',
     'donmayan iptv',
-    '4k iptv',
     'premium iptv',
     'galya iptv',
     'iptv türkiye',
     'iptv test',
-    'iptv paket',
-    'en iyi iptv',
   ],
   authors: [{ name: 'Galya IPTV', url: SITE_URL }],
   creator: 'Galya IPTV',
@@ -44,30 +46,30 @@ export const metadata: Metadata = {
     locale: 'tr_TR',
     url: SITE_URL,
     siteName: 'Galya IPTV',
-    title: 'Galya IPTV - IPTV Satın Al | Premium IPTV Hizmeti',
+    title: 'IPTV Satın Al | 4K IPTV Paketleri – Galya IPTV',
     description:
-      'Türkiye’nin en kaliteli IPTV hizmeti. 10.000+ kanal, 4K yayın ve donmayan sunucu altyapısıyla hemen aboneliğinizi başlatın ve kesintisiz yayının tadını çıkarın!',
+      'Türkiye\'nin en kaliteli IPTV hizmeti. 85.000+ kanal, 4K yayın ve donmayan altyapıyla hemen testinizi başlatın.',
     images: [
       {
         url: OG_IMAGE_PATH,
         width: 1200,
         height: 630,
-        alt: 'Galya IPTV - Premium IPTV Hizmeti',
+        alt: 'Galya IPTV - Premium 4K IPTV Hizmeti',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Galya IPTV - IPTV Satın Al | Premium IPTV Hizmeti',
+    title: 'IPTV Satın Al | 4K IPTV Paketleri – Galya IPTV',
     description:
-      'Türkiye’nin en kaliteli IPTV hizmeti. 10.000+ kanal, 4K yayın ve 7/24 destek ile kesintisiz TV deneyimi burada.',
-    images: [OG_IMAGE_PATH], // Twitter için liste yapısı
+      '85.000+ kanal ve 4K yayın kalitesiyle Türkiye’nin en iyi IPTV deneyimi.',
+    images: [OG_IMAGE_PATH],
   },
   alternates: {
     canonical: SITE_URL,
   },
   verification: {
-    google: 'YOUR_GOOGLE_VERIFICATION_CODE', // Search Console kodunu buraya eklemeyi unutma
+    google: 'YOUR_GOOGLE_VERIFICATION_CODE', // Search Console kodunu buraya eklemeyi unutmayın
   },
 };
 
@@ -78,14 +80,14 @@ const organizationSchema = {
   alternateName: ['Galya IP TV', 'Galaxy IPTV', 'Galya TV'],
   url: SITE_URL,
   logo: `${SITE_URL}/logo.png`,
-  description: "Türkiye'nin en kaliteli IPTV hizmeti sağlayıcısı. 10.000+ kanal, 4K yayın, 7/24 destek.",
+  description: "Türkiye'nin en kaliteli IPTV hizmeti sağlayıcısı. 85.000+ kanal, 4K yayın, 7/24 destek.",
   contactPoint: {
     '@type': 'ContactPoint',
-    telephone: '+44-7445-508352',
+    telephone: '+447441921660', // page.tsx'teki güncel numara ile senkronize edildi
     contactType: 'customer service',
     availableLanguage: ['Turkish', 'English'],
   },
-  sameAs: ['https://wa.me/447445508352'],
+  sameAs: ['https://wa.me/447441921660'],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -96,13 +98,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <meta name="theme-color" content="#8B5CF6" />
+        <meta name="theme-color" content="#0891b2" /> {/* Sitedeki markör rengiyle uyumlu hale getirildi */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
       </head>
-      <body className="bg-gray-950 text-white antialiased">{children}</body>
+      <body className="bg-[#080f10] text-white antialiased">{children}</body>
     </html>
   );
 }
