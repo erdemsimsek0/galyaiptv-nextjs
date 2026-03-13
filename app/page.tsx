@@ -5,20 +5,23 @@ import Link from 'next/link';
 
 const WHATSAPP_URL = 'https://wa.me/447441921660?text=Merhaba%2C%20sat%C4%B1n%20almak%20istiyorum.';
 
+// DEĞİŞİKLİK 3 & 4: 12 aylık pakete popular eklendi, 3 aylıktan kaldırıldı.
+// 6 aylık paketten 2 Bağlantı -> 1 Bağlantı yapıldı (süresiz hariç tüm paketler 1 bağlantı).
 const packages = [
   { name: '1 Aylık Paket', duration: '1 Ay IPTV', price: '500', features: ['85.000+ Kanal', 'Full HD Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'], popular: false },
-  { name: '3 Aylık Paket', duration: '3 Ay IPTV', price: '700', features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'], popular: true },
-  { name: '6 Aylık Paket', duration: '6 Ay IPTV', price: '1.000', features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum'], popular: false },
-  { name: '12 Aylık Paket', duration: '12 Ay IPTV', price: '1.400', features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'], popular: false },
+  { name: '3 Aylık Paket', duration: '3 Ay IPTV', price: '700', features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'], popular: false },
+  { name: '6 Aylık Paket', duration: '6 Ay IPTV', price: '1.000', features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'], popular: false },
+  { name: '12 Aylık Paket', duration: '12 Ay IPTV', price: '1.400', features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'], popular: true },
   { name: '24 Aylık Paket', duration: '24 Ay IPTV', price: '2.200', features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'], popular: false },
   { name: 'Süresiz Paket', duration: 'Sınırsız IPTV', price: '6.900', features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'], popular: false },
 ];
 
+// DEĞİŞİKLİK 3: Modal paketlerde de popular 12 aylığa taşındı
 const modalPackages = [
   { label: '1 Aylık Paket', price: '₺500' },
-  { label: '3 Aylık Paket', price: '₺700', popular: true },
+  { label: '3 Aylık Paket', price: '₺700' },
   { label: '6 Aylık Paket', price: '₺1.000' },
-  { label: '12 Aylık Paket', price: '₺1.400' },
+  { label: '12 Aylık Paket', price: '₺1.400', popular: true },
   { label: '24 Aylık Paket', price: '₺2.200' },
   { label: 'Süresiz Paket', price: '₺6.900' },
   { label: 'Henüz bilmiyorum', price: '' },
@@ -127,6 +130,59 @@ function Stepper({ step }: { step: ModalStep }) {
   );
 }
 
+// ─── DEĞİŞİKLİK 1: Progress Bar bileşeni ─────────────────────────────────────
+function CreatingProgress() {
+  const [progress, setProgress] = useState(0);
+  const [statusIndex, setStatusIndex] = useState(0);
+
+  const statuses = [
+    'Yayın bağlantısı kuruluyor...',
+    'Yayın hazırlanıyor...',
+    'Test hesabınız oluşturuluyor...',
+    'Son kontroller yapılıyor...',
+  ];
+
+  useEffect(() => {
+    // Progress 0'dan ~90'a kadar gider (gerçek tamamlanma step 4'e geçince olur)
+    const duration = 35000; // ~35sn
+    const interval = 200;
+    const step = (90 / (duration / interval));
+
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        const next = prev + step;
+        return next >= 90 ? 90 : next;
+      });
+    }, interval);
+
+    // Durum metnini her ~8 saniyede bir değiştir
+    const statusTimer = setInterval(() => {
+      setStatusIndex((prev) => (prev + 1 < statuses.length ? prev + 1 : prev));
+    }, 8000);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(statusTimer);
+    };
+  }, []);
+
+  return (
+    <div className="space-y-3 py-2">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-zinc-400">{statuses[statusIndex]}</span>
+        <span className="font-mono text-[#a78bfa]">{Math.round(progress)}%</span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] transition-all duration-300 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+      <p className="text-center text-[11px] text-zinc-700">Bu işlem 30–40 saniye sürebilir, lütfen bekleyin.</p>
+    </div>
+  );
+}
+
 // ─── Ana bileşen ──────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -143,6 +199,8 @@ export default function HomePage() {
   const [trialCredentials, setTrialCredentials] = useState<{
     username: string; password: string; startedAt: number;
   } | null>(null);
+  // DEĞİŞİKLİK 1: test oluşturma aşamasını takip eden state
+  const [isCreating, setIsCreating] = useState(false);
 
   const emailInputRef = useRef<HTMLInputElement>(null);
 
@@ -164,6 +222,7 @@ export default function HomePage() {
     setStatusMsg(''); setAlreadyUsedMsg('');
     setResendCooldown(0); setIsRecovery(false);
     setTrialCredentials(null);
+    setIsCreating(false);
   };
 
   const handleCloseModal = () => {
@@ -173,6 +232,7 @@ export default function HomePage() {
     setStatusMsg(''); setAlreadyUsedMsg('');
     setLoading(false); setResendCooldown(0); setIsRecovery(false);
     setTrialCredentials(null);
+    setIsCreating(false);
   };
 
   const handleSendOtp = async (recoveryMode = false) => {
@@ -206,10 +266,14 @@ export default function HomePage() {
     finally { setLoading(false); }
   };
 
+  // DEĞİŞİKLİK 1: isCreating state ile progress bar'ı tetikliyoruz
   const handleVerifyOtp = async () => {
     if (!otp) return alert('Lütfen doğrulama kodunu girin.');
     setLoading(true);
-    setStatusMsg(isRecovery ? 'Bilgileriniz getiriliyor...' : 'Test hesabınız oluşturuluyor, 30–40 saniye sürebilir...');
+    if (!isRecovery) {
+      setIsCreating(true);
+    }
+    setStatusMsg(isRecovery ? 'Bilgileriniz getiriliyor...' : '');
     try {
       const action = isRecovery ? 'recover' : 'verify';
       const res = await fetch('/api/test-talep', {
@@ -218,12 +282,12 @@ export default function HomePage() {
         body: JSON.stringify({ action, email, otp, token: otpToken }),
       });
       const data = await res.json();
-      if (data.alreadyUsed) { setAlreadyUsedMsg(data.error); setStep(5); setStatusMsg(''); return; }
+      if (data.alreadyUsed) { setAlreadyUsedMsg(data.error); setStep(5); setStatusMsg(''); setIsCreating(false); return; }
       if (data.success) {
         setTrialCredentials({ username: data.username, password: data.password, startedAt: Date.now() });
-        setStep(4); setStatusMsg('');
-      } else { alert(data.error || 'Kod hatalı.'); setStatusMsg(''); }
-    } catch { alert('Bir hata oluştu.'); setStatusMsg(''); }
+        setStep(4); setStatusMsg(''); setIsCreating(false);
+      } else { alert(data.error || 'Kod hatalı.'); setStatusMsg(''); setIsCreating(false); }
+    } catch { alert('Bir hata oluştu.'); setStatusMsg(''); setIsCreating(false); }
     finally { setLoading(false); }
   };
 
@@ -318,30 +382,31 @@ export default function HomePage() {
         </section>
 
         {/* ─── Packages ──────────────────────────────────────────────────────── */}
+        {/* DEĞİŞİKLİK 2, 3, 4, 5: Paket kartları güncellendi */}
         <section id="paketler" className="border-t border-white/5 px-6 py-20">
           <div className="mx-auto max-w-6xl">
             <div className="mb-12 text-center">
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Paket Seçenekleri</h2>
               <p className="mt-3 text-sm text-zinc-500">Tek seferlik ödeme, abonelik yok.</p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {packages.map((pkg) => (
                 <div
                   key={pkg.name}
-                  className={`relative flex flex-col rounded-2xl border p-6 transition-colors ${
+                  className={`relative flex flex-col rounded-2xl border p-6 transition-all ${
                     pkg.popular
-                      ? 'border-[#7c3aed]/50 bg-[#7c3aed]/5'
-                      : 'border-white/5 bg-white/[0.02] hover:border-white/10'
+                      ? 'border-[#7c3aed]/60 bg-gradient-to-b from-[#7c3aed]/10 to-[#7c3aed]/[0.03] shadow-lg shadow-[#7c3aed]/10'
+                      : 'border-white/8 bg-white/[0.025] hover:border-white/15 hover:bg-white/[0.04]'
                   }`}
                 >
                   {pkg.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#7c3aed] px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
-                      Popüler
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-[#7c3aed] to-[#9333ea] px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-md shadow-[#7c3aed]/30">
+                      ⭐ En Popüler
                     </div>
                   )}
                   <div className="mb-4">
-                    <div className="text-xs font-medium uppercase tracking-widest text-zinc-600">{pkg.duration}</div>
-                    <h3 className="mt-1 text-lg font-bold text-white">{pkg.name}</h3>
+                    <div className="text-[11px] font-semibold uppercase tracking-widest text-zinc-600">{pkg.duration}</div>
+                    <h3 className="mt-1.5 text-lg font-bold text-white">{pkg.name}</h3>
                   </div>
                   <div className="mb-5">
                     <span className="text-4xl font-extrabold text-white">₺{pkg.price}</span>
@@ -350,27 +415,33 @@ export default function HomePage() {
                   <ul className="mb-6 flex-1 space-y-2.5">
                     {pkg.features.map((f) => (
                       <li key={f} className="flex items-center gap-2.5 text-sm text-zinc-400">
-                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 text-[10px]">✓</span>
+                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${
+                          pkg.popular ? 'bg-[#7c3aed]/20 text-[#a78bfa]' : 'bg-emerald-500/10 text-emerald-400'
+                        }`}>✓</span>
                         {f}
                       </li>
                     ))}
                   </ul>
+
+                  {/* WhatsApp Satın Al butonu */}
                   <a
                     href={`https://wa.me/447441921660?text=Merhaba%2C%20${encodeURIComponent(pkg.name)}%20sat%C4%B1n%20almak%20istiyorum.`}
                     target="_blank" rel="noopener noreferrer"
-                    className={`mb-2 block w-full rounded-xl py-2.5 text-center text-sm font-semibold transition-colors ${
+                    className={`mb-3 flex w-full items-center justify-center rounded-xl py-3 text-center text-sm font-semibold transition-all ${
                       pkg.popular
-                        ? 'bg-[#7c3aed] text-white hover:bg-[#6d28d9]'
-                        : 'border border-white/8 text-zinc-300 hover:bg-white/5 hover:text-white'
+                        ? 'bg-[#7c3aed] text-white shadow-md shadow-[#7c3aed]/25 hover:bg-[#6d28d9]'
+                        : 'border border-white/15 bg-white/[0.04] text-white hover:bg-white/[0.08] hover:border-white/25'
                     }`}
                   >
                     💬 WhatsApp ile Satın Al
                   </a>
+
+                  {/* DEĞİŞİKLİK 2: "Önce Ücretsiz Test Al" butonu tam görünür, beyaz yazı, belirgin border */}
                   <button
                     onClick={() => handleOpenModal(pkg.name)}
-                    className="w-full rounded-xl py-2 text-center text-xs text-zinc-600 transition-colors hover:text-zinc-400"
+                    className="flex w-full items-center justify-center rounded-xl border border-white/20 bg-white/[0.03] px-3 py-2.5 text-center text-xs font-medium text-white transition-all hover:border-white/30 hover:bg-white/[0.07]"
                   >
-                    Önce ücretsiz test al
+                    Önce Ücretsiz Test Al
                   </button>
                 </div>
               ))}
@@ -584,26 +655,40 @@ export default function HomePage() {
                 />
                 <p className="text-xs text-zinc-700">Spam klasörünü de kontrol edin.</p>
                 {statusMsg && <p className="text-xs text-zinc-400">{statusMsg}</p>}
-                <button
-                  onClick={handleVerifyOtp}
-                  disabled={loading || otp.length !== 6}
-                  className="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-40"
-                >
-                  {loading ? 'Lütfen Bekleyin...' : 'Onayla ve Testi Aç'}
-                </button>
-                <div className="flex justify-between text-xs">
-                  <button onClick={() => { setStep(2); setOtp(''); }} className="text-zinc-700 transition-colors hover:text-zinc-400">← Geri dön</button>
+
+                {/* DEĞİŞİKLİK 1: Oluşturma sırasında progress bar, değilse normal buton */}
+                {isCreating ? (
+                  <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                    <CreatingProgress />
+                  </div>
+                ) : (
                   <button
-                    onClick={() => handleSendOtp(isRecovery)}
-                    disabled={loading || resendCooldown > 0}
-                    className="text-zinc-700 transition-colors hover:text-zinc-400 disabled:text-zinc-800"
+                    onClick={handleVerifyOtp}
+                    disabled={loading || otp.length !== 6}
+                    className="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-40"
                   >
-                    {resendCooldown > 0 ? `Tekrar gönder (${resendCooldown}s)` : 'Tekrar gönder'}
+                    {loading ? 'Lütfen Bekleyin...' : 'Onayla ve Testi Aç'}
                   </button>
-                </div>
-                <div className="border-t border-white/5 pt-3">
-                  <WaButton />
-                </div>
+                )}
+
+                {!isCreating && (
+                  <div className="flex justify-between text-xs">
+                    <button onClick={() => { setStep(2); setOtp(''); }} className="text-zinc-700 transition-colors hover:text-zinc-400">← Geri dön</button>
+                    <button
+                      onClick={() => handleSendOtp(isRecovery)}
+                      disabled={loading || resendCooldown > 0}
+                      className="text-zinc-700 transition-colors hover:text-zinc-400 disabled:text-zinc-800"
+                    >
+                      {resendCooldown > 0 ? `Tekrar gönder (${resendCooldown}s)` : 'Tekrar gönder'}
+                    </button>
+                  </div>
+                )}
+
+                {!isCreating && (
+                  <div className="border-t border-white/5 pt-3">
+                    <WaButton />
+                  </div>
+                )}
               </div>
             )}
 
