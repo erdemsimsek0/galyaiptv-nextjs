@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 const WHATSAPP_URL = 'https://wa.me/447441921660?text=Merhaba%2C%20sat%C4%B1n%20almak%20istiyorum.';
@@ -14,15 +14,14 @@ const packages = [
   { name: 'Süresiz Paket', duration: 'Sınırsız IPTV', price: '6.900', features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'], popular: false },
 ];
 
-// Modal paket seçim listesi (kısa)
 const modalPackages = [
-  '1 Aylık Paket — ₺500',
-  '3 Aylık Paket — ₺700',
-  '6 Aylık Paket — ₺1.000',
-  '12 Aylık Paket — ₺1.400',
-  '24 Aylık Paket — ₺2.200',
-  'Süresiz Paket — ₺6.900',
-  'Henüz bilmiyorum',
+  { label: '1 Aylık Paket', price: '₺500' },
+  { label: '3 Aylık Paket', price: '₺700', popular: true },
+  { label: '6 Aylık Paket', price: '₺1.000' },
+  { label: '12 Aylık Paket', price: '₺1.400' },
+  { label: '24 Aylık Paket', price: '₺2.200' },
+  { label: 'Süresiz Paket', price: '₺6.900' },
+  { label: 'Henüz bilmiyorum', price: '' },
 ];
 
 const faqs = [
@@ -38,14 +37,104 @@ const faqSchema = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEn
 const productSchema = { '@context': 'https://schema.org', '@type': 'Product', name: 'Galya IPTV Paketleri', image: 'https://galyaiptv.com.tr/og-image.jpg', description: 'Galya IPTV paketleri ile 4K ve Full HD yayın kalitesinde içeriklere erişin.', brand: { '@type': 'Brand', name: 'Galya IPTV' }, offers: { '@type': 'AggregateOffer', lowPrice: '500', highPrice: '6900', priceCurrency: 'TRY', availability: 'https://schema.org/InStock', offerCount: '6', url: 'https://galyaiptv.com.tr/#paketler' } };
 const organizationSchema = { '@context': 'https://schema.org', '@type': 'Organization', name: 'Galya IPTV', url: 'https://galyaiptv.com.tr/', logo: 'https://galyaiptv.com.tr/logo.png', contactPoint: [{ '@type': 'ContactPoint', contactType: 'customer support', url: 'https://wa.me/447441921660', availableLanguage: ['Turkish'] }] };
 
-// Adımlar:
-// 1 → paket seç
-// 2 → email gir
-// 3 → otp gir
-// 4 → başarılı
-// 5 → daha önce test alındı
+// 1 → paket seç | 2 → email | 3 → otp | 4 → başarılı | 5 → zaten test alındı
 type ModalStep = 1 | 2 | 3 | 4 | 5;
 
+// ─── Kopyala butonu ───────────────────────────────────────────────────────────
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  const handle = () => {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button
+      onClick={handle}
+      className={`ml-2 rounded-md border px-2 py-0.5 text-xs transition-all ${
+        copied
+          ? 'border-green-500 text-green-400'
+          : 'border-gray-700 text-gray-500 hover:border-purple-500 hover:text-purple-400'
+      }`}
+    >
+      {copied ? '✓' : 'Kopyala'}
+    </button>
+  );
+}
+
+// ─── Geri sayım (trialdaki 12 saat için) ─────────────────────────────────────
+function Countdown({ startedAt }: { startedAt: number }) {
+  const [remaining, setRemaining] = useState(0);
+  useEffect(() => {
+    const total = 12 * 60 * 60 * 1000;
+    const calc = () => Math.max(0, total - (Date.now() - startedAt));
+    setRemaining(calc());
+    const id = setInterval(() => setRemaining(calc()), 1000);
+    return () => clearInterval(id);
+  }, [startedAt]);
+
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  const s = Math.floor((remaining % 60000) / 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return (
+    <div className="flex items-center justify-center gap-1 rounded-lg border border-green-900/60 bg-black/30 px-3 py-2 text-center">
+      {[{ val: pad(h), label: 'saat' }, { val: pad(m), label: 'dak' }, { val: pad(s), label: 'sn' }].map(
+        (block, i) => (
+          <span key={block.label} className="flex items-center gap-1">
+            {i > 0 && <span className="mb-2 text-green-700 font-bold">:</span>}
+            <span className="flex flex-col items-center">
+              <span className="font-mono text-xl font-bold leading-none text-green-400">{block.val}</span>
+              <span className="text-[9px] uppercase tracking-wider text-green-900">{block.label}</span>
+            </span>
+          </span>
+        )
+      )}
+    </div>
+  );
+}
+
+// ─── Stepper ──────────────────────────────────────────────────────────────────
+const STEP_LABELS = ['Paket', 'E-posta', 'Doğrula', 'Hazır'];
+function Stepper({ step }: { step: ModalStep }) {
+  const active = Math.min(step, 4);
+  return (
+    <div className="mb-6 flex items-center justify-center gap-1">
+      {STEP_LABELS.map((label, i) => {
+        const idx = i + 1;
+        const done = active > idx;
+        const current = active === idx;
+        return (
+          <span key={label} className="flex items-center gap-1">
+            <span className="flex flex-col items-center gap-0.5">
+              <span
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                  done
+                    ? 'bg-purple-600 text-white'
+                    : current
+                    ? 'border-2 border-purple-500 text-purple-400'
+                    : 'border border-gray-700 text-gray-600'
+                }`}
+              >
+                {done ? '✓' : idx}
+              </span>
+              <span className={`text-[10px] ${current ? 'text-purple-400' : done ? 'text-gray-500' : 'text-gray-700'}`}>
+                {label}
+              </span>
+            </span>
+            {i < STEP_LABELS.length - 1 && (
+              <span className={`mb-4 h-px w-8 ${done ? 'bg-purple-600' : 'bg-gray-800'}`} />
+            )}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Ana bileşen ──────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [step, setStep] = useState<ModalStep>(1);
@@ -56,15 +145,28 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
   const [alreadyUsedMsg, setAlreadyUsedMsg] = useState('');
-  const [resendCooldown, setResendCooldown] = useState(0); // saniye
-  const [isRecovery, setIsRecovery] = useState(false); // credentials kurtarma modu
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [isRecovery, setIsRecovery] = useState(false);
 
-  // Resend geri sayım
+  // ✨ YENİ: başarılı sonrası credential state'i
+  const [trialCredentials, setTrialCredentials] = useState<{
+    username: string;
+    password: string;
+    startedAt: number;
+  } | null>(null);
+
+  const emailInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const id = setInterval(() => setResendCooldown((c) => Math.max(c - 1, 0)), 1000);
     return () => clearInterval(id);
   }, [resendCooldown]);
+
+  // Modal açıldığında email input'a focus
+  useEffect(() => {
+    if (step === 2) setTimeout(() => emailInputRef.current?.focus(), 100);
+  }, [step]);
 
   const handleOpenModal = (pkg?: string) => {
     setIsModalOpen(true);
@@ -73,6 +175,7 @@ export default function HomePage() {
     setEmail(''); setOtp(''); setOtpToken('');
     setStatusMsg(''); setAlreadyUsedMsg('');
     setResendCooldown(0); setIsRecovery(false);
+    setTrialCredentials(null);
   };
 
   const handleCloseModal = () => {
@@ -81,6 +184,7 @@ export default function HomePage() {
     setEmail(''); setOtp(''); setOtpToken('');
     setStatusMsg(''); setAlreadyUsedMsg('');
     setLoading(false); setResendCooldown(0); setIsRecovery(false);
+    setTrialCredentials(null);
   };
 
   const handleSendOtp = async (recoveryMode = false) => {
@@ -95,9 +199,7 @@ export default function HomePage() {
       const data = await res.json();
       if (data.alreadyUsed) {
         if (recoveryMode) {
-          // Kurtarma modunda: zaten test var, OTP gönder
           setIsRecovery(true);
-          // alreadyUsed = true ama biz recovery OTP istiyoruz, backend izin verecek
         } else {
           setAlreadyUsedMsg(data.error); setStep(5); return;
         }
@@ -132,15 +234,34 @@ export default function HomePage() {
       });
       const data = await res.json();
       if (data.alreadyUsed) { setAlreadyUsedMsg(data.error); setStep(5); setStatusMsg(''); return; }
-      if (data.success) { setStep(4); }
-      else { alert(data.error || 'Kod hatalı.'); setStatusMsg(''); }
+      if (data.success) {
+        // ✨ YENİ: credentials'ı state'e kaydet
+        setTrialCredentials({
+          username: data.username,
+          password: data.password,
+          startedAt: Date.now(),
+        });
+        setStep(4);
+        setStatusMsg('');
+      } else {
+        alert(data.error || 'Kod hatalı.');
+        setStatusMsg('');
+      }
     } catch { alert('Bir hata oluştu.'); setStatusMsg(''); }
     finally { setLoading(false); }
   };
 
+  const m3uLink = trialCredentials
+    ? `http://pro4kiptv.xyz:2086/get.php?username=${trialCredentials.username}&password=${trialCredentials.password}&type=m3u&output=ts`
+    : '';
+
   const WaButton = ({ label = '💬 Hemen Satın Al (WhatsApp)' }: { label?: string }) => (
-    <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
-      className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#25d366] hover:bg-[#1ebe5d] py-3 font-bold text-white transition-colors">
+    <a
+      href={WHATSAPP_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#25d366] hover:bg-[#1ebe5d] py-3 font-bold text-white transition-colors"
+    >
       {label}
     </a>
   );
@@ -161,7 +282,9 @@ export default function HomePage() {
             <Link href="/#sss" className="transition-colors hover:text-white">S.S.S</Link>
             <Link href="/blog" className="transition-colors hover:text-white">Blog</Link>
             <Link href="/iletisim" className="transition-colors hover:text-white">İletişim</Link>
-            <button onClick={() => handleOpenModal()} className="rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700">Ücretsiz Test</button>
+            <button onClick={() => handleOpenModal()} className="rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700">
+              Ücretsiz Test
+            </button>
           </div>
         </nav>
       </header>
@@ -181,11 +304,20 @@ export default function HomePage() {
               Galya IPTV ile canlı TV, spor, film ve dizi içeriklerine tek bir üyelikle kolayca erişin.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <button onClick={() => handleOpenModal()} className="rounded-xl bg-purple-600 px-8 py-4 text-lg font-semibold text-white transition-colors hover:bg-purple-700">Ücretsiz Test Al</button>
-              <Link href="/#paketler" className="rounded-xl border border-purple-500 px-8 py-4 text-lg font-semibold text-purple-300 transition-colors hover:bg-purple-900/30">Paketleri İncele</Link>
+              <button onClick={() => handleOpenModal()} className="rounded-xl bg-purple-600 px-8 py-4 text-lg font-semibold text-white transition-colors hover:bg-purple-700">
+                Ücretsiz Test Al
+              </button>
+              <Link href="/#paketler" className="rounded-xl border border-purple-500 px-8 py-4 text-lg font-semibold text-purple-300 transition-colors hover:bg-purple-900/30">
+                Paketleri İncele
+              </Link>
             </div>
             <div className="mt-10 grid grid-cols-2 gap-4 text-left md:grid-cols-4">
-              {[{ title: '85.000+', desc: 'Canlı kanal' }, { title: '4K / Full HD', desc: 'Yüksek görüntü kalitesi' }, { title: 'Çoklu Cihaz', desc: 'TV, telefon, tablet, PC' }, { title: 'Destek', desc: 'Kurulum yardımı' }].map((item) => (
+              {[
+                { title: '85.000+', desc: 'Canlı kanal' },
+                { title: '4K / Full HD', desc: 'Yüksek görüntü kalitesi' },
+                { title: 'Çoklu Cihaz', desc: 'TV, telefon, tablet, PC' },
+                { title: 'Destek', desc: 'Kurulum yardımı' },
+              ].map((item) => (
                 <div key={item.title} className="rounded-2xl border border-gray-800 bg-gray-900/60 p-4">
                   <div className="mb-1 text-xl font-bold gradient-text">{item.title}</div>
                   <div className="text-sm text-gray-400">{item.desc}</div>
@@ -198,7 +330,12 @@ export default function HomePage() {
         {/* ─── Stats ────────────────────────────────────────────────────────── */}
         <section className="border-y border-gray-800 bg-gray-900/50 py-12">
           <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 px-4 text-center md:grid-cols-4">
-            {[{ value: '85.000+', label: 'Canlı Kanal' }, { value: '4K', label: 'Yayın Kalitesi' }, { value: '7/24', label: 'Destek Hattı' }, { value: 'Çoklu', label: 'Cihaz Uyumu' }].map((s) => (
+            {[
+              { value: '85.000+', label: 'Canlı Kanal' },
+              { value: '4K', label: 'Yayın Kalitesi' },
+              { value: '7/24', label: 'Destek Hattı' },
+              { value: 'Çoklu', label: 'Cihaz Uyumu' },
+            ].map((s) => (
               <div key={s.label}>
                 <div className="text-3xl font-bold gradient-text">{s.value}</div>
                 <div className="mt-1 text-sm text-gray-400">{s.label}</div>
@@ -214,27 +351,34 @@ export default function HomePage() {
             <p className="mx-auto mb-12 max-w-3xl text-center text-gray-400">Size en uygun süreyi seçin, fiyatları karşılaştırın.</p>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {packages.map((pkg) => (
-                <div key={pkg.name} className={`relative rounded-2xl border p-6 flex flex-col ${pkg.popular ? 'border-purple-500 bg-purple-900/20' : 'border-gray-700 bg-gray-900/50'}`}>
-                  {pkg.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-purple-600 px-4 py-1 text-xs font-bold text-white">EN POPÜLER</div>}
+                <div key={pkg.name} className={`relative flex flex-col rounded-2xl border p-6 ${pkg.popular ? 'border-purple-500 bg-purple-900/20' : 'border-gray-700 bg-gray-900/50'}`}>
+                  {pkg.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-purple-600 px-4 py-1 text-xs font-bold text-white">
+                      EN POPÜLER
+                    </div>
+                  )}
                   <div className="mb-1 text-sm text-gray-400">{pkg.duration}</div>
                   <h3 className="mb-2 text-xl font-bold">{pkg.name}</h3>
                   <div className="mb-1 text-4xl font-extrabold">₺{pkg.price}</div>
                   <div className="mb-6 text-sm text-gray-500">tek seferlik ödeme</div>
                   <ul className="mb-8 flex-1 space-y-3">
                     {pkg.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-gray-300"><span className="text-green-400">✓</span> {f}</li>
+                      <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
+                        <span className="text-green-400">✓</span> {f}
+                      </li>
                     ))}
                   </ul>
                   <a
                     href={`https://wa.me/447441921660?text=Merhaba%2C%20${encodeURIComponent(pkg.name)}%20sat%C4%B1n%20almak%20istiyorum.`}
-                    target="_blank" rel="noopener noreferrer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`mb-2 block w-full rounded-xl py-3 text-center font-semibold transition-colors ${pkg.popular ? 'bg-purple-600 text-white hover:bg-purple-700' : 'border border-gray-600 text-gray-300 hover:border-purple-500 hover:text-white'}`}
                   >
                     💬 Satın Al
                   </a>
                   <button
                     onClick={() => handleOpenModal(pkg.name)}
-                    className="block w-full rounded-xl py-2 text-center text-sm text-purple-400 transition-colors hover:text-purple-300 border border-purple-800 hover:border-purple-500"
+                    className="block w-full rounded-xl border border-purple-800 py-2 text-center text-sm text-purple-400 transition-colors hover:border-purple-500 hover:text-purple-300"
                   >
                     Ücretsiz Test Al
                   </button>
@@ -257,7 +401,7 @@ export default function HomePage() {
                 { icon: '📱', title: 'Tüm Cihazlar', desc: 'Smart TV, mobil, TV Box, bilgisayar ve daha fazlası.' },
                 { icon: '🆓', title: 'Önce Test', desc: 'Satın almadan önce deneyerek karar ver.' },
               ].map((item) => (
-                <div key={item.title} className="rounded-xl border border-gray-800 bg-gray-900 p-6 hover:border-purple-800 transition-colors">
+                <div key={item.title} className="rounded-xl border border-gray-800 bg-gray-900 p-6 transition-colors hover:border-purple-800">
                   <div className="mb-3 text-3xl">{item.icon}</div>
                   <h3 className="mb-2 text-lg font-bold">{item.title}</h3>
                   <p className="text-sm text-gray-400">{item.desc}</p>
@@ -307,139 +451,273 @@ export default function HomePage() {
         <p className="mb-2 font-semibold text-gray-300">Galya IPTV</p>
         <p>© {new Date().getFullYear()} Galya IPTV. Tüm hakları saklıdır.</p>
         <div className="mt-4 flex justify-center gap-6">
-          <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-          <Link href="/#paketler" className="hover:text-white transition-colors">Paketler</Link>
-          <Link href="/#sss" className="hover:text-white transition-colors">S.S.S</Link>
-          <Link href="/iletisim" className="hover:text-white transition-colors">İletişim</Link>
+          <Link href="/blog" className="transition-colors hover:text-white">Blog</Link>
+          <Link href="/#paketler" className="transition-colors hover:text-white">Paketler</Link>
+          <Link href="/#sss" className="transition-colors hover:text-white">S.S.S</Link>
+          <Link href="/iletisim" className="transition-colors hover:text-white">İletişim</Link>
         </div>
       </footer>
 
       {/* ─── Modal ────────────────────────────────────────────────────────────── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-purple-500 bg-gray-950 p-8 shadow-[0_0_30px_rgba(147,51,234,0.3)]">
-            <button onClick={handleCloseModal} className="float-right text-xl font-bold text-gray-500 hover:text-white">✕</button>
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+          onClick={(e) => e.target === e.currentTarget && handleCloseModal()}
+        >
+          <div className="w-full max-w-md rounded-2xl border border-purple-500 bg-gray-950 p-6 shadow-[0_0_30px_rgba(147,51,234,0.3)]">
+            {/* Kapat */}
+            <button
+              onClick={handleCloseModal}
+              className="float-right text-xl font-bold text-gray-600 hover:text-white"
+            >
+              ✕
+            </button>
 
-            {/* Adım 1: Paket seç */}
+            {/* Stepper (adım 4 ve 5'te gösterme) */}
+            {step !== 5 && <Stepper step={step} />}
+
+            {/* ── ADIM 1: Paket seç ─────────────────────────────────────── */}
             {step === 1 && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <h3 className="text-2xl font-bold text-white">Ücretsiz Test Al</h3>
-                <p className="text-sm text-gray-400">Hangi paketi düşünüyorsunuz? (İsteğe bağlı)</p>
+                <p className="text-sm text-gray-400">Hangi paketi düşünüyorsunuz? <span className="text-gray-600">(İsteğe bağlı)</span></p>
                 <div className="space-y-2">
                   {modalPackages.map((pkg) => (
                     <button
-                      key={pkg}
-                      onClick={() => setSelectedPackage(pkg)}
-                      className={`w-full text-left px-4 py-3 rounded-xl text-sm border transition-colors ${
-                        selectedPackage === pkg
+                      key={pkg.label}
+                      onClick={() => setSelectedPackage(pkg.label)}
+                      className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${
+                        selectedPackage === pkg.label
                           ? 'border-purple-500 bg-purple-900/30 text-white'
                           : 'border-gray-700 text-gray-400 hover:border-gray-600 hover:text-white'
                       }`}
                     >
-                      {selectedPackage === pkg && <span className="mr-2 text-purple-400">✓</span>}
-                      {pkg}
+                      {/* Checkbox circle */}
+                      <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border text-xs font-bold transition-all ${
+                        selectedPackage === pkg.label ? 'border-purple-500 bg-purple-600 text-white' : 'border-gray-600'
+                      }`}>
+                        {selectedPackage === pkg.label ? '✓' : ''}
+                      </span>
+                      <span className={pkg.label === 'Henüz bilmiyorum' ? 'italic text-gray-500' : ''}>
+                        {pkg.label}
+                      </span>
+                      {pkg.popular && (
+                        <span className="ml-1 rounded bg-purple-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                          POPÜLER
+                        </span>
+                      )}
+                      {pkg.price && (
+                        <span className="ml-auto font-bold text-purple-400">{pkg.price}</span>
+                      )}
                     </button>
                   ))}
                 </div>
                 <button
                   onClick={() => setStep(2)}
-                  className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold py-3 rounded-xl transition-colors"
+                  className="w-full rounded-xl bg-purple-600 py-3 font-bold text-white transition-colors hover:bg-purple-700"
                 >
                   Devam Et →
                 </button>
-                <div className="pt-2 border-t border-gray-800">
+                <div className="border-t border-gray-800 pt-3">
                   <WaButton />
                 </div>
               </div>
             )}
 
-            {/* Adım 2: Email */}
+            {/* ── ADIM 2: Email ─────────────────────────────────────────── */}
             {step === 2 && (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <h3 className="text-2xl font-bold text-white">E-posta Adresiniz</h3>
-                {selectedPackage && (
-                  <div className="bg-purple-900/20 border border-purple-800/50 rounded-xl px-4 py-2 text-sm text-purple-300">
+                {selectedPackage && selectedPackage !== 'Henüz bilmiyorum' && (
+                  <div className="rounded-xl border border-purple-800/50 bg-purple-900/20 px-4 py-2 text-sm text-purple-300">
                     📦 {selectedPackage}
                   </div>
                 )}
                 <p className="text-sm text-gray-400">Test bilgilerini göndereceğimiz e-posta adresinizi girin.</p>
                 <input
+                  ref={emailInputRef}
                   type="email"
-                  placeholder="E-posta adresiniz"
-                  className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-3 outline-none focus:border-[#7c3aed] transition-colors"
+                  placeholder="ornek@email.com"
+                  className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white outline-none transition-colors focus:border-purple-500"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()}
                 />
-                <button onClick={() => handleSendOtp(false)} disabled={loading}
-                  className="w-full rounded-xl bg-purple-600 py-4 font-bold text-white transition-colors hover:bg-purple-700 disabled:opacity-50">
-                  {loading ? 'Kod Gönderiliyor...' : 'Doğrulama Kodu Gönder'}
+                <p className="text-xs text-gray-600">Geçici e-posta adresleri kabul edilmemektedir.</p>
+                <button
+                  onClick={() => handleSendOtp(false)}
+                  disabled={loading}
+                  className="w-full rounded-xl bg-purple-600 py-3 font-bold text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+                >
+                  {loading ? 'Gönderiliyor...' : 'Doğrulama Kodu Gönder'}
                 </button>
-                {statusMsg && <p className="text-yellow-400 text-xs text-center">{statusMsg}</p>}
-                <button onClick={() => setStep(1)} className="w-full text-gray-500 hover:text-gray-300 text-sm transition-colors">← Geri dön</button>
+                {statusMsg && <p className="text-center text-xs text-yellow-400">{statusMsg}</p>}
+                <button onClick={() => setStep(1)} className="w-full text-sm text-gray-600 transition-colors hover:text-gray-300">
+                  ← Geri dön
+                </button>
                 <button
                   onClick={() => handleSendOtp(true)}
                   disabled={loading}
-                  className="w-full text-purple-500 hover:text-purple-300 text-xs transition-colors mt-1"
+                  className="w-full text-xs text-purple-600 transition-colors hover:text-purple-400"
                 >
                   Test bilgilerimi daha önce aldım, tekrar görmek istiyorum →
                 </button>
-                <div className="pt-2 border-t border-gray-800"><WaButton /></div>
+                <div className="border-t border-gray-800 pt-3">
+                  <WaButton />
+                </div>
               </div>
             )}
 
-            {/* Adım 3: OTP */}
+            {/* ── ADIM 3: OTP ───────────────────────────────────────────── */}
             {step === 3 && (
-              <div className="space-y-5 text-center">
+              <div className="space-y-4 text-center">
                 <h3 className="text-2xl font-bold text-white">Kodu Doğrula</h3>
-                <p className="text-sm text-gray-400"><strong className="text-white">{email}</strong> adresine gönderilen 6 haneli kodu girin.</p>
+                <p className="text-sm text-gray-400">
+                  <strong className="text-white">{email}</strong> adresine gönderilen 6 haneli kodu girin.
+                </p>
                 <input
-                  type="text" placeholder="000000" maxLength={6} inputMode="numeric"
-                  className="w-full bg-[#1f2937] border border-[#374151] text-white text-center text-3xl font-bold tracking-[10px] rounded-xl px-4 py-3 outline-none focus:border-[#7c3aed] transition-colors"
+                  type="text"
+                  placeholder="000000"
+                  maxLength={6}
+                  inputMode="numeric"
+                  className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-center font-mono text-3xl font-bold tracking-[10px] text-white outline-none transition-colors focus:border-purple-500"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                   onKeyDown={(e) => e.key === 'Enter' && handleVerifyOtp()}
                 />
+                <p className="text-xs text-gray-600">Spam klasörünü de kontrol edin.</p>
                 {statusMsg && <p className="text-xs font-medium text-purple-400">{statusMsg}</p>}
-                <button onClick={handleVerifyOtp} disabled={loading || otp.length !== 6}
-                  className="w-full rounded-xl bg-green-600 py-4 font-bold text-white transition-colors hover:bg-green-700 disabled:opacity-50">
+                <button
+                  onClick={handleVerifyOtp}
+                  disabled={loading || otp.length !== 6}
+                  className="w-full rounded-xl bg-green-600 py-3 font-bold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                >
                   {loading ? 'Lütfen Bekleyin...' : 'Onayla ve Testi Aç'}
                 </button>
                 <button
                   onClick={() => handleSendOtp(isRecovery)}
                   disabled={loading || resendCooldown > 0}
-                  className="w-full text-sm text-gray-500 hover:text-gray-300 disabled:text-gray-700 transition-colors"
+                  className="w-full text-sm text-gray-500 transition-colors hover:text-gray-300 disabled:text-gray-700"
                 >
                   {resendCooldown > 0 ? `Yeni kod: ${resendCooldown}s` : 'Kodu tekrar gönder'}
                 </button>
-                <button onClick={() => { setStep(2); setOtp(''); }} className="w-full text-gray-600 hover:text-gray-400 text-xs transition-colors">← Geri dön</button>
-                <div className="pt-2 border-t border-gray-800"><WaButton /></div>
+                <button
+                  onClick={() => { setStep(2); setOtp(''); }}
+                  className="w-full text-xs text-gray-600 transition-colors hover:text-gray-400"
+                >
+                  ← Geri dön
+                </button>
+                <div className="border-t border-gray-800 pt-3">
+                  <WaButton />
+                </div>
               </div>
             )}
 
-            {/* Adım 4: Başarılı */}
+            {/* ── ADIM 4: Başarılı + Inline Credentials ─────────────────── */}
             {step === 4 && (
-              <div className="space-y-4 py-6 text-center">
-                <div className="text-6xl text-green-500">✅</div>
-                <h3 className="text-2xl font-bold text-white">Harika! Testiniz Hazır.</h3>
-                <p className="text-gray-300">IPTV test bilgileriniz e-posta adresinize gönderildi.<br /><br />
-                  Lütfen <strong className="text-white">Spam</strong> klasörünü de kontrol edin.</p>
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="text-5xl">✅</div>
+                  <h3 className="mt-2 text-2xl font-bold text-white">
+                    {isRecovery ? 'Bilgileriniz Hazır' : 'Testiniz Açıldı!'}
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-400">
+                    Bilgiler <strong className="text-white">{email}</strong> adresine de gönderildi.
+                  </p>
+                </div>
+
+                {trialCredentials && (
+                  <div className="rounded-xl border border-purple-900/60 bg-black/40 p-4">
+                    {/* Aktif badge + geri sayım */}
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+                        </span>
+                        <span className="text-xs font-semibold text-green-400">Aktif Test Hesabı</span>
+                      </div>
+                      <Countdown startedAt={trialCredentials.startedAt} />
+                    </div>
+
+                    {/* Credential satırları */}
+                    <div className="space-y-0 divide-y divide-gray-800/60">
+                      {/* Sunucu */}
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-xs text-gray-500">Sunucu</span>
+                        <div className="flex items-center">
+                          <span className="font-mono text-xs text-purple-400">pro4kiptv.xyz:2086</span>
+                          <CopyButton value="http://pro4kiptv.xyz:2086/" />
+                        </div>
+                      </div>
+                      {/* Kullanıcı Adı */}
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-xs text-gray-500">Kullanıcı Adı</span>
+                        <div className="flex items-center">
+                          <span className="rounded bg-purple-950 px-2 py-0.5 font-mono text-sm font-bold text-purple-300">
+                            {trialCredentials.username}
+                          </span>
+                          <CopyButton value={trialCredentials.username} />
+                        </div>
+                      </div>
+                      {/* Şifre */}
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-xs text-gray-500">Şifre</span>
+                        <div className="flex items-center">
+                          <span className="rounded bg-purple-950 px-2 py-0.5 font-mono text-sm font-bold text-purple-300">
+                            {trialCredentials.password}
+                          </span>
+                          <CopyButton value={trialCredentials.password} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* M3U linki */}
+                    <div className="mt-3 rounded-lg border border-gray-800 bg-gray-900/50 p-2">
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="text-[10px] uppercase tracking-wider text-gray-600">M3U Linki</span>
+                        <CopyButton value={m3uLink} />
+                      </div>
+                      <p className="break-all font-mono text-[10px] leading-relaxed text-gray-500">{m3uLink}</p>
+                    </div>
+
+                    {/* Önerilen uygulamalar */}
+                    <div className="mt-3 flex gap-2">
+                      {['IPTV Smarters', 'TiviMate', 'Hot IPTV'].map((app) => (
+                        <span key={app} className="flex-1 rounded-lg border border-gray-800 py-1 text-center text-[10px] text-gray-500">
+                          {app}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <WaButton label="💬 Beğendiyseniz Satın Alın" />
-                <button onClick={handleCloseModal} className="mt-2 inline-block rounded-lg border border-purple-500 px-6 py-2 text-purple-400 transition-colors hover:bg-purple-500 hover:text-white">
+                <button
+                  onClick={handleCloseModal}
+                  className="w-full rounded-lg border border-gray-800 py-2 text-sm text-gray-500 transition-colors hover:border-gray-600 hover:text-gray-300"
+                >
                   Pencereyi Kapat
                 </button>
               </div>
             )}
 
-            {/* Adım 5: Daha önce test alındı */}
+            {/* ── ADIM 5: Daha önce test alındı ────────────────────────── */}
             {step === 5 && (
-              <div className="space-y-4 py-6 text-center">
+              <div className="space-y-4 py-4 text-center">
                 <div className="text-5xl">⏳</div>
                 <h3 className="text-2xl font-bold text-white">Daha Önce Test Aldınız</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{alreadyUsedMsg}</p>
+                <p className="text-sm leading-relaxed text-gray-400">{alreadyUsedMsg}</p>
                 <WaButton label="💬 WhatsApp ile Satın Al" />
-                <button onClick={() => { setStep(1); setEmail(''); setAlreadyUsedMsg(''); }} className="w-full text-gray-600 hover:text-gray-400 text-sm transition-colors">Farklı e-posta ile dene</button>
-                <button onClick={handleCloseModal} className="w-full text-gray-600 hover:text-gray-400 text-sm transition-colors">Kapat</button>
+                <button
+                  onClick={() => { setStep(1); setEmail(''); setAlreadyUsedMsg(''); }}
+                  className="w-full text-sm text-gray-600 transition-colors hover:text-gray-400"
+                >
+                  Farklı e-posta ile dene
+                </button>
+                <button onClick={handleCloseModal} className="w-full text-sm text-gray-600 transition-colors hover:text-gray-400">
+                  Kapat
+                </button>
               </div>
             )}
 
