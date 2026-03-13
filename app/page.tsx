@@ -15,10 +15,13 @@ const packages = [
 ];
 
 const modalPackages = [
-  { label: '3 Aylık Paket', price: '₺700' },
+  { label: '1 Aylık Paket', price: '₺500' },
+  { label: '3 Aylık Paket', price: '₺700', popular: true },
   { label: '6 Aylık Paket', price: '₺1.000' },
-  { label: '12 Aylık Paket', price: '₺1.400', popular: true },
-  { label: 'Henüz karar vermedim', price: '' },
+  { label: '12 Aylık Paket', price: '₺1.400' },
+  { label: '24 Aylık Paket', price: '₺2.200' },
+  { label: 'Süresiz Paket', price: '₺6.900' },
+  { label: 'Henüz bilmiyorum', price: '' },
 ];
 
 const faqs = [
@@ -643,7 +646,7 @@ export default function HomePage() {
                       <div className="flex items-center justify-between py-2">
                         <span className="text-xs text-gray-500">Sunucu</span>
                         <div className="flex items-center">
-                          <span className="font-mono text-xs text-purple-400">pro4kiptv.xyz:2086</span>
+                          <span className="font-mono text-xs text-purple-400">http://pro4kiptv.xyz:2086/</span>
                           <CopyButton value="http://pro4kiptv.xyz:2086/" />
                         </div>
                       </div>
