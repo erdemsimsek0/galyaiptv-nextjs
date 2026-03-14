@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 // ─── Metadata notu ────────────────────────────────────────────────────────────
@@ -157,7 +157,144 @@ const PLATFORMS: Platform[] = [
   },
 ];
 
-// ─── Kopyala butonu ───────────────────────────────────────────────────────────
+// ─── localStorage'dan gerçek test bilgilerini oku ─────────────────────────────
+const LS_KEY = 'galya_modal_progress'; // aynı key ana sayfadaki gibi
+
+interface TrialCreds {
+  username: string;
+  password: string;
+  startedAt: number; // ms timestamp
+}
+
+function useTrialCredentials(): TrialCreds | null {
+  const [creds, setCreds] = useState<TrialCreds | null>(null);
+
+  useEffect(() => {
+    // Önce direkt trial credentials anahtarına bak
+    // Ana sayfada test tamamlanınca localStorage'a farklı bir key ile kaydediyoruz
+    // Burada iki olası kaynağı kontrol ediyoruz
+    try {
+      // 1. 'galya_trial_creds' — modal adım 4'te set edilen bilgiler
+      const raw = localStorage.getItem('galya_trial_creds');
+      if (raw) {
+        const parsed = JSON.parse(raw) as TrialCreds;
+        if (parsed.username && parsed.password) { setCreds(parsed); return; }
+      }
+      // 2. Fallback: galya_modal_progress içinde saklanan bilgi
+      const prog = localStorage.getItem(LS_KEY);
+      if (prog) {
+        const p = JSON.parse(prog);
+        if (p.username && p.password && p.startedAt) setCreds(p as TrialCreds);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  return creds;
+}
+
+// ─── Kalan süre hesapla ───────────────────────────────────────────────────────
+function useCountdown(startedAt: number): string {
+  const TOTAL = 3 * 60 * 60 * 1000; // 3 saat
+  const [remaining, setRemaining] = useState(() => Math.max(0, TOTAL - (Date.now() - startedAt)));
+
+  useEffect(() => {
+    const id = setInterval(() => setRemaining(Math.max(0, TOTAL - (Date.now() - startedAt))), 1000);
+    return () => clearInterval(id);
+  }, [startedAt, TOTAL]);
+
+  if (remaining <= 0) return 'Süresi doldu';
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  const s = Math.floor((remaining % 60000) / 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+// ─── Test bilgileri kartı ─────────────────────────────────────────────────────
+function TrialCredentialsCard({ creds }: { creds: TrialCreds }) {
+  const SERVER = 'http://pro4kiptv.xyz:2086';
+  const m3u    = `${SERVER}/get.php?username=${creds.username}&password=${creds.password}&type=m3u&output=ts`;
+  const countdown = useCountdown(creds.startedAt);
+  const isExpired = countdown === 'Süresi doldu';
+
+  const rows = [
+    { label: 'KULLANICI ADI', value: creds.username },
+    { label: 'ŞİFRE',         value: creds.password },
+    { label: 'SERVER URL',    value: SERVER },
+    { label: 'M3U URL',       value: m3u },
+  ];
+
+  return (
+    <div className={`mb-8 rounded-2xl border p-5 ${isExpired ? 'border-[#1e2d42] bg-[#0a0f18] opacity-60' : 'border-[#3b82f6]/30 bg-[#0a1525]'}`}>
+      <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          {!isExpired && (
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+          )}
+          <p className="text-sm font-semibold text-white">
+            {isExpired ? '⌛ Test Süresi Doldu' : '🔗 Kurulum Bilgileriniz'}
+          </p>
+        </div>
+        {/* Geri sayım */}
+        <span className={`rounded-lg border px-3 py-1 font-mono text-sm font-bold ${
+          isExpired
+            ? 'border-[#1e2d42] text-[#4b5563]'
+            : 'border-emerald-500/30 bg-emerald-950/40 text-emerald-400'
+        }`}>
+          {isExpired ? '00:00:00' : countdown}
+        </span>
+      </div>
+
+      {isExpired ? (
+        <div className="text-center py-4">
+          <p className="text-sm text-[#6b7280] mb-4">Test süreniz sona erdi. Paketi satın alarak kesintisiz izlemeye devam edebilirsiniz.</p>
+          <a
+            href="https://wa.me/447441921660?text=Merhaba%2C%20sat%C4%B1n%20almak%20istiyorum."
+            target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#25d366] px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1ebe5d]"
+          >
+            💬 WhatsApp ile Satın Al
+          </a>
+        </div>
+      ) : (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {rows.map((row) => (
+            <div key={row.label} className="flex items-center justify-between gap-2 rounded-xl border border-[#1e2d42] bg-[#060e1a] px-3 py-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-semibold uppercase tracking-widest text-[#4b5563]">{row.label}</p>
+                <p className="mt-0.5 truncate font-mono text-sm font-medium text-[#8b9ab3]">{row.value}</p>
+              </div>
+              <CopyBtn value={row.value} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Test yok kartı ──────────────────────────────────────────────────────────
+function NoTrialCard() {
+  return (
+    <div className="mb-8 rounded-2xl border border-dashed border-[#1e2d42] bg-[#060e1a] p-6 text-center">
+      <div className="mb-3 text-3xl opacity-40">🔒</div>
+      <p className="mb-1 font-semibold text-white">Henüz Test Hesabınız Yok</p>
+      <p className="mb-5 text-sm text-[#6b7280]">
+        Kurulum bilgilerinizi görmek için önce ücretsiz test hesabı açın.
+        Bilgiler buraya otomatik olarak yüklenecektir.
+      </p>
+      <Link
+        href="/"
+        className="inline-flex items-center gap-2 rounded-xl bg-[#3b82f6] px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#3b82f6]/25 transition-colors hover:bg-[#2563eb]"
+      >
+        ⚡ Ücretsiz Test Al
+      </Link>
+    </div>
+  );
+}
 function CopyBtn({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -312,6 +449,7 @@ function PlatformCard({ platform }: { platform: Platform }) {
 
 // ─── Ana Sayfa ────────────────────────────────────────────────────────────────
 export default function KurulumRehberiPage() {
+  const trialCreds = useTrialCredentials();
   return (
     <div className="min-h-screen bg-[#07111f] text-white">
       {/* ─── Header bağlantısı (ana header yok, basit nav) ─────────────── */}
@@ -352,35 +490,12 @@ export default function KurulumRehberiPage() {
           </p>
         </div>
 
-        {/* Sunucu bilgileri özet kartı */}
-        <div className="mb-8 rounded-2xl border border-[#1e3a5f] bg-[#0a1525] p-5">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="text-[#3b82f6]">🔗</span>
-            <p className="text-sm font-semibold text-white">Kurulum Bilgileriniz</p>
-            <span className="ml-auto rounded-full border border-[#1e3a5f] px-2 py-0.5 text-[10px] text-[#6b7280]">
-              Test sonrası e-posta ile gönderilir
-            </span>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {[
-              { label: 'KULLANICI ADI', value: 'vgichafd' },
-              { label: 'ŞİFRE', value: '0WJKkWYR' },
-              { label: 'SERVER URL', value: SERVER_URL },
-              { label: 'M3U URL', value: `${SERVER_URL}/playlist/vgichafd/0WJKkWYR/m3u_plus` },
-            ].map((row) => (
-              <div key={row.label} className="flex items-center justify-between gap-2 rounded-xl border border-[#1e2d42] bg-[#060e1a] px-3 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[9px] font-semibold uppercase tracking-widest text-[#4b5563]">{row.label}</p>
-                  <p className="mt-0.5 truncate font-mono text-sm font-medium text-[#8b9ab3]">{row.value}</p>
-                </div>
-                <CopyBtn value={row.value} />
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 text-[11px] text-[#374151]">
-            * Yukarıdaki bilgiler örnek değerlerdir. Gerçek test bilgileri size e-posta ile iletilir.
-          </p>
-        </div>
+        {/* ── Test bilgileri — sadece gerçek test bilgileri gösterilir ── */}
+        {trialCreds ? (
+          <TrialCredentialsCard creds={trialCreds} />
+        ) : (
+          <NoTrialCard />
+        )}
 
         {/* Platform kartları */}
         <div className="space-y-3">
