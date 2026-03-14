@@ -7,7 +7,7 @@ import Link from 'next/link';
 // Bu sayfa 'use client' olduğundan metadata'yı layout.tsx'e ekle:
 // export const metadata = {
 //   title: 'Galya IPTV | Donmayan Premium IPTV – 85.000+ Kanal, 4K Yayın',
-//   description: 'Donmayan premium IPTV hizmeti. 85.000+ kanal, 4K yayın kalitesi, Avrupa sunucuları. 12 saatlik ücretsiz test. Tüm cihazlarda çalışır.',
+//   description: 'Donmayan premium IPTV hizmeti. 85.000+ kanal, 4K yayın kalitesi, Avrupa sunucuları. 3 saatlik ücretsiz test. Tüm cihazlarda çalışır.',
 //   keywords: 'iptv satın al, iptv fiyat, 4k iptv, en iyi iptv, iptv server, donmayan iptv',
 // }
 
@@ -196,7 +196,7 @@ function getRecommendedPackage(device: string, purposes: string[]): string {
 
 // ─── Müşteri yorumları ─────────────────────────────────────────────────────────
 const reviews = [
-  { initials: 'MK', name: 'Mehmet Kaya', city: 'Ankara', text: 'Başta şüpheciydim, 12 saatlik ücretsiz testi denedim. Kurulumda takıldım, destek ekibi uzaktan 5 dakikada halletti. 6 aydır donma yaşamadım.', stars: 5 },
+  { initials: 'MK', name: 'Mehmet Kaya', city: 'Ankara', text: 'Başta şüpheciydim, 3 saatlik ücretsiz testi denedim. Kurulumda takıldım, destek ekibi uzaktan 5 dakikada halletti. 6 aydır donma yaşamadım.', stars: 5 },
   { initials: 'ZA', name: 'Zeynep Arslan', city: 'İzmir', text: '70 yaşındaki babam için aldım, kolayca kullanıyor. TRT, Show TV, ATV sorunsuz geliyor. Yerel kanallar ve spor mükemmel.', stars: 5 },
   { initials: 'CO', name: 'Can Özdemir', city: 'Londra', text: 'Premier Lig için aldım ama film arşivini keşfettim. Hafta sonu çıkan filmler var. Smart TV\'ye direkt açılıyor, harika.', stars: 5 },
   { initials: 'AY', name: 'Ayşe Yılmaz', city: 'İstanbul', text: 'Ücretsiz testi denedim, kaliteden ikna oldum ve hemen satın aldım. 4K destekli TV\'de spor kanalları muhteşem görünüyor.', stars: 5 },
@@ -205,7 +205,7 @@ const reviews = [
 ];
 
 const faqs = [
-  { q: 'Ücretsiz test nasıl çalışır?', a: 'E-posta adresinizi doğruladıktan sonra 12 saatlik test hesabınız anında açılır. Kredi kartı bilgisi gerekmez, tüm içeriklere erişebilirsiniz.' },
+  { q: 'Ücretsiz test nasıl çalışır?', a: 'E-posta adresinizi doğruladıktan sonra 3 saatlik test hesabınız anında açılır. Kredi kartı bilgisi gerekmez, tüm içeriklere erişebilirsiniz.' },
   { q: 'Ücret iadesi politikanız nedir?', a: 'Herhangi bir sorun yaşarsanız destek hattımız çözüm garantisi verir. WhatsApp üzerinden 7/24 yardım sağlıyoruz.' },
   { q: 'Smart TV\'de çalışır mı?', a: 'Evet, Samsung, LG, Vestel ve Sony Smart TV\'lerde doğrudan çalışır. Kurulum kılavuzu satın alma sonrası WhatsApp\'tan gönderilir.' },
   { q: 'Kurulum ne kadar sürer?', a: '5 dakika yeterlidir. Eğer zorlanırsanız destek ekibimiz WhatsApp üzerinden adım adım yardımcı olur, gerekirse uzaktan kurulum yapılır.' },
@@ -310,173 +310,6 @@ const INSTALL_GUIDES: Record<DeviceId, { app: string; steps: string[]; note?: st
 };
 
 const LS_KEY = 'galya_modal_progress';
-const LS_SPIN_KEY = 'galya_spin_entries';
-const SPIN_PRIZES = [
-  { label: '%5 İndirim', chance: 0.30, bg: '#1e1b4b', text: '#818cf8' },
-  { label: '%10 İndirim', chance: 0.25, bg: '#1e3a5f', text: '#93c5fd' },
-  { label: '+7 Gün Ücretsiz', chance: 0.20, bg: '#0f172a', text: '#a5b4fc' },
-  { label: '+15 Gün Hediye', chance: 0.15, bg: '#172554', text: '#bfdbfe' },
-  { label: '%20 İndirim', chance: 0.02, bg: '#6366f1', text: '#ffffff' },
-  { label: '%8 İndirim', chance: 0.08, bg: '#312e81', text: '#c7d2fe' },
-] as const;
-type SpinPrize = typeof SPIN_PRIZES[number];
-const SPIN_SEG_ANGLE = 360 / SPIN_PRIZES.length;
-const SPIN_DURATION = 5200;
-const PRIZE_VALID_MS = 15 * 60 * 1000;
-
-interface SpinEntry { prizeIndex: number; wonAt: number }
-interface SpinMap { [phone: string]: SpinEntry }
-
-function spinLoadEntries(): SpinMap {
-  try { const raw = localStorage.getItem(LS_SPIN_KEY); if (!raw) return {}; const p = JSON.parse(raw); return (typeof p === 'object' && p !== null) ? p as SpinMap : {}; }
-  catch { localStorage.removeItem(LS_SPIN_KEY); return {}; }
-}
-function spinSaveEntry(phone: string, entry: SpinEntry) { const m = spinLoadEntries(); m[phone] = entry; localStorage.setItem(LS_SPIN_KEY, JSON.stringify(m)); }
-function spinValidatePhone(raw: string): { valid: boolean; normalized: string; error: string } {
-  let d = raw.replace(/\D/g, '');
-  if (d.startsWith('90')) d = d.slice(2);
-  if (d.startsWith('0')) d = d.slice(1);
-  if ((d.length !== 10 && d.length !== 9) || !d.startsWith('5')) return { valid: false, normalized: '', error: 'Geçerli bir GSM numarası girin (05xx veya 5xx formatında)' };
-  return { valid: true, normalized: d, error: '' };
-}
-function spinPickPrize(): number { let r = Math.random(), c = 0; for (let i = 0; i < SPIN_PRIZES.length; i++) { c += SPIN_PRIZES[i].chance; if (r < c) return i; } return 0; }
-function spinEaseOut(t: number) { return 1 - Math.pow(1 - t, 4); }
-function spinFormatPhone(val: string) {
-  const d = val.replace(/\D/g, '').slice(0, 11);
-  if (d.length <= 4) return d;
-  if (d.length <= 7) return `${d.slice(0, 4)} ${d.slice(4)}`;
-  if (d.length <= 9) return `${d.slice(0, 4)} ${d.slice(4, 7)} ${d.slice(7)}`;
-  return `${d.slice(0, 4)} ${d.slice(4, 7)} ${d.slice(7, 9)} ${d.slice(9)}`;
-}
-function spinFmtCountdown(ms: number) { const s = Math.ceil(ms / 1000), m = Math.floor(s / 60); return `${m}:${String(s % 60).padStart(2, '0')}`; }
-function spinBuildWaUrl(label: string) { return `${WHATSAPP_BASE}?text=${encodeURIComponent(`Merhaba, kampanyadan "${label}" kazandım. Satın almak istiyorum.`)}`; }
-
-function SpinWheelSVG({ rotation }: { rotation: number }) {
-  const cx = 150, cy = 150, r = 138, inner = 28;
-  return (
-    <svg viewBox="0 0 300 300" className="w-full h-full" style={{ transform: `rotate(${rotation}deg)` }}>
-      <defs><radialGradient id="sg-cg" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#818cf8" /><stop offset="100%" stopColor="#6366f1" /></radialGradient></defs>
-      <circle cx={cx} cy={cy} r={r + 5} fill="none" stroke="rgba(99,102,241,0.25)" strokeWidth="9" />
-      {SPIN_PRIZES.map((p, i) => {
-        const a1 = (i * SPIN_SEG_ANGLE - 90) * Math.PI / 180, a2 = ((i + 1) * SPIN_SEG_ANGLE - 90) * Math.PI / 180;
-        const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1), x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
-        const am = (a1 + a2) / 2, lr = r * 0.63, lx = cx + lr * Math.cos(am), ly = cy + lr * Math.sin(am), rot = (am * 180 / Math.PI) + 90;
-        return (
-          <g key={i}>
-            <path d={`M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 0 1 ${x2} ${y2}Z`} fill={p.bg} stroke="rgba(99,102,241,0.2)" strokeWidth="1" />
-            <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fill={p.text} fontSize="10.5" fontWeight="700" fontFamily="system-ui,sans-serif" transform={`rotate(${rot},${lx},${ly})`} style={{ userSelect: 'none' }}>{p.label}</text>
-          </g>
-        );
-      })}
-      {SPIN_PRIZES.map((_, i) => { const a = (i * SPIN_SEG_ANGLE - 90) * Math.PI / 180; return <line key={`l${i}`} x1={cx} y1={cy} x2={cx + r * Math.cos(a)} y2={cy + r * Math.sin(a)} stroke="rgba(99,102,241,0.25)" strokeWidth="1" />; })}
-      {Array.from({ length: 12 }).map((_, i) => { const a = (i * 30 - 90) * Math.PI / 180, pr = r + 7; return <circle key={`d${i}`} cx={cx + pr * Math.cos(a)} cy={cy + pr * Math.sin(a)} r="3.5" fill="#6366f1" opacity="0.85" />; })}
-      <circle cx={cx} cy={cy} r={inner + 5} fill="rgba(30,27,75,0.5)" /><circle cx={cx} cy={cy} r={inner} fill="url(#sg-cg)" />
-      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="9" fontWeight="800" fontFamily="system-ui,sans-serif" style={{ userSelect: 'none' }}>ÇEVİR</text>
-    </svg>
-  );
-}
-
-function SpinSection({ onOpenModal }: { onOpenModal: () => void }) {
-  const [sPhase, setPhase] = useState<'form' | 'spinning' | 'result' | 'already_won'>('form');
-  const [sPhone, setPhone] = useState('');
-  const [sNorm, setNorm] = useState('');
-  const [sPhoneErr, setPhoneErr] = useState('');
-  const [sRot, setRot] = useState(0);
-  const [sPrizeIdx, setPrizeIdx] = useState<number | null>(null);
-  const [remaining, setRemaining] = useState(0);
-  const [expired, setExpired] = useState(false);
-  const [waUrl, setWaUrl] = useState('');
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (sPrizeIdx === null || sPhase !== 'result') return;
-    const entries = spinLoadEntries();
-    const entry = entries[sNorm];
-    if (!entry) return;
-    const tick = () => { const r = entry.wonAt + PRIZE_VALID_MS - Date.now(); setRemaining(Math.max(0, r)); setExpired(r <= 0); };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [sPrizeIdx, sPhase, sNorm]);
-
-  const handlePhoneSubmit = () => {
-    const v = spinValidatePhone(sPhone);
-    if (!v.valid) { setPhoneErr(v.error); return; }
-    setPhoneErr('');
-    const entries = spinLoadEntries();
-    let prizeIdx: number; let isAlreadyWon = false;
-    if (entries[v.normalized]) {
-      prizeIdx = entries[v.normalized].prizeIndex; isAlreadyWon = true;
-    } else {
-      prizeIdx = spinPickPrize();
-      spinSaveEntry(v.normalized, { prizeIndex: prizeIdx, wonAt: Date.now() });
-    }
-    setNorm(v.normalized); setPrizeIdx(prizeIdx);
-    setWaUrl(spinBuildWaUrl(SPIN_PRIZES[prizeIdx].label));
-    const segMid = prizeIdx * SPIN_SEG_ANGLE + SPIN_SEG_ANGLE / 2;
-    const targetAngle = 360 * 8 + (360 - segMid) + 90;
-    if (isAlreadyWon) { setRot(targetAngle % 360); setPhase('already_won'); return; }
-    setPhase('spinning');
-    const startTime = Date.now(); const startRot = sRot % 360;
-    const animate = () => {
-      const elapsed = Date.now() - startTime; const t = Math.min(elapsed / SPIN_DURATION, 1);
-      const eased = spinEaseOut(t); setRot(startRot + eased * (targetAngle - startRot));
-      if (t < 1) { rafRef.current = requestAnimationFrame(animate); } else { setPhase('result'); }
-    };
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  };
-
-  const wonPrize = sPrizeIdx !== null ? SPIN_PRIZES[sPrizeIdx] : null;
-
-  if (sPhase === 'form') return (
-    <div className="space-y-3">
-      <div className="relative mx-auto" style={{ width: 240, height: 240 }}>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-0.5 z-10">
-          <div className="w-0 h-0" style={{ borderLeft: '9px solid transparent', borderRight: '9px solid transparent', borderTop: '20px solid #6366f1', filter: 'drop-shadow(0 2px 4px rgba(99,102,241,0.8))' }} />
-        </div>
-        <SpinWheelSVG rotation={sRot} />
-      </div>
-      <div>
-        <label className="mb-1.5 block text-xs font-medium text-[#9ca3af]">GSM Numaranız</label>
-        <input type="tel" placeholder="05xx xxx xx xx" value={sPhone} onChange={(e) => setPhone(spinFormatPhone(e.target.value))}
-          className="w-full rounded-xl border border-[#1e3a5f] bg-[#0d1117] px-4 py-2.5 text-sm text-white outline-none placeholder:text-[#4b5563] focus:border-[#6366f1]/40" />
-      </div>
-      {sPhoneErr && <p className="text-xs text-red-400">{sPhoneErr}</p>}
-      <button onClick={handlePhoneSubmit} className="w-full rounded-xl bg-gradient-to-r from-[#6366f1] to-[#4f46e5] py-3 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]">🎡 Çarkı Çevir</button>
-      <p className="text-center text-[10px] text-[#6b7280]">Her numara 1 kez. Ödül 15 dk geçerli.</p>
-    </div>
-  );
-
-  return (
-    <div className="space-y-4">
-      <div className="relative mx-auto" style={{ width: 240, height: 240 }}>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-0.5 z-10">
-          <div className="w-0 h-0" style={{ borderLeft: '9px solid transparent', borderRight: '9px solid transparent', borderTop: '20px solid #6366f1', filter: 'drop-shadow(0 2px 4px rgba(99,102,241,0.8))' }} />
-        </div>
-        <SpinWheelSVG rotation={sRot} />
-      </div>
-      {sPhase === 'spinning' && <p className="text-center text-xs text-[#818cf8] animate-pulse">Çark dönüyor…</p>}
-      {(sPhase === 'result' || sPhase === 'already_won') && wonPrize && (
-        <div className="space-y-3">
-          {sPhase === 'already_won' && <p className="text-center text-xs text-amber-400">⚠️ Bu numara daha önce katıldı</p>}
-          <div className={`rounded-xl border p-4 text-center ${expired ? 'border-[#1e3a5f]/50 opacity-50' : 'border-[#6366f1]/40 bg-[#1e1b4b]/40'}`}>
-            <p className="text-xs text-[#818cf8] mb-1">{expired ? 'Süre doldu' : 'Kazandın 🎉'}</p>
-            <p className="text-2xl font-extrabold text-white">{wonPrize.label}</p>
-            {!expired && <p className="mt-1 text-xs text-amber-400">⏱ {spinFmtCountdown(remaining)} kaldı</p>}
-          </div>
-          {!expired && (
-            <div className="space-y-2">
-              <a href={waUrl} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] py-3 text-sm font-bold text-white transition-all hover:bg-[#1ebe5d]">💬 WhatsApp&apos;tan Kullan</a>
-              <button onClick={onOpenModal} className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#6366f1] to-[#4f46e5] py-3 text-sm font-bold text-white transition-all hover:opacity-90">⚡ Ücretsiz Test Al</button>
-            </div>
-          )}
-          {sPhase === 'already_won' && <button onClick={() => { setPhone(''); setNorm(''); setPhase('form'); }} className="w-full text-xs text-[#818cf8] hover:text-[#a5b4fc] py-1">Farklı numara →</button>}
-        </div>
-      )}
-    </div>
-  );
-}
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 interface ToastMsg { id: number; message: string; type: ToastType }
@@ -539,7 +372,7 @@ function CopyButton({ value }: { value: string }) {
 function Countdown({ startedAt }: { startedAt: number }) {
   const [remaining, setRemaining] = useState(0);
   useEffect(() => {
-    const total = 12 * 60 * 60 * 1000;
+    const total = 3 * 60 * 60 * 1000;
     const calc = () => Math.max(0, total - (Date.now() - startedAt));
     setRemaining(calc());
     const id = setInterval(() => setRemaining(calc()), 1000);
@@ -641,8 +474,6 @@ export default function HomePage() {
   const [showExitPopup, setShowExitPopup] = useState(false);
   const [exitPopupShown, setExitPopupShown] = useState(false);
   const [recommendedPkg, setRecommendedPkg] = useState('');
-  const [showSpinPopup, setShowSpinPopup] = useState(false);
-  const [spinBannerDismissed, setSpinBannerDismissed] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<DurationKey>('6ay');
   const toastIdRef = useRef(0);
@@ -730,7 +561,7 @@ export default function HomePage() {
             <button onClick={() => setShowExitPopup(false)} className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#1e3a5f] hover:text-white">✕</button>
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#1e1b4b] text-2xl">🎁</div>
             <h3 className="mb-1 text-lg font-bold text-white">Gitmeden önce bir dakika!</h3>
-            <p className="mb-4 text-sm text-[#9ca3af]">12 saatlik <strong className="text-white">ücretsiz test</strong> hesabı açılsın mı?</p>
+            <p className="mb-4 text-sm text-[#9ca3af]">3 saatlik <strong className="text-white">ücretsiz test</strong> hesabı açılsın mı?</p>
             <button onClick={() => { setShowExitPopup(false); handleOpenModal(); }} className="mb-2 w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">⚡ Evet, Ücretsiz Test Al</button>
             <button onClick={() => setShowExitPopup(false)} className="text-xs text-[#6b7280] transition-colors hover:text-[#9ca3af]">Hayır, teşekkürler</button>
           </div>
@@ -762,11 +593,12 @@ export default function HomePage() {
           <div className="hidden items-center md:flex">
             <div className="flex items-center gap-1 rounded-2xl border border-[#1e2d42] bg-[#0d1a2a] px-2 py-1.5">
               {[
-                { href: '/#paketler',   label: 'Paketler'   },
-                { href: '/#ozellikler', label: 'Özellikler' },
-                { href: '/#platformlar',label: 'Platformlar'},
-                { href: '/#yorumlar',   label: 'Yorumlar'   },
-                { href: '/#sss',        label: 'SSS'        },
+                { href: '/#paketler',    label: 'Paketler'          },
+              { href: '/#ozellikler',  label: 'Özellikler'        },
+              { href: '/#platformlar', label: 'Platformlar'       },
+              { href: '/#yorumlar',    label: 'Yorumlar'          },
+              { href: '/#sss',         label: 'SSS'               },
+              { href: '/kurulum-rehberi', label: 'Kurulum Rehberi'},
               ].map((item) => (
                 <Link
                   key={item.href}
@@ -806,7 +638,7 @@ export default function HomePage() {
         {mobileMenuOpen && (
           <div className="border-t border-[#1e3a5f] bg-[#0d1117] px-6 pb-4 md:hidden">
             <div className="flex flex-col gap-1 pt-3 text-sm">
-              {[{ href: '/#paketler', label: 'Paketler' }, { href: '/#ozellikler', label: 'Özellikler' }, { href: '/#platformlar', label: 'Platformlar' }, { href: '/#yorumlar', label: 'Yorumlar' }, { href: '/#sss', label: 'S.S.S' }].map((item) => (
+              {[{ href: '/#paketler', label: 'Paketler' }, { href: '/#ozellikler', label: 'Özellikler' }, { href: '/#platformlar', label: 'Platformlar' }, { href: '/#yorumlar', label: 'Yorumlar' }, { href: '/#sss', label: 'S.S.S' }, { href: '/kurulum-rehberi', label: 'Kurulum Rehberi' }].map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-[#9ca3af] transition-colors hover:bg-[#1e3a5f]/30 hover:text-white">{item.label}</Link>
               ))}
               <button onClick={() => { setMobileMenuOpen(false); handleOpenModal(); }} className="mt-2 rounded-xl bg-[#3b82f6] py-3 text-sm font-bold text-white">Kayıt Ol</button>
@@ -837,13 +669,13 @@ export default function HomePage() {
 
               {/* Ana başlık */}
               <h1 className="mb-5 text-5xl font-black leading-[1.05] tracking-tight md:text-6xl">
-                15.000+ İçerikli<br />
+                65.000+ İçerikli<br />
                 <span className="text-[#3b82f6]">Premium IPTV</span>
               </h1>
 
               {/* Alt metin */}
               <p className="mb-6 max-w-lg text-base leading-relaxed text-[#8b9ab3]">
-                Avrupa local sunucularla kesintisiz yayın. 15.000+ içerik, tüm
+                Avrupa local sunucularla kesintisiz yayın. 65.000+ içerik, tüm
                 cihazlarda çalışır.{' '}
                 <strong className="text-white">3 Saat Ücretsiz Dene — Kurulum 5 dakika.</strong>
               </p>
@@ -874,8 +706,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Sağ: mockup görseli */}
-            <div className="relative w-full lg:w-1/2">
+            {/* Sağ: mockup görseli — mobilde gizli */}
+            <div className="relative hidden lg:block w-full lg:w-1/2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/platform-mockup.png"
@@ -1329,7 +1161,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#3730a3] bg-[#1e1b4b] px-4 py-1.5 text-xs text-[#818cf8]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#818cf8] animate-pulse" />
-              Hâlâ kararsız mısınız? Önce 12 saat ücretsiz deneyin.
+              Hâlâ kararsız mısınız? Önce 3 saat ücretsiz deneyin.
             </div>
             <h2 className="mb-3 text-2xl font-bold tracking-tight md:text-4xl">Bugün Başlayın</h2>
             <p className="mb-2 text-sm text-[#9ca3af]">Ücretsiz test ile kaliteyi görün, sonra karar verin.</p>
@@ -1374,6 +1206,7 @@ export default function HomePage() {
               <Link href="/#paketler" className="transition-colors hover:text-white">Paketler</Link>
               <Link href="/#platformlar" className="transition-colors hover:text-white">Desteklenen Cihazlar</Link>
               <Link href="/#sss" className="transition-colors hover:text-white">S.S.S</Link>
+              <Link href="/kurulum-rehberi" className="transition-colors hover:text-white">Kurulum Rehberi</Link>
               <Link href="/blog" className="transition-colors hover:text-white">Blog</Link>
               <Link href="/iletisim" className="transition-colors hover:text-white">İletişim</Link>
               <Link href="/blog/iptv-nedir" className="transition-colors hover:text-white">IPTV Nedir?</Link>
@@ -1400,34 +1233,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ─── Spin Popup Modal ────────────────────────────────────────────────── */}
-      {showSpinPopup && (
-        <div className="fixed inset-0 z-[65] flex items-center justify-center p-4" style={{ background: 'rgba(3,7,18,0.8)', backdropFilter: 'blur(8px)' }} onClick={(e) => { if (e.target === e.currentTarget) setShowSpinPopup(false); }}>
-          <div className="relative w-full max-w-xs rounded-2xl p-5 shadow-2xl border border-[#1e3a5f] bg-[#111827]">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2"><span className="text-base">🎡</span><span className="text-sm font-bold text-white">İndirim Kazan</span><span className="rounded-full bg-[#1e1b4b] px-2 py-0.5 text-[10px] font-semibold text-[#818cf8]">Sınırlı</span></div>
-              <button onClick={() => setShowSpinPopup(false)} className="flex h-6 w-6 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#1e3a5f] hover:text-white text-xs">✕</button>
-            </div>
-            <SpinSection onOpenModal={() => { setShowSpinPopup(false); handleOpenModal(); }} />
-          </div>
-        </div>
-      )}
-
-      {/* ─── Sticky Spin Banner ─────────────────────────────────────────────── */}
-      {!spinBannerDismissed && !showSpinPopup && (
-        <div className="fixed bottom-20 right-4 z-40 md:bottom-[88px] md:right-6">
-          <div className="relative">
-            <button onClick={() => setSpinBannerDismissed(true)} className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#1e3a5f] border border-[#3730a3] text-[10px] text-[#818cf8] transition-colors hover:text-white z-10">✕</button>
-            <button onClick={() => setShowSpinPopup(true)} className="flex items-center gap-2.5 rounded-2xl border border-[#3730a3] bg-[#111827] px-4 py-3 shadow-2xl backdrop-blur-md transition-all hover:border-[#6366f1]/50 hover:bg-[#1e1b4b]" style={{ boxShadow: '0 0 20px rgba(99,102,241,0.15)' }}>
-              <span className="text-2xl" style={{ display: 'inline-block', animation: 'spin-slow 4s linear infinite' }}>🎡</span>
-              <div className="text-left"><p className="text-xs font-bold text-white leading-tight">İndirim Kazan!</p><p className="text-[10px] text-[#818cf8] leading-tight">Çarkı çevir, ödülünü al</p></div>
-              <span className="relative flex h-2 w-2 ml-1"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#6366f1] opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-[#6366f1]" /></span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      <style>{`@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
       {/* ─── Modal ───────────────────────────────────────────────────────────── */}
       {isModalOpen && (
@@ -1450,7 +1255,7 @@ export default function HomePage() {
                   ))}
                 </div>
                 <button onClick={() => setStep(1.5 as ModalStep)} disabled={!selectedDevice} className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5] disabled:opacity-40">Devam Et →</button>
-                <p className="text-center text-xs text-[#6b7280]">Kredi kartı gerekmez · 12 saatlik ücretsiz erişim</p>
+                <p className="text-center text-xs text-[#6b7280]">Kredi kartı gerekmez · 3 saatlik ücretsiz erişim</p>
               </div>
             )}
 
@@ -1582,7 +1387,7 @@ export default function HomePage() {
                 <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1117] p-4">
                   <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#6b7280]">📋 Ne Yapmalısınız?</p>
                   <ol className="space-y-2.5">
-                    {[{ n: '1', text: 'Uygulamayı cihazınıza indirin', sub: selectedDevice ? INSTALL_GUIDES[selectedDevice as DeviceId]?.app : 'IPTV Smarters Pro' }, { n: '2', text: 'Bilgileri uygulamaya girin', sub: 'Önceki ekrandaki sunucu, kullanıcı adı ve şifre' }, { n: '3', text: '12 saat boyunca deneyin', sub: 'Tüm kanalları, kaliteyi ve hızı test edin' }, { n: '4', text: 'Memnunsan paketi al', sub: 'WhatsApp\'tan kolayca satın alabilirsin' }].map(item => (
+                    {[{ n: '1', text: 'Uygulamayı cihazınıza indirin', sub: selectedDevice ? INSTALL_GUIDES[selectedDevice as DeviceId]?.app : 'IPTV Smarters Pro' }, { n: '2', text: 'Bilgileri uygulamaya girin', sub: 'Önceki ekrandaki sunucu, kullanıcı adı ve şifre' }, { n: '3', text: '3 saat boyunca deneyin', sub: 'Tüm kanalları, kaliteyi ve hızı test edin' }, { n: '4', text: 'Memnunsan paketi al', sub: 'WhatsApp\'tan kolayca satın alabilirsin' }].map(item => (
                       <li key={item.n} className="flex items-start gap-3">
                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1e1b4b] text-[10px] font-bold text-[#818cf8]">{item.n}</span>
                         <div><p className="text-xs font-medium text-white">{item.text}</p><p className="text-[11px] text-[#6b7280]">{item.sub}</p></div>
