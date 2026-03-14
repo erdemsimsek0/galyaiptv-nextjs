@@ -16,18 +16,61 @@ const WHATSAPP_BASE = 'https://wa.me/447441921660';
 
 // ─── Süre seçenekleri ve iskonto oranları ────────────────────────────────────
 type DurationKey = '1ay' | '6ay' | '12ay';
-const DURATIONS: { key: DurationKey; label: string; discount: number; badge?: string }[] = [
-  { key: '1ay',  label: '1 Ay',  discount: 0 },
-  { key: '6ay',  label: '6 Ay',  discount: 5,  badge: '%5 İNDİRİM' },
-  { key: '12ay', label: '12 Ay', discount: 20, badge: '%20 İNDİRİM' },
+const DURATIONS: { key: DurationKey; label: string; months: number; discount: number; badge?: string }[] = [
+  { key: '1ay',  label: '1 Ay',  months: 1,  discount: 0 },
+  { key: '6ay',  label: '6 Ay',  months: 6,  discount: 5,  badge: '%5 İNDİRİM' },
+  { key: '12ay', label: '12 Ay', months: 12, discount: 20, badge: '%20 İNDİRİM' },
 ];
 
-// Fiyat hesapla (kuruş hassasiyeti için .90 sabit)
-function calcPrice(base: number, discount: number): string {
-  if (discount === 0) return base.toFixed(2).replace('.', ',').replace(',00', ',90').replace(/\d+,/, (m) => m) ;
-  const discounted = base * (1 - discount / 100);
-  // .90 ile bitir
-  return Math.floor(discounted).toFixed(0) + ',90';
+// Toplam fiyat (ay sayısı × aylık fiyat × indirim)
+function calcTotalPrice(base: number, months: number, discount: number): number {
+  const monthly = base * (1 - discount / 100);
+  return Math.round(monthly * months * 100) / 100;
+}
+
+// Sayıyı TL formatında göster  → "159,90" veya "911,40"
+function formatTL(n: number): string {
+  return n.toFixed(2).replace('.', ',');
+}
+
+// ─── Animasyonlu fiyat sayacı bileşeni ───────────────────────────────────────
+function AnimatedPrice({ target, popular }: { target: number; popular: boolean }) {
+  const [display, setDisplay] = useState(target);
+  const prevRef = useRef(target);
+  const rafRef  = useRef<number>(0);
+
+  useEffect(() => {
+    const from = prevRef.current;
+    const to   = target;
+    if (from === to) return;
+    prevRef.current = to;
+
+    const duration = 600; // ms
+    const startTime = performance.now();
+
+    const animate = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(from + (to - from) * eased);
+      if (t < 1) rafRef.current = requestAnimationFrame(animate);
+      else setDisplay(to);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [target]);
+
+  const formatted = formatTL(display);
+  const [integer, decimal] = formatted.split(',');
+
+  return (
+    <div className="flex items-end justify-center gap-0.5">
+      <span className={`text-5xl font-extrabold tracking-tight tabular-nums leading-none ${popular ? 'text-white' : 'text-white'}`}>
+        ₺{integer}
+      </span>
+      <span className={`mb-1 text-xl font-bold tabular-nums ${popular ? 'text-[#93c5fd]' : 'text-[#6b7280]'}`}>,{decimal}</span>
+    </div>
+  );
 }
 
 // ─── Kategori Paketleri (ana sayfa gösterimi) ─────────────────────────────────
@@ -825,8 +868,9 @@ export default function HomePage() {
             <div className="grid gap-6 md:grid-cols-3">
               {categoryPackages.map((pkg) => {
                 const dur = DURATIONS.find(d => d.key === selectedDuration)!;
-                const price = calcPrice(pkg.basePrice, dur.discount);
-                const waText = `${pkg.waMsg} (${dur.label} paket)`;
+                const totalPrice = calcTotalPrice(pkg.basePrice, dur.months, dur.discount);
+                const originalTotal = pkg.basePrice * dur.months;
+                const waText = `${pkg.waMsg} (${dur.label} paket, ₺${formatTL(totalPrice)})`;
                 return (
                   <div key={pkg.id} className={`relative flex flex-col rounded-2xl border p-6 transition-all ${
                     pkg.popular
@@ -839,45 +883,51 @@ export default function HomePage() {
                       </div>
                     )}
 
-                    {/* Logo */}
-                    <div className="mb-5 flex items-center justify-center h-16">
+                    {/* Logo — büyük, tam genişlik */}
+                    <div className="mb-5 flex items-center justify-center" style={{ minHeight: '80px' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={pkg.logo}
                         alt={pkg.logoAlt}
-                        className="max-h-14 w-auto object-contain"
+                        className="w-full max-w-[220px] h-auto object-contain"
+                        style={{ maxHeight: '80px' }}
                         onError={(e) => {
-                          // Logo yoksa fallback metin göster
                           (e.currentTarget as HTMLImageElement).style.display = 'none';
                           const fallback = e.currentTarget.nextElementSibling as HTMLElement;
                           if (fallback) fallback.style.display = 'block';
                         }}
                       />
-                      <span className="hidden text-xl font-bold text-white">{pkg.name}</span>
+                      <span className="hidden text-2xl font-bold text-white">{pkg.name}</span>
                     </div>
 
                     {/* Açıklama */}
-                    <p className="mb-5 text-center text-sm leading-relaxed text-[#9ca3af]">{pkg.desc}</p>
+                    <p className="mb-6 text-center text-sm leading-relaxed text-[#9ca3af]">{pkg.desc}</p>
 
-                    {/* Fiyat */}
-                    <div className="mb-5 text-center">
-                      <div className="flex items-end justify-center gap-1">
-                        <span className="text-4xl font-extrabold tracking-tight text-white">₺{price}</span>
-                        <span className="mb-1.5 text-sm text-[#6b7280]">₺/Ay</span>
-                      </div>
+                    {/* Fiyat — animasyonlu, TOPLAM gösterim */}
+                    <div className="mb-2 text-center">
+                      <AnimatedPrice target={totalPrice} popular={pkg.popular} />
+                      <p className="mt-1.5 text-xs text-[#6b7280]">
+                        {dur.months === 1
+                          ? 'aylık'
+                          : `${dur.months} aylık toplam`}
+                      </p>
                       {dur.discount > 0 && (
-                        <p className="mt-1 text-xs text-[#9ca3af]">
-                          <span className="line-through text-[#4b5563]">₺{pkg.basePrice.toFixed(2).replace('.', ',')}</span>
-                          <span className="ml-1.5 rounded-md bg-emerald-950/60 px-1.5 py-0.5 text-emerald-400">%{dur.discount} indirim</span>
-                        </p>
+                        <div className="mt-2 flex items-center justify-center gap-2">
+                          <span className="text-xs line-through text-[#4b5563]">₺{formatTL(originalTotal)}</span>
+                          <span className="rounded-full bg-emerald-950/70 px-2 py-0.5 text-[11px] font-semibold text-emerald-400">
+                            %{dur.discount} tasarruf
+                          </span>
+                        </div>
                       )}
                     </div>
+
+                    {/* Ayırıcı */}
+                    <div className={`my-5 h-px ${pkg.popular ? 'bg-[#1e3a5f]' : 'bg-[#1a2535]'}`} />
 
                     {/* Özellikler */}
                     <ul className="mb-6 flex-1 space-y-2.5">
                       {pkg.features.map((f) => (
                         <li key={f.text} className="flex items-center gap-2.5 text-sm">
-                          {/* Mavi check ikonu — görseldeki gibi */}
                           <svg className="h-4 w-4 shrink-0 text-[#3b82f6]" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd"/>
                           </svg>
