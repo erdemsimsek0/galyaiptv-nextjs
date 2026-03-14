@@ -111,7 +111,6 @@ const productSchema = {
   image: 'https://galyaiptv.com.tr/og-image.jpg',
   description: 'Türkiye\'nin en kaliteli IPTV hizmeti. 85.000+ kanal, 4K yayın kalitesi. ₺500\'den başlayan fiyatlarla en iyi IPTV server.',
   brand: { '@type': 'Brand', name: 'Galya IPTV' },
-  // Daha gerçekçi rating değerleri (Google için daha güvenilir)
   aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.9', reviewCount: '1243', bestRating: '5' },
   offers: {
     '@type': 'AggregateOffer', lowPrice: '500', highPrice: '6900',
@@ -200,19 +199,19 @@ const LS_KEY = 'galya_modal_progress';
 
 // ─── Spin Wheel sabitleri ─────────────────────────────────────────────────────
 const WHATSAPP_BASE = 'https://wa.me/447441921660';
-const LS_SPIN_KEY   = 'galya_spin_entries'; // { [phone]: { prizeIndex, wonAt } }
+const LS_SPIN_KEY   = 'galya_spin_entries';
 const SPIN_PRIZES = [
-  { label: '%5 İndirim',      chance: 0.30, bg: '#ede9fe', text: '#4c1d95' },
-  { label: '%10 İndirim',     chance: 0.25, bg: '#ddd6fe', text: '#3b0764' },
-  { label: '+7 Gün Ücretsiz', chance: 0.20, bg: '#f5f3ff', text: '#5b21b6' },
-  { label: '+15 Gün Hediye',  chance: 0.15, bg: '#e9d5ff', text: '#4c1d95' },
-  { label: '%20 İndirim',     chance: 0.02, bg: '#7c3aed', text: '#ffffff' },
-  { label: '%8 İndirim',      chance: 0.08, bg: '#c4b5fd', text: '#3b0764' },
+  { label: '%5 İndirim',      chance: 0.30, bg: '#1e1b4b', text: '#818cf8' },
+  { label: '%10 İndirim',     chance: 0.25, bg: '#1e3a5f', text: '#93c5fd' },
+  { label: '+7 Gün Ücretsiz', chance: 0.20, bg: '#0f172a', text: '#a5b4fc' },
+  { label: '+15 Gün Hediye',  chance: 0.15, bg: '#172554', text: '#bfdbfe' },
+  { label: '%20 İndirim',     chance: 0.02, bg: '#6366f1', text: '#ffffff' },
+  { label: '%8 İndirim',      chance: 0.08, bg: '#312e81', text: '#c7d2fe' },
 ] as const;
 type SpinPrize = typeof SPIN_PRIZES[number];
-const SPIN_SEG_ANGLE  = 360 / SPIN_PRIZES.length;  // 60° her dilim
-const SPIN_DURATION   = 5200;                        // ms
-const PRIZE_VALID_MS  = 15 * 60 * 1000;             // 15 dakika
+const SPIN_SEG_ANGLE  = 360 / SPIN_PRIZES.length;
+const SPIN_DURATION   = 5200;
+const PRIZE_VALID_MS  = 15 * 60 * 1000;
 
 interface SpinEntry { prizeIndex: number; wonAt: number }
 interface SpinMap   { [phone: string]: SpinEntry }
@@ -234,10 +233,8 @@ function spinValidatePhone(raw: string): { valid: boolean; normalized: string; e
   let d = raw.replace(/\D/g, '');
   if (d.startsWith('90')) d = d.slice(2);
   if (d.startsWith('0'))  d = d.slice(1);
-  // 10 haneli (05xx → 5xx) veya 9 haneli (5xxxxxxxxx) kabul et — normalize: daima 10 hane (0'sız)
   if ((d.length !== 10 && d.length !== 9) || !d.startsWith('5'))
     return { valid: false, normalized: '', error: 'Geçerli bir GSM numarası girin (05xx veya 5xx formatında)' };
-  // 9 hane gelirse (örn. kullanıcı 5xx... yazdıysa) başına 0 eklemeden normalize: zaten 5 ile başlıyor, sakla
   return { valid: true, normalized: d, error: '' };
 }
 function spinPickPrize(): number {
@@ -247,7 +244,7 @@ function spinPickPrize(): number {
 }
 function spinEaseOut(t: number) { return 1 - Math.pow(1 - t, 4); }
 function spinFormatPhone(val: string) {
-  const d = val.replace(/\D/g, '').slice(0, 11); // 05xx = 11, 5xx = 10 — ikisini de al
+  const d = val.replace(/\D/g, '').slice(0, 11);
   if (d.length <= 4) return d;
   if (d.length <= 7) return `${d.slice(0,4)} ${d.slice(4)}`;
   if (d.length <= 9) return `${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7)}`;
@@ -268,12 +265,10 @@ function SpinWheelSVG({ rotation }: { rotation: number }) {
     <svg viewBox="0 0 300 300" className="w-full h-full" style={{ transform: `rotate(${rotation}deg)` }}>
       <defs>
         <radialGradient id="sg-cg" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#7c3aed"/>
+          <stop offset="0%" stopColor="#818cf8"/><stop offset="100%" stopColor="#6366f1"/>
         </radialGradient>
       </defs>
-      {/* Dış parıltı halkası */}
-      <circle cx={cx} cy={cy} r={r+5} fill="none" stroke="rgba(109,40,217,0.25)" strokeWidth="9"/>
-      {/* Dilimler */}
+      <circle cx={cx} cy={cy} r={r+5} fill="none" stroke="rgba(99,102,241,0.25)" strokeWidth="9"/>
       {SPIN_PRIZES.map((p, i) => {
         const a1 = (i*SPIN_SEG_ANGLE - 90) * Math.PI/180;
         const a2 = ((i+1)*SPIN_SEG_ANGLE - 90) * Math.PI/180;
@@ -285,7 +280,7 @@ function SpinWheelSVG({ rotation }: { rotation: number }) {
         return (
           <g key={i}>
             <path d={`M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 0 1 ${x2} ${y2}Z`}
-              fill={p.bg} stroke="rgba(109,40,217,0.2)" strokeWidth="1"/>
+              fill={p.bg} stroke="rgba(99,102,241,0.2)" strokeWidth="1"/>
             <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle"
               fill={p.text} fontSize="10.5" fontWeight="700" fontFamily="system-ui,sans-serif"
               transform={`rotate(${rot},${lx},${ly})`} style={{userSelect:'none'}}>
@@ -294,20 +289,17 @@ function SpinWheelSVG({ rotation }: { rotation: number }) {
           </g>
         );
       })}
-      {/* Bölme çizgileri */}
       {SPIN_PRIZES.map((_,i) => {
         const a=(i*SPIN_SEG_ANGLE-90)*Math.PI/180;
         return <line key={`l${i}`} x1={cx} y1={cy} x2={cx+r*Math.cos(a)} y2={cy+r*Math.sin(a)}
-          stroke="rgba(109,40,217,0.25)" strokeWidth="1"/>;
+          stroke="rgba(99,102,241,0.25)" strokeWidth="1"/>;
       })}
-      {/* Süsleme noktaları */}
       {Array.from({length:12}).map((_,i)=>{
         const a=(i*30-90)*Math.PI/180, pr=r+7;
         return <circle key={`d${i}`} cx={cx+pr*Math.cos(a)} cy={cy+pr*Math.sin(a)} r="3.5"
-          fill={i%2===0?'#7c3aed':'#7c3aed'} opacity="0.85"/>;
+          fill="#6366f1" opacity="0.85"/>;
       })}
-      {/* Merkez */}
-      <circle cx={cx} cy={cy} r={inner+5} fill="rgba(245,243,255,0.5)"/>
+      <circle cx={cx} cy={cy} r={inner+5} fill="rgba(30,27,75,0.5)"/>
       <circle cx={cx} cy={cy} r={inner} fill="url(#sg-cg)"/>
       <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle"
         fill="white" fontSize="9" fontWeight="800" fontFamily="system-ui,sans-serif"
@@ -316,7 +308,7 @@ function SpinWheelSVG({ rotation }: { rotation: number }) {
   );
 }
 
-// ─── SpinSection — sade modal içeriği ────────────────────────────────────────
+// ─── SpinSection ────────────────────────────────────────────────────────────
 function SpinSection({ onOpenModal }: { onOpenModal: () => void }) {
   type SpinPhase = 'form' | 'spinning' | 'result' | 'already_won';
   const [sPhone,    setPhone]   = useState('');
@@ -331,7 +323,6 @@ function SpinSection({ onOpenModal }: { onOpenModal: () => void }) {
   const startTs = useRef<number|null>(null);
   const startRt = useRef(0);
 
-  // 15 dk countdown
   const expiresAt = sWonAt ? sWonAt + PRIZE_VALID_MS : null;
   const [remaining, setRemaining] = useState(0);
   useEffect(() => {
@@ -343,7 +334,6 @@ function SpinSection({ onOpenModal }: { onOpenModal: () => void }) {
   const expired = remaining === 0 && expiresAt !== null;
   useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
 
-  // ses
   const playTick = useCallback(() => {
     try {
       if (!audCtx.current) audCtx.current = new (window.AudioContext||(window as any).webkitAudioContext)();
@@ -381,35 +371,15 @@ function SpinSection({ onOpenModal }: { onOpenModal: () => void }) {
       setWonAt(entries[normalized].wonAt);
       setPhase('already_won'); return;
     }
-    // IP kontrolü için: fetch('/api/spin/check',{method:'POST',body:JSON.stringify({phone:normalized})})
     startSpin(normalized);
   }
 
   function startSpin(norm: string) {
     const idx = spinPickPrize();
-
-    // ── Açı hesabı ──────────────────────────────────────────────────────────
-    // SVG'de dilimler -90° offset ile çiziliyor:
-    //   dilim i'nin ortası = i * 60 + 30  derece (SVG koordinatında)
-    //   ama SVG -90° ile başladığından gerçek açı = i*60 + 30 - 90
-    //
-    // Pointer üstte (SVG'de 0° = sağ, -90° = üst demek).
-    // Çark rotate(R) yapılınca, SVG'deki bir nokta (açı A) ekrandaki
-    // (A + R) konumuna gelir. Pointer -90°'de, yani:
-    //   A + R ≡ -90°  →  R = -90 - A  →  R = -90 - (i*60 + 30 - 90) = -i*60 - 30
-    //
-    // Pozitif (saat yönü) dönüş istiyoruz + 5 tam tur ekle:
-    //   finalRotation = 5*360 + (360 - ((i*60 + 30) % 360))
-    //   Bu formül: hedefe en kısa saat yönü mesafesini + 5 tur verir.
-
     const segCenter = (idx * SPIN_SEG_ANGLE + SPIN_SEG_ANGLE / 2) % 360;
-    // Çarkı saat yönünde döndürerek bu segCenter'ı pointer'a (üst = 0°) getir:
     const toTop = (360 - segCenter) % 360;
-    // Mevcut rotasyonu normalize et
     const currentNorm = ((sRot % 360) + 360) % 360;
-    // Ne kadar daha dönmeli (en az 0, en fazla 360 — saat yönü)
     const extraToTarget = (toTop - currentNorm + 360) % 360;
-    // Toplam dönüş: 5 tam tur + hedefe kalan mesafe
     const total = 5 * 360 + extraToTarget;
 
     startRt.current = sRot;
@@ -426,12 +396,10 @@ function SpinSection({ onOpenModal }: { onOpenModal: () => void }) {
       if (seg !== lastSeg) { playTick(); lastSeg = seg; }
       if (prog < 1) { rafRef.current = requestAnimationFrame(animate); }
       else {
-        // Kesin hedef rotasyon
         setRot(startRt.current + total);
         const now = Date.now();
         setWonAt(now);
         spinSaveEntry(norm, { prizeIndex: idx, wonAt: now });
-        // backend: fetch('/api/spin/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:norm,prizeIndex:idx,wonAt:now})})
         playWin(); setPhase('result');
       }
     }
@@ -441,81 +409,76 @@ function SpinSection({ onOpenModal }: { onOpenModal: () => void }) {
   const wonPrize: SpinPrize|null = sWonIdx !== null ? SPIN_PRIZES[sWonIdx] : null;
   const waUrl = wonPrize ? spinBuildWaUrl(wonPrize.label) : WHATSAPP_URL;
 
-  // ─── Form aşaması ─────────────────────────────────────────────────────────
   if (sPhase === 'form') return (
     <div className="space-y-4">
-      <p className="text-center text-sm text-[#7c3aed]">
+      <p className="text-center text-sm text-[#818cf8]">
         Numaranı gir, çarkı çevir — özel indirimini kap!
       </p>
       <div className="flex gap-2">
-        <div className="flex items-center rounded-lg border border-[#7c3aed]/[0.15] bg-[#7c3aed]/[0.05] px-3 text-sm text-[#7c3aed] whitespace-nowrap">
+        <div className="flex items-center rounded-lg border border-[#1e3a5f] bg-[#1e1b4b]/30 px-3 text-sm text-[#818cf8] whitespace-nowrap">
           🇹🇷 +90
         </div>
         <input type="tel" inputMode="numeric" placeholder="05xx xxx xx xx"
           value={sPhone}
           onChange={e => { setPhone(spinFormatPhone(e.target.value)); setPhoneErr(''); }}
           onKeyDown={e => e.key==='Enter' && handlePhoneSubmit()}
-          className="flex-1 rounded-lg border border-[#7c3aed]/[0.15] bg-[#7c3aed]/[0.05] px-3 py-2.5 text-sm text-white placeholder-[#8b5cf6] outline-none focus:border-[#7c3aed]/60"/>
+          className="flex-1 rounded-lg border border-[#1e3a5f] bg-[#111827] px-3 py-2.5 text-sm text-white placeholder-[#4b5563] outline-none focus:border-[#6366f1]/60"/>
       </div>
-      {sPhoneErr && <p className="text-xs text-red-600">{sPhoneErr}</p>}
+      {sPhoneErr && <p className="text-xs text-red-400">{sPhoneErr}</p>}
       <button onClick={handlePhoneSubmit}
-        className="w-full rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] py-3 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]">
+        className="w-full rounded-xl bg-gradient-to-r from-[#6366f1] to-[#4f46e5] py-3 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]">
         🎡 Çarkı Çevir
       </button>
-      <p className="text-center text-[10px] text-[#8b5cf6]">Her numara 1 kez. Ödül 15 dk geçerli.</p>
+      <p className="text-center text-[10px] text-[#6b7280]">Her numara 1 kez. Ödül 15 dk geçerli.</p>
     </div>
   );
 
-  // ─── Çark + sonuç aşaması ─────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      {/* Çark */}
       <div className="relative mx-auto" style={{ width: 240, height: 240 }}>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-0.5 z-10">
           <div className="w-0 h-0" style={{
             borderLeft:'9px solid transparent', borderRight:'9px solid transparent',
-            borderTop:'20px solid #7c3aed',
-            filter:'drop-shadow(0 2px 4px rgba(109,40,217,0.8))',
+            borderTop:'20px solid #6366f1',
+            filter:'drop-shadow(0 2px 4px rgba(99,102,241,0.8))',
           }}/>
         </div>
         <SpinWheelSVG rotation={sRot}/>
       </div>
 
-      {/* Spinning */}
       {sPhase === 'spinning' && (
-        <p className="text-center text-xs text-[#7c3aed] animate-pulse">Çark dönüyor…</p>
+        <p className="text-center text-xs text-[#818cf8] animate-pulse">Çark dönüyor…</p>
       )}
 
-      {/* Sonuç */}
       {(sPhase === 'result' || sPhase === 'already_won') && wonPrize && (
         <div className="space-y-3">
           {sPhase === 'already_won' && (
-            <p className="text-center text-xs text-amber-700">⚠️ Bu numara daha önce katıldı</p>
+            <p className="text-center text-xs text-amber-400">⚠️ Bu numara daha önce katıldı</p>
           )}
           <div className={`rounded-xl border p-4 text-center ${
-            expired ? 'border-[#7c3aed]/[0.10] opacity-50' : 'border-[#7c3aed]/40 bg-[#7c3aed]/10'
+            expired ? 'border-[#1e3a5f]/50 opacity-50' : 'border-[#6366f1]/40 bg-[#1e1b4b]/40'
           }`}>
-            <p className="text-xs text-[#7c3aed] mb-1">{expired ? 'Süre doldu' : 'Kazandın 🎉'}</p>
-            <p className="text-2xl font-extrabold text-[#1e1b4b]">{wonPrize.label}</p>
+            <p className="text-xs text-[#818cf8] mb-1">{expired ? 'Süre doldu' : 'Kazandın 🎉'}</p>
+            <p className="text-2xl font-extrabold text-white">{wonPrize.label}</p>
             {!expired && (
-              <p className="mt-1 text-xs text-amber-700">⏱ {spinFmtCountdown(remaining)} kaldı</p>
+              <p className="mt-1 text-xs text-amber-400">⏱ {spinFmtCountdown(remaining)} kaldı</p>
             )}
           </div>
           {!expired && (
             <div className="space-y-2">
               <a href={waUrl} target="_blank" rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] ... text-white transition-all hover:bg-[#1ebe5d]">
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] py-3 text-sm font-bold text-white transition-all hover:bg-[#1ebe5d]">
                 💬 WhatsApp&apos;tan Kullan
               </a>
               <button onClick={onOpenModal}
-                className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] py-3 text-sm font-bold text-white transition-all hover:opacity-90">
+                className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#6366f1] to-[#4f46e5] py-3 text-sm font-bold text-white transition-all hover:opacity-90">
                 ⚡ Ücretsiz Test Al
               </button>
             </div>
           )}
           {sPhase === 'already_won' && (
             <button onClick={() => { setPhone(''); setNorm(''); setPhase('form'); }}
-              className="w-full text-xs text-[#7c3aed] hover:text-[#7c3aed] py-1">
+              className="w-full text-xs text-[#818cf8] hover:text-[#a5b4fc] py-1">
               Farklı numara →
             </button>
           )}
@@ -535,10 +498,10 @@ function ToastContainer({ toasts, onRemove }: { toasts: ToastMsg[]; onRemove: (i
       {toasts.map((t) => (
         <div key={t.id} onClick={() => onRemove(t.id)}
           className={`pointer-events-auto flex cursor-pointer items-center gap-2.5 rounded-xl border px-4 py-3 text-sm shadow-xl backdrop-blur-md transition-all ${
-            t.type === 'success' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' :
-            t.type === 'error'   ? 'border-red-300 bg-red-50 text-red-300' :
-            t.type === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-300' :
-                                   'border-[#7c3aed]/40 bg-[#f5f3ff]/95 text-[#7c3aed]'
+            t.type === 'success' ? 'border-emerald-500/40 bg-emerald-950/80 text-emerald-300' :
+            t.type === 'error'   ? 'border-red-500/40 bg-red-950/80 text-red-300' :
+            t.type === 'warning' ? 'border-amber-500/40 bg-amber-950/80 text-amber-300' :
+                                   'border-[#1e3a5f] bg-[#111827]/95 text-[#818cf8]'
           }`}>
           <span>{t.type === 'success' ? '✓' : t.type === 'error' ? '✕' : t.type === 'warning' ? '⚠' : 'ℹ'}</span>
           <span>{t.message}</span>
@@ -582,8 +545,8 @@ function OTPInput({ value, onChange }: { value: string; onChange: (v: string) =>
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={handlePaste}
-          className={`h-12 w-10 rounded-xl border bg-[#7c3aed]/[0.05] text-center font-mono text-xl font-bold text-white outline-none transition-all ${
-            value[i] ? 'border-[#7c3aed]/60 bg-[#7c3aed]/10' : 'border-[#7c3aed]/[0.15] focus:border-[#7c3aed]/40'
+          className={`h-12 w-10 rounded-xl border bg-[#111827] text-center font-mono text-xl font-bold text-white outline-none transition-all ${
+            value[i] ? 'border-[#6366f1]/60 bg-[#1e1b4b]/40' : 'border-[#1e3a5f] focus:border-[#6366f1]/40'
           }`}
         />
       ))}
@@ -596,7 +559,7 @@ function Stars({ count = 5 }: { count?: number }) {
   return (
     <span className="flex gap-0.5">
       {Array.from({ length: count }).map((_, i) => (
-        <span key={i} className="text-amber-700 text-sm">★</span>
+        <span key={i} className="text-amber-400 text-sm">★</span>
       ))}
     </span>
   );
@@ -614,7 +577,7 @@ function CopyButton({ value }: { value: string }) {
   return (
     <button onClick={handle}
       className={`ml-2 rounded-md border px-2 py-0.5 text-xs transition-all ${
-        copied ? 'border-emerald-600 text-emerald-400' : 'border-[#7c3aed]/[0.15] text-[#7c3aed] hover:border-[#7c3aed]/50 hover:text-[#7c3aed]'
+        copied ? 'border-emerald-500/60 text-emerald-400' : 'border-[#1e3a5f] text-[#818cf8] hover:border-[#6366f1]/50 hover:text-[#a5b4fc]'
       }`}>
       {copied ? '✓ Kopyalandı' : 'Kopyala'}
     </button>
@@ -636,13 +599,13 @@ function Countdown({ startedAt }: { startedAt: number }) {
   const s = Math.floor((remaining % 60000) / 1000);
   const pad = (n: number) => String(n).padStart(2, '0');
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-emerald-300/60 bg-emerald-50 px-2.5 py-1.5">
+    <div className="flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-1.5">
       {[{ val: pad(h), label: 'sa' }, { val: pad(m), label: 'dk' }, { val: pad(s), label: 'sn' }].map((block, i) => (
         <span key={block.label} className="flex items-center gap-1">
-          {i > 0 && <span className="mb-2 text-xs font-bold text-emerald-900">:</span>}
+          {i > 0 && <span className="mb-2 text-xs font-bold text-emerald-500">:</span>}
           <span className="flex flex-col items-center">
             <span className="font-mono text-base font-bold leading-none text-emerald-400">{block.val}</span>
-            <span className="text-[9px] uppercase tracking-wider text-emerald-900">{block.label}</span>
+            <span className="text-[9px] uppercase tracking-wider text-emerald-600">{block.label}</span>
           </span>
         </span>
       ))}
@@ -664,13 +627,13 @@ function Stepper({ step }: { step: ModalStep }) {
           <span key={label} className="flex items-center gap-1">
             <span className="flex flex-col items-center gap-0.5">
               <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold transition-all ${
-                done ? 'bg-[#7c3aed] text-white' : current ? 'border-2 border-[#7c3aed] text-[#7c3aed]' : 'border border-[#7c3aed]/[0.15] text-[#7c3aed]'
+                done ? 'bg-[#6366f1] text-white' : current ? 'border-2 border-[#6366f1] text-[#818cf8]' : 'border border-[#1e3a5f] text-[#4b5563]'
               }`}>
                 {done ? '✓' : idx}
               </span>
-              <span className={`text-[9px] ${current ? 'text-[#7c3aed]' : done ? 'text-[#7c3aed]' : 'text-[#7c3aed]'}`}>{label}</span>
+              <span className={`text-[9px] ${current ? 'text-[#818cf8]' : done ? 'text-[#6366f1]' : 'text-[#4b5563]'}`}>{label}</span>
             </span>
-            {i < STEP_LABELS.length - 1 && <span className={`mb-4 h-px w-8 ${done ? 'bg-[#7c3aed]' : 'bg-[#7c3aed]/[0.05]'}`} />}
+            {i < STEP_LABELS.length - 1 && <span className={`mb-4 h-px w-8 ${done ? 'bg-[#6366f1]' : 'bg-[#1e3a5f]'}`} />}
           </span>
         );
       })}
@@ -678,7 +641,7 @@ function Stepper({ step }: { step: ModalStep }) {
   );
 }
 
-// ─── Progress Bar (test oluşturma) ────────────────────────────────────────────
+// ─── Progress Bar ─────────────────────────────────────────────────────────────
 function CreatingProgress() {
   const [progress, setProgress] = useState(0);
   const [statusIndex, setStatusIndex] = useState(0);
@@ -694,13 +657,13 @@ function CreatingProgress() {
   return (
     <div className="space-y-3 py-2">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-[#7c3aed]">{statuses[statusIndex]}</span>
-        <span className="font-mono text-[#7c3aed]">{Math.round(progress)}%</span>
+        <span className="text-[#818cf8]">{statuses[statusIndex]}</span>
+        <span className="font-mono text-[#818cf8]">{Math.round(progress)}%</span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-[#7c3aed]/[0.05]">
-        <div className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
+      <div className="h-2 w-full overflow-hidden rounded-full bg-[#1e3a5f]/50">
+        <div className="h-full rounded-full bg-gradient-to-r from-[#6366f1] to-[#4f46e5] transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
       </div>
-      <p className="text-center text-[11px] text-[#7c3aed]">Bu işlem 30–40 saniye sürebilir, lütfen bekleyin.</p>
+      <p className="text-center text-[11px] text-[#6b7280]">Bu işlem 30–40 saniye sürebilir, lütfen bekleyin.</p>
     </div>
   );
 }
@@ -728,14 +691,11 @@ export default function HomePage() {
   const [showExitPopup, setShowExitPopup] = useState(false);
   const [exitPopupShown, setExitPopupShown] = useState(false);
   const [recommendedPkg, setRecommendedPkg] = useState('');
-  // ─── Spin popup state ──────────────────────────────────────────────────────
-  const [showSpinPopup,       setShowSpinPopup]       = useState(false);
+  const [showSpinPopup, setShowSpinPopup] = useState(false);
   const [spinBannerDismissed, setSpinBannerDismissed] = useState(false);
   const toastIdRef = useRef(0);
-
   const emailInputRef = useRef<HTMLInputElement>(null);
 
-  // ─── Toast yardımcıları ──────────────────────────────────────────────────
   const addToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = ++toastIdRef.current;
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -743,7 +703,6 @@ export default function HomePage() {
   }, []);
   const removeToast = (id: number) => setToasts((prev) => prev.filter((t) => t.id !== id));
 
-  // ─── Cooldown sayacı ─────────────────────────────────────────────────────
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const id = setInterval(() => setResendCooldown((c) => Math.max(c - 1, 0)), 1000);
@@ -754,14 +713,12 @@ export default function HomePage() {
     if (step === 2) setTimeout(() => emailInputRef.current?.focus(), 100);
   }, [step]);
 
-  // ─── Paket önerisi: cihaz + amaç seçilince otomatik hesapla ─────────────
   useEffect(() => {
     if (selectedDevice && selectedPurposes.length > 0) {
       setRecommendedPkg(getRecommendedPackage(selectedDevice, selectedPurposes));
     }
   }, [selectedDevice, selectedPurposes]);
 
-  // ─── Exit-intent ─────────────────────────────────────────────────────────
   useEffect(() => {
     const handleMouseLeave = (e: MouseEvent) => {
       if (e.clientY < 10 && !exitPopupShown && !isModalOpen) {
@@ -773,9 +730,7 @@ export default function HomePage() {
     return () => document.removeEventListener('mouseleave', handleMouseLeave);
   }, [exitPopupShown, isModalOpen]);
 
-  // ─── Modal açma: localStorage'dan ilerlemeyi yükle ────────────────────────
   const handleOpenModal = (pkg?: string) => {
-    // localStorage'dan önceki seçimi yükle
     try {
       const saved = localStorage.getItem(LS_KEY);
       if (saved) {
@@ -784,37 +739,23 @@ export default function HomePage() {
         if (parsed.purposes) setSelectedPurposes(parsed.purposes);
         if (parsed.email) setEmail(parsed.email);
       } else {
-        setSelectedDevice('');
-        setSelectedPurposes([]);
-        setEmail('');
+        setSelectedDevice(''); setSelectedPurposes([]); setEmail('');
       }
     } catch {
-      setSelectedDevice('');
-      setSelectedPurposes([]);
-      setEmail('');
+      setSelectedDevice(''); setSelectedPurposes([]); setEmail('');
     }
-    setIsModalOpen(true);
-    setStep(1);
-    setSelectedPackage(pkg || '');
-    setOtp(''); setOtpToken('');
-    setStatusMsg(''); setAlreadyUsedMsg('');
-    setResendCooldown(0); setIsRecovery(false);
-    setTrialCredentials(null); setIsCreating(false);
+    setIsModalOpen(true); setStep(1); setSelectedPackage(pkg || '');
+    setOtp(''); setOtpToken(''); setStatusMsg(''); setAlreadyUsedMsg('');
+    setResendCooldown(0); setIsRecovery(false); setTrialCredentials(null); setIsCreating(false);
   };
 
-  // ─── Modal kapama: localStorage'a kaydet ─────────────────────────────────
   const handleCloseModal = () => {
-    // Tamamlanmamış seçimi sakla (adım 4'e ulaşmamışsa)
     if (step !== 4) {
       try {
-        localStorage.setItem(LS_KEY, JSON.stringify({
-          device: selectedDevice,
-          purposes: selectedPurposes,
-          email,
-        }));
-      } catch { /* ignore */ }
+        localStorage.setItem(LS_KEY, JSON.stringify({ device: selectedDevice, purposes: selectedPurposes, email }));
+      } catch { }
     } else {
-      try { localStorage.removeItem(LS_KEY); } catch { /* ignore */ }
+      try { localStorage.removeItem(LS_KEY); } catch { }
     }
     setIsModalOpen(false); setStep(1); setSelectedPackage('');
     setSelectedDevice(''); setSelectedPurposes([]);
@@ -878,12 +819,11 @@ export default function HomePage() {
 
   const WaButton = ({ label = '💬 WhatsApp ile Satın Al' }: { label?: string }) => (
     <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
-      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] ... text-white transition-colors hover:bg-[#1ebe5d]">
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] py-3 text-sm font-bold text-white transition-colors hover:bg-[#1ebe5d]">
       {label}
     </a>
   );
 
-  // Paket karşılaştırma tablosu
   const compareRows = [
     { label: 'Kanal Sayısı',    values: ['85.000+', '85.000+', '85.000+', '85.000+', '85.000+', '85.000+'] },
     { label: 'Görüntü',         values: ['Full HD', '4K', '4K', '4K', '4K Ultra HD', '4K Ultra HD'] },
@@ -895,28 +835,26 @@ export default function HomePage() {
 
   return (
     <>
-      {/* Schema Markup */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
 
-      {/* ─── Toast bildirimleri ──────────────────────────────────────────────── */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       {/* ─── Exit-intent popup ───────────────────────────────────────────────── */}
       {showExitPopup && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#7c3aed]/20 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-sm rounded-2xl border border-[#7c3aed]/30 bg-[#ffffff] p-6 text-center shadow-2xl">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#030712]/70 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm rounded-2xl border border-[#1e3a5f] bg-[#111827] p-6 text-center shadow-2xl">
             <button onClick={() => setShowExitPopup(false)}
-              className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-[#7c3aed] transition-colors hover:bg-[#7c3aed]/[0.08] hover:text-white">✕</button>
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#7c3aed]/15 text-2xl">🎁</div>
-            <h3 className="mb-1 text-lg font-bold text-[#1e1b4b]">Gitmeden önce bir dakika!</h3>
-            <p className="mb-4 text-sm text-[#7c3aed]">12 saatlik <strong className="text-[#1e1b4b]">ücretsiz test</strong> hesabı açılsın mı? Kredi kartı gerekmez.</p>
+              className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#1e3a5f] hover:text-white">✕</button>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#1e1b4b] text-2xl">🎁</div>
+            <h3 className="mb-1 text-lg font-bold text-white">Gitmeden önce bir dakika!</h3>
+            <p className="mb-4 text-sm text-[#9ca3af]">12 saatlik <strong className="text-white">ücretsiz test</strong> hesabı açılsın mı? Kredi kartı gerekmez.</p>
             <button onClick={() => { setShowExitPopup(false); handleOpenModal(); }}
-              className="mb-2 w-full rounded-xl bg-[#7c3aed] py-3 font-semibold text-white transition-colors hover:bg-[#6d28d9]">
+              className="mb-2 w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">
               ⚡ Evet, Ücretsiz Test Al
             </button>
-            <button onClick={() => setShowExitPopup(false)} className="text-xs text-[#7c3aed] transition-colors hover:text-[#7c3aed]">
+            <button onClick={() => setShowExitPopup(false)} className="text-xs text-[#6b7280] transition-colors hover:text-[#9ca3af]">
               Hayır, teşekkürler
             </button>
           </div>
@@ -924,28 +862,26 @@ export default function HomePage() {
       )}
 
       {/* ─── Header ─────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-[#7c3aed]/[0.15] bg-white/95 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-[#1e3a5f] bg-[#030712]/95 backdrop-blur-md">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link href="/" className="text-lg font-bold tracking-tight text-[#1e1b4b]">
-            Galya <span className="text-[#7c3aed]">IPTV</span>
+          <Link href="/" className="text-lg font-bold tracking-tight text-white">
+            Galya <span className="text-[#818cf8]">IPTV</span>
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden items-center gap-7 text-sm text-[#7c3aed] md:flex">
-            <Link href="/#paketler" className="transition-colors hover:text-[#1e1b4b]">Paketler</Link>
-            <Link href="/#yorumlar" className="transition-colors hover:text-[#1e1b4b]">Yorumlar</Link>
-            <Link href="/#neden-biz" className="transition-colors hover:text-[#1e1b4b]">Neden Biz</Link>
-            <Link href="/#sss" className="transition-colors hover:text-[#1e1b4b]">S.S.S</Link>
-            <Link href="/araclar" className="transition-colors hover:text-[#1e1b4b]">Araçlar</Link>
-            <Link href="/blog" className="transition-colors hover:text-[#1e1b4b]">Blog</Link>
-            <Link href="/iletisim" className="transition-colors hover:text-[#1e1b4b]">İletişim</Link>
+          <div className="hidden items-center gap-7 text-sm text-[#9ca3af] md:flex">
+            <Link href="/#paketler" className="transition-colors hover:text-white">Paketler</Link>
+            <Link href="/#yorumlar" className="transition-colors hover:text-white">Yorumlar</Link>
+            <Link href="/#neden-biz" className="transition-colors hover:text-white">Neden Biz</Link>
+            <Link href="/#sss" className="transition-colors hover:text-white">S.S.S</Link>
+            <Link href="/araclar" className="transition-colors hover:text-white">Araçlar</Link>
+            <Link href="/blog" className="transition-colors hover:text-white">Blog</Link>
+            <Link href="/iletisim" className="transition-colors hover:text-white">İletişim</Link>
             <button onClick={() => handleOpenModal()}
-              className="rounded-lg border border-[#7c3aed]/40 bg-[#7c3aed]/10 px-4 py-2 text-sm font-medium text-[#7c3aed] transition-all hover:bg-[#7c3aed]/20 hover:text-white">
+              className="rounded-lg border border-[#3730a3] bg-[#1e1b4b] px-4 py-2 text-sm font-medium text-[#818cf8] transition-all hover:bg-[#312e81] hover:text-white">
               Ücretsiz Test
             </button>
           </div>
 
-          {/* Mobile Hamburger */}
           <button className="flex flex-col gap-1.5 p-2 md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Menüyü aç">
             <span className={`block h-0.5 w-6 bg-white transition-all duration-200 ${mobileMenuOpen ? 'translate-y-2 rotate-45' : ''}`} />
             <span className={`block h-0.5 w-6 bg-white transition-all duration-200 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
@@ -953,9 +889,8 @@ export default function HomePage() {
           </button>
         </nav>
 
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="border-t border-[#7c3aed]/[0.15] bg-[#f5f3ff] px-6 pb-4 md:hidden">
+          <div className="border-t border-[#1e3a5f] bg-[#0d1117] px-6 pb-4 md:hidden">
             <div className="flex flex-col gap-1 pt-3 text-sm">
               {[
                 { href: '/#paketler', label: 'Paketler' },
@@ -967,7 +902,7 @@ export default function HomePage() {
                 { href: '/iletisim', label: 'İletişim' },
               ].map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-lg px-3 py-2.5 text-[#7c3aed] transition-colors hover:bg-[#7c3aed]/[0.05] hover:text-white">
+                  className="rounded-lg px-3 py-2.5 text-[#9ca3af] transition-colors hover:bg-[#1e3a5f]/30 hover:text-white">
                   {item.label}
                 </Link>
               ))}
@@ -976,56 +911,53 @@ export default function HomePage() {
         )}
       </header>
 
-      <main className="bg-[#f5f3ff] text-[#1e1b4b]">
+      <main className="bg-[#030712] text-white">
 
         {/* ─── Hero ──────────────────────────────────────────────────────────── */}
         <section className="relative overflow-hidden px-6 pb-24 pt-20 text-center">
-          <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-[500px] w-[500px] rounded-full bg-[#7c3aed]/8 blur-3xl" />
+          <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-[500px] w-[500px] rounded-full bg-[#6366f1]/5 blur-3xl" />
           <div className="relative mx-auto max-w-4xl">
 
-            {/* Canlı aciliyet rozeti */}
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#7c3aed]/[0.15] bg-[#ede9fe] px-4 py-1.5 text-xs text-[#7c3aed]">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#3730a3] bg-[#1e1b4b] px-4 py-1.5 text-xs text-[#818cf8]">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Bu ay <span className="text-[#1e1b4b] font-medium mx-1">847 kişi</span> satın aldı · 4K Yayın · 85.000+ Kanal
+              Bu ay <span className="text-white font-medium mx-1">847 kişi</span> satın aldı · 4K Yayın · 85.000+ Kanal
             </div>
 
-            <h1 className="mb-5 text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl">
+            <h1 className="mb-5 text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl text-white">
               IPTV Satın Al –<br />
-              <span className="text-[#7c3aed]">4K Kalite, 85.000+ Kanal</span>
+              <span className="text-[#818cf8]">4K Kalite, 85.000+ Kanal</span>
             </h1>
 
-            <p className="mx-auto mb-4 max-w-2xl text-base leading-relaxed text-[#7c3aed] md:text-lg">
+            <p className="mx-auto mb-4 max-w-2xl text-base leading-relaxed text-[#9ca3af] md:text-lg">
               En iyi IPTV server ile canlı TV, spor, film ve dizi — tek üyelikle tüm cihazlarda.
-              ₺500'den başlayan fiyatlarla, <strong className="text-[#6d28d9] font-medium">ücretsiz test</strong> ile başla.
+              ₺500'den başlayan fiyatlarla, <strong className="text-[#a5b4fc] font-medium">ücretsiz test</strong> ile başla.
             </p>
 
-            <p className="mb-8 text-xs text-[#7c3aed]">
+            <p className="mb-8 text-xs text-[#6b7280]">
               Kredi kartı gerektirmez · 12 saatlik ücretsiz erişim · Anında kurulum
             </p>
 
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <button onClick={() => handleOpenModal()}
-                className="w-full sm:w-auto rounded-xl bg-[#7c3aed] px-8 py-4 text-base font-semibold text-white shadow-xl shadow-[#7c3aed]/25 transition-all hover:bg-[#6d28d9] hover:shadow-[#7c3aed]/40 hover:scale-[1.02]">
+                className="w-full sm:w-auto rounded-xl bg-[#6366f1] px-8 py-4 text-base font-semibold text-white shadow-xl shadow-[#6366f1]/25 transition-all hover:bg-[#4f46e5] hover:shadow-[#6366f1]/40 hover:scale-[1.02]">
                 ⚡ Ücretsiz Test Al
               </button>
               <Link href="/#paketler"
-                className="w-full sm:w-auto rounded-xl border border-[#7c3aed]/[0.15] px-8 py-4 text-base font-semibold text-[#1e1b4b] transition-all hover:bg-[#7c3aed]/[0.05] hover:text-white hover:border-[#7c3aed]/25">
+                className="w-full sm:w-auto rounded-xl border border-[#1e3a5f] px-8 py-4 text-base font-semibold text-[#9ca3af] transition-all hover:bg-[#1e3a5f]/30 hover:text-white hover:border-[#3730a3]">
                 IPTV Fiyatlarına Bak →
               </Link>
             </div>
 
-            {/* Sosyal kanıt şeridi */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-[#7c3aed]">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-[#6b7280]">
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> 10.000+ mutlu kullanıcı</span>
-              <span className="hidden sm:block text-[#7c3aed]">|</span>
+              <span className="hidden sm:block text-[#1e3a5f]">|</span>
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> %99.9 uptime garantisi</span>
-              <span className="hidden sm:block text-[#7c3aed]">|</span>
+              <span className="hidden sm:block text-[#1e3a5f]">|</span>
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> 7/24 teknik destek</span>
-              <span className="hidden sm:block text-[#7c3aed]">|</span>
+              <span className="hidden sm:block text-[#1e3a5f]">|</span>
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> Anında kurulum</span>
             </div>
 
-            {/* Canlı bilgi kartları */}
             <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
               {[
                 { v: '85.000+', l: 'Canlı Kanal' },
@@ -1033,9 +965,9 @@ export default function HomePage() {
                 { v: '10.000+', l: 'Aktif Kullanıcı' },
                 { v: '7/24', l: 'Teknik Destek' },
               ].map((s) => (
-                <div key={s.l} className="rounded-xl border border-[#7c3aed]/[0.15] bg-[#ffffff] p-4 text-left transition-colors hover:border-[#7c3aed]/[0.15]">
-                  <div className="text-lg font-bold text-[#1e1b4b]">{s.v}</div>
-                  <div className="mt-0.5 text-xs text-[#7c3aed]">{s.l}</div>
+                <div key={s.l} className="rounded-xl border border-[#1e3a5f] bg-[#111827] p-4 text-left transition-colors hover:border-[#3730a3]">
+                  <div className="text-lg font-bold text-[#818cf8]">{s.v}</div>
+                  <div className="mt-0.5 text-xs text-[#6b7280]">{s.l}</div>
                 </div>
               ))}
             </div>
@@ -1043,27 +975,27 @@ export default function HomePage() {
         </section>
 
         {/* ─── "Neden test almalıyım?" mini blok ─────────────────────────────── */}
-        <section className="border-t border-[#7c3aed]/[0.15] px-6 py-10">
+        <section className="border-t border-[#1e3a5f] px-6 py-10">
           <div className="mx-auto max-w-3xl">
-            <p className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-[#7c3aed]">Neden Önce Test Almalısınız?</p>
+            <p className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-[#6b7280]">Neden Önce Test Almalısınız?</p>
             <div className="grid gap-3 sm:grid-cols-3">
               {[
                 { icon: '🔍', title: 'Kaliteyi Önce Görün', desc: 'Satın almadan önce yayın kalitesini ve kanal sayısını bizzat test edin.' },
                 { icon: '📱', title: 'Cihaz Uyumluluğunu Deneyin', desc: 'Kendi cihazınızda çalışıp çalışmadığını önceden doğrulayın.' },
                 { icon: '❄️', title: 'Donma Performansını Kontrol Edin', desc: 'İnternet hızınızla uyumlu mu? Test ederek emin olun.' },
               ].map((item) => (
-                <div key={item.title} className="flex items-start gap-3 rounded-xl border border-[#7c3aed]/[0.15] bg-[#ffffff] p-4">
+                <div key={item.title} className="flex items-start gap-3 rounded-xl border border-[#1e3a5f] bg-[#111827] p-4">
                   <span className="mt-0.5 text-xl">{item.icon}</span>
                   <div>
-                    <p className="text-sm font-semibold text-[#1e1b4b]">{item.title}</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-[#7c3aed]">{item.desc}</p>
+                    <p className="text-sm font-semibold text-white">{item.title}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-[#9ca3af]">{item.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
             <div className="mt-5 text-center">
               <button onClick={() => handleOpenModal()}
-                className="rounded-xl bg-[#7c3aed]/10 border border-[#7c3aed]/30 px-6 py-2.5 text-sm font-semibold text-[#7c3aed] transition-all hover:bg-[#7c3aed]/20">
+                className="rounded-xl bg-[#1e1b4b] border border-[#3730a3] px-6 py-2.5 text-sm font-semibold text-[#818cf8] transition-all hover:bg-[#312e81]">
                 ⚡ Ücretsiz Testi Başlat
               </button>
             </div>
@@ -1071,7 +1003,7 @@ export default function HomePage() {
         </section>
 
         {/* ─── Güven rozetleri şeridi ─────────────────────────────────────────── */}
-        <section className="border-y border-[#7c3aed]/[0.15] bg-white/[0.01] px-6 py-5">
+        <section className="border-y border-[#1e3a5f] bg-[#0d1117] px-6 py-5">
           <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-6 md:gap-10">
             {[
               { icon: '🔒', label: 'SSL Güvenli' },
@@ -1081,7 +1013,7 @@ export default function HomePage() {
               { icon: '🛡️', label: 'Gizlilik Korumalı' },
               { icon: '↩️', label: 'Sorun Çözme Garantisi' },
             ].map((b) => (
-              <div key={b.label} className="flex items-center gap-2 text-xs text-[#7c3aed]">
+              <div key={b.label} className="flex items-center gap-2 text-xs text-[#6b7280]">
                 <span className="text-base">{b.icon}</span>
                 <span>{b.label}</span>
               </div>
@@ -1090,54 +1022,52 @@ export default function HomePage() {
         </section>
 
         {/* ─── Packages ──────────────────────────────────────────────────────── */}
-        <section id="paketler" className="border-t border-[#7c3aed]/[0.15] px-6 py-20">
+        <section id="paketler" className="border-t border-[#1e3a5f] px-6 py-20">
           <div className="mx-auto max-w-6xl">
             <div className="mb-3 text-center">
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">IPTV Paket Fiyatları</h2>
-              <p className="mt-3 text-sm text-[#7c3aed]">Tek seferlik ödeme, abonelik yok. Uzun vadede büyük tasarruf.</p>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl text-white">IPTV Paket Fiyatları</h2>
+              <p className="mt-3 text-sm text-[#9ca3af]">Tek seferlik ödeme, abonelik yok. Uzun vadede büyük tasarruf.</p>
             </div>
 
-            {/* Paket karşılaştırma toggle */}
             <div className="mb-8 text-center">
               <button onClick={() => setShowCompare(!showCompare)}
-                className="rounded-lg border border-[#7c3aed]/[0.15] bg-[#f5f3ff] px-4 py-2 text-xs font-medium text-[#7c3aed] transition-all hover:border-[#7c3aed]/25 hover:text-[#1e1b4b]">
+                className="rounded-lg border border-[#1e3a5f] bg-[#111827] px-4 py-2 text-xs font-medium text-[#818cf8] transition-all hover:border-[#3730a3] hover:text-white">
                 {showCompare ? '▲ Tabloyu Gizle' : '⇄ Paketleri Karşılaştır'}
               </button>
             </div>
 
-            {/* Karşılaştırma tablosu */}
             {showCompare && (
-              <div className="mb-10 overflow-x-auto rounded-2xl border border-[#7c3aed]/[0.15]">
+              <div className="mb-10 overflow-x-auto rounded-2xl border border-[#1e3a5f]">
                 <table className="w-full text-xs md:text-sm">
                   <thead>
-                    <tr className="border-b border-[#7c3aed]/[0.15] bg-[#f5f3ff]">
-                      <th className="px-4 py-3 text-left font-medium text-[#7c3aed]">Özellik</th>
+                    <tr className="border-b border-[#1e3a5f] bg-[#0d1117]">
+                      <th className="px-4 py-3 text-left font-medium text-[#6b7280]">Özellik</th>
                       {packages.map((p) => (
-                        <th key={p.name} className={`px-3 py-3 text-center font-semibold ${p.popular ? 'text-[#7c3aed]' : 'text-[#1e1b4b]'}`}>
+                        <th key={p.name} className={`px-3 py-3 text-center font-semibold ${p.popular ? 'text-[#818cf8]' : 'text-white'}`}>
                           {p.name.replace(' Paket', '')}
-                          {p.popular && <span className="ml-1 text-[10px] text-[#7c3aed]">★</span>}
+                          {p.popular && <span className="ml-1 text-[10px] text-[#818cf8]">★</span>}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {compareRows.map((row, ri) => (
-                      <tr key={row.label} className={`border-b border-[#7c3aed]/[0.15] ${ri % 2 === 0 ? '' : 'bg-white/[0.01]'}`}>
-                        <td className="px-4 py-2.5 text-[#7c3aed]">{row.label}</td>
+                      <tr key={row.label} className={`border-b border-[#1e3a5f] ${ri % 2 === 0 ? '' : 'bg-[#0d1117]/50'}`}>
+                        <td className="px-4 py-2.5 text-[#9ca3af]">{row.label}</td>
                         {row.values.map((val, vi) => (
                           <td key={vi} className={`px-3 py-2.5 text-center ${
-                            packages[vi]?.popular ? 'text-[#7c3aed] font-semibold'
-                            : val === '✗' ? 'text-[#7c3aed]'
+                            packages[vi]?.popular ? 'text-[#818cf8] font-semibold'
+                            : val === '✗' ? 'text-[#4b5563]'
                             : val === '✓' ? 'text-emerald-400'
-                            : 'text-[#1e1b4b]'
+                            : 'text-white'
                           }`}>{val}</td>
                         ))}
                       </tr>
                     ))}
-                    <tr className="bg-[#ede9fe]">
-                      <td className="px-4 py-3 font-medium text-[#7c3aed]">Toplam Fiyat</td>
+                    <tr className="bg-[#1e1b4b]/40">
+                      <td className="px-4 py-3 font-medium text-[#9ca3af]">Toplam Fiyat</td>
                       {packages.map((p) => (
-                        <td key={p.name} className={`px-3 py-3 text-center font-bold ${p.popular ? 'text-[#6d28d9]' : 'text-[#1e1b4b]'}`}>
+                        <td key={p.name} className={`px-3 py-3 text-center font-bold ${p.popular ? 'text-[#818cf8]' : 'text-white'}`}>
                           ₺{p.price}
                         </td>
                       ))}
@@ -1152,50 +1082,48 @@ export default function HomePage() {
                 <div key={pkg.name}
                   className={`relative flex flex-col rounded-2xl border p-6 transition-all ${
                     pkg.popular
-                      ? 'border-[#7c3aed]/60 bg-gradient-to-b from-[#7c3aed]/10 to-[#6d28d9]/[0.03] shadow-xl shadow-[#7c3aed]/10'
-                      : 'border-[#7c3aed]/[0.15] bg-[#ffffff] hover:border-[#7c3aed]/20 hover:bg-[#ede9fe]'
+                      ? 'border-[#6366f1]/60 bg-[#111827] shadow-xl shadow-[#6366f1]/10'
+                      : 'border-[#1e3a5f] bg-[#111827] hover:border-[#3730a3] hover:bg-[#0d1117]'
                   }`}
                 >
                   {pkg.popular && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[#1e1b4b] shadow-lg shadow-[#7c3aed]/30">
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-[#6366f1] to-[#4f46e5] px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-[#6366f1]/30">
                       ⭐ En Çok Tercih Edilen
                     </div>
                   )}
                   <div className="mb-4">
-                    <div className="text-[11px] font-semibold uppercase tracking-widest text-[#7c3aed]">{pkg.duration}</div>
-                    <h3 className="mt-1.5 text-lg font-bold text-[#1e1b4b]">{pkg.name}</h3>
-                    {/* "Kim için?" etiketi */}
+                    <div className="text-[11px] font-semibold uppercase tracking-widest text-[#818cf8]">{pkg.duration}</div>
+                    <h3 className="mt-1.5 text-lg font-bold text-white">{pkg.name}</h3>
                     <span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-[11px] font-medium ${
-                      pkg.popular ? 'bg-[#7c3aed]/15 text-[#7c3aed]' : 'bg-[#7c3aed]/[0.05] text-[#7c3aed]'
+                      pkg.popular ? 'bg-[#1e1b4b] text-[#818cf8]' : 'bg-[#0d1117] text-[#6b7280]'
                     }`}>
                       {pkg.forWho}
                     </span>
                   </div>
 
-                  {/* Fiyat + aylık maliyet + tasarruf */}
                   <div className="mb-2">
-                    <span className="text-4xl font-extrabold text-[#1e1b4b]">₺{pkg.price}</span>
-                    <span className="ml-1.5 text-sm text-[#7c3aed]">tek ödeme</span>
+                    <span className="text-4xl font-extrabold text-white">₺{pkg.price}</span>
+                    <span className="ml-1.5 text-sm text-[#6b7280]">tek ödeme</span>
                   </div>
                   {pkg.monthlyPrice ? (
                     <div className="mb-5 flex items-center gap-2">
-                      <span className="text-xs text-[#7c3aed]">
-                        Aylık yalnızca <span className={`font-semibold ${pkg.popular ? 'text-[#7c3aed]' : 'text-[#1e1b4b]'}`}>₺{pkg.monthlyPrice}</span>
+                      <span className="text-xs text-[#9ca3af]">
+                        Aylık yalnızca <span className={`font-semibold ${pkg.popular ? 'text-[#818cf8]' : 'text-white'}`}>₺{pkg.monthlyPrice}</span>
                       </span>
                       {pkg.saving && (
-                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${pkg.popular ? 'bg-[#7c3aed]/15 text-[#6d28d9]' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${pkg.popular ? 'bg-[#1e1b4b] text-[#818cf8]' : 'bg-emerald-950/60 text-emerald-400'}`}>
                           {pkg.saving} tasarruf
                         </span>
                       )}
                     </div>
                   ) : (
-                    <div className="mb-5 text-xs text-[#7c3aed]">Ömür boyu tek ödeme</div>
+                    <div className="mb-5 text-xs text-[#6b7280]">Ömür boyu tek ödeme</div>
                   )}
 
                   <ul className="mb-6 flex-1 space-y-2.5">
                     {pkg.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2.5 text-sm text-[#7c3aed]">
-                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${pkg.popular ? 'bg-[#7c3aed]/15 text-[#6d28d9]' : 'bg-emerald-500/10 text-emerald-400'}`}>✓</span>
+                      <li key={f} className="flex items-center gap-2.5 text-sm text-[#9ca3af]">
+                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${pkg.popular ? 'bg-[#1e1b4b] text-[#818cf8]' : 'bg-emerald-950/60 text-emerald-400'}`}>✓</span>
                         {f}
                       </li>
                     ))}
@@ -1205,60 +1133,60 @@ export default function HomePage() {
                     target="_blank" rel="noopener noreferrer"
                     className={`mb-3 flex w-full items-center justify-center rounded-xl py-3 text-center text-sm font-semibold transition-all ${
                       pkg.popular
-                        ? 'bg-[#7c3aed] text-white shadow-md shadow-[#7c3aed]/25 hover:bg-[#6d28d9] hover:shadow-[#7c3aed]/40'
-                        : 'border border-[#7c3aed]/20 bg-[#ede9fe] text-white hover:bg-[#7c3aed]/[0.10] hover:border-[#7c3aed]/30'
+                        ? 'bg-[#6366f1] text-white shadow-md shadow-[#6366f1]/25 hover:bg-[#4f46e5]'
+                        : 'border border-[#1e3a5f] bg-[#0d1117] text-[#9ca3af] hover:bg-[#1e3a5f]/40 hover:border-[#3730a3] hover:text-white'
                     }`}>
                     💬 WhatsApp ile Satın Al
                   </a>
                   <button onClick={() => handleOpenModal(pkg.name)}
-                    className="flex w-full items-center justify-center rounded-xl border border-[#7c3aed]/25 bg-[#f5f3ff] px-3 py-2.5 text-xs font-medium text-[#1e1b4b] transition-all hover:border-white/30 hover:bg-[#ede9fe]">
+                    className="flex w-full items-center justify-center rounded-xl border border-[#1e3a5f] bg-[#111827] px-3 py-2.5 text-xs font-medium text-[#818cf8] transition-all hover:border-[#3730a3] hover:text-white">
                     Önce Ücretsiz Test Al
                   </button>
                 </div>
               ))}
             </div>
 
-            <p className="mt-8 text-center text-xs text-[#7c3aed]">
+            <p className="mt-8 text-center text-xs text-[#6b7280]">
               💳 Ödeme WhatsApp üzerinden güvenli şekilde gerçekleşir · Kurulum desteği dahil · Sorun yaşarsanız çözüm garantisi
             </p>
           </div>
         </section>
 
         {/* ─── Müşteri Yorumları ──────────────────────────────────────────────── */}
-        <section id="yorumlar" className="border-t border-[#7c3aed]/[0.15] px-6 py-20">
+        <section id="yorumlar" className="border-t border-[#1e3a5f] px-6 py-20">
           <div className="mx-auto max-w-6xl">
             <div className="mb-3 text-center">
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Müşteri Yorumları</h2>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl text-white">Müşteri Yorumları</h2>
               <div className="mt-3 flex items-center justify-center gap-2">
                 <Stars count={5} />
-                <span className="text-sm text-[#7c3aed]">10.000+ kullanıcı · Ortalama <strong className="text-[#1e1b4b]">4.9</strong>/5</span>
+                <span className="text-sm text-[#9ca3af]">10.000+ kullanıcı · Ortalama <strong className="text-white">4.9</strong>/5</span>
               </div>
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {reviews.map((r) => (
-                <div key={r.initials} className="rounded-2xl border border-[#7c3aed]/[0.15] bg-[#ffffff] p-5 transition-all hover:border-[#7c3aed]/20 hover:bg-[#ede9fe]">
+                <div key={r.initials} className="rounded-2xl border border-[#1e3a5f] bg-[#111827] p-5 transition-all hover:border-[#3730a3]">
                   <div className="mb-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#7c3aed]/20 text-sm font-bold text-[#7c3aed]">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1e1b4b] text-sm font-bold text-[#818cf8]">
                         {r.initials}
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-[#1e1b4b]">{r.name}</div>
-                        <div className="text-xs text-[#7c3aed]">{r.city}</div>
+                        <div className="text-sm font-semibold text-white">{r.name}</div>
+                        <div className="text-xs text-[#6b7280]">{r.city}</div>
                       </div>
                     </div>
                     <Stars count={r.stars} />
                   </div>
-                  <p className="text-sm leading-relaxed text-[#7c3aed]">"{r.text}"</p>
+                  <p className="text-sm leading-relaxed text-[#9ca3af]">"{r.text}"</p>
                 </div>
               ))}
             </div>
 
             <div className="mt-10 text-center">
-              <p className="mb-4 text-sm text-[#7c3aed]">Siz de denemek ister misiniz? Önce ücretsiz test alın.</p>
+              <p className="mb-4 text-sm text-[#9ca3af]">Siz de denemek ister misiniz? Önce ücretsiz test alın.</p>
               <button onClick={() => handleOpenModal()}
-                className="rounded-xl bg-[#7c3aed] px-8 py-3.5 font-semibold text-white shadow-lg shadow-[#7c3aed]/20 transition-all hover:bg-[#6d28d9] hover:scale-[1.02]">
+                className="rounded-xl bg-[#6366f1] px-8 py-3.5 font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
                 Ücretsiz Test Al →
               </button>
             </div>
@@ -1266,9 +1194,9 @@ export default function HomePage() {
         </section>
 
         {/* ─── Neden Biz ─────────────────────────────────────────────────────── */}
-        <section id="neden-biz" className="border-t border-[#7c3aed]/[0.15] px-6 py-20">
+        <section id="neden-biz" className="border-t border-[#1e3a5f] px-6 py-20">
           <div className="mx-auto max-w-5xl">
-            <h2 className="mb-12 text-center text-3xl font-bold tracking-tight md:text-4xl">Neden Galya IPTV?</h2>
+            <h2 className="mb-12 text-center text-3xl font-bold tracking-tight md:text-4xl text-white">Neden Galya IPTV?</h2>
             <div className="grid gap-4 md:grid-cols-3">
               {[
                 { icon: '📺', title: 'Geniş İçerik', desc: 'Canlı TV, spor, belgesel, film ve dizi kategorilerinde 85.000+ kanal.' },
@@ -1278,27 +1206,27 @@ export default function HomePage() {
                 { icon: '📱', title: 'Tüm Cihazlar', desc: 'Smart TV, mobil, TV Box, bilgisayar, Apple TV ve daha fazlası.' },
                 { icon: '🆓', title: 'Önce Test Et', desc: 'Kredi kartı gerekmez. Satın almadan 12 saatlik ücretsiz test al.' },
               ].map((item) => (
-                <div key={item.title} className="rounded-xl border border-[#7c3aed]/[0.15] bg-[#ede9fe] p-5 transition-all hover:border-[#7c3aed]/[0.15] hover:bg-[#7c3aed]/[0.04]">
+                <div key={item.title} className="rounded-xl border border-[#1e3a5f] bg-[#111827] p-5 transition-all hover:border-[#3730a3]">
                   <div className="mb-3 text-2xl">{item.icon}</div>
-                  <h3 className="mb-1.5 font-semibold text-[#1e1b4b]">{item.title}</h3>
-                  <p className="text-sm leading-relaxed text-[#7c3aed]">{item.desc}</p>
+                  <h3 className="mb-1.5 font-semibold text-white">{item.title}</h3>
+                  <p className="text-sm leading-relaxed text-[#9ca3af]">{item.desc}</p>
                 </div>
               ))}
             </div>
             <div className="mt-10 text-center">
               <button onClick={() => handleOpenModal()}
-                className="rounded-xl border border-[#7c3aed]/20 bg-[#ede9fe] px-8 py-3.5 font-semibold text-[#1e1b4b] transition-all hover:bg-[#7c3aed]/[0.10]">
+                className="rounded-xl border border-[#1e3a5f] bg-[#111827] px-8 py-3.5 font-semibold text-[#818cf8] transition-all hover:bg-[#1e3a5f]/40 hover:text-white">
                 Hemen Test Al →
               </button>
             </div>
           </div>
         </section>
 
-        {/* ─── Satın alma itirazlarını kıran bölüm ───────────────────────────── */}
-        <section className="border-t border-[#7c3aed]/[0.15] px-6 py-16">
+        {/* ─── Endişeleri giderme bölümü ───────────────────────────────────── */}
+        <section className="border-t border-[#1e3a5f] px-6 py-16">
           <div className="mx-auto max-w-3xl">
-            <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-[#7c3aed]">Aklınızdaki Soruları Biliyoruz</p>
-            <h2 className="mb-8 text-center text-2xl font-bold tracking-tight md:text-3xl">Endişelerinizi Gideriyoruz</h2>
+            <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-[#6b7280]">Aklınızdaki Soruları Biliyoruz</p>
+            <h2 className="mb-8 text-center text-2xl font-bold tracking-tight md:text-3xl text-white">Endişelerinizi Gideriyoruz</h2>
             <div className="space-y-3">
               {[
                 { concern: 'Donma sorunu olur mu?', answer: 'Testte bizzat deneyin. Altyapımız %99.9 uptime garantisi verir.' },
@@ -1306,11 +1234,11 @@ export default function HomePage() {
                 { concern: 'Cihazımda çalışır mı?', answer: 'Ücretsiz test ile kendi cihazınızda önce deneyin, sonra karar verin.' },
                 { concern: 'Param boşa giderse?', answer: 'Sorun yaşarsanız destek hattımız çözüm garantisi verir.' },
               ].map((item) => (
-                <div key={item.concern} className="flex items-start gap-4 rounded-xl border border-[#7c3aed]/[0.15] bg-[#ffffff] px-5 py-4">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#7c3aed]/15 text-[11px] font-bold text-[#7c3aed]">?</span>
+                <div key={item.concern} className="flex items-start gap-4 rounded-xl border border-[#1e3a5f] bg-[#111827] px-5 py-4">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1e1b4b] text-[11px] font-bold text-[#818cf8]">?</span>
                   <div>
-                    <p className="text-sm font-semibold text-[#1e1b4b]">{item.concern}</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-[#7c3aed]">{item.answer}</p>
+                    <p className="text-sm font-semibold text-white">{item.concern}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-[#9ca3af]">{item.answer}</p>
                   </div>
                 </div>
               ))}
@@ -1319,18 +1247,18 @@ export default function HomePage() {
         </section>
 
         {/* ─── SSS ───────────────────────────────────────────────────────────── */}
-        <section id="sss" className="border-t border-[#7c3aed]/[0.15] px-6 py-20">
+        <section id="sss" className="border-t border-[#1e3a5f] px-6 py-20">
           <div className="mx-auto max-w-2xl">
-            <h2 className="mb-3 text-center text-3xl font-bold tracking-tight md:text-4xl">Sıkça Sorulan Sorular</h2>
-            <p className="mb-10 text-center text-sm text-[#7c3aed]">IPTV satın almadan önce merak ettikleriniz</p>
+            <h2 className="mb-3 text-center text-3xl font-bold tracking-tight md:text-4xl text-white">Sıkça Sorulan Sorular</h2>
+            <p className="mb-10 text-center text-sm text-[#9ca3af]">IPTV satın almadan önce merak ettikleriniz</p>
             <div className="space-y-2">
               {faqs.map((faq) => (
-                <details key={faq.q} className="group rounded-xl border border-[#7c3aed]/[0.15] bg-[#ede9fe] px-5 py-4 transition-colors hover:border-[#7c3aed]/[0.15]">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium text-zinc-200">
+                <details key={faq.q} className="group rounded-xl border border-[#1e3a5f] bg-[#111827] px-5 py-4 transition-colors hover:border-[#3730a3]">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium text-white">
                     {faq.q}
-                    <span className="shrink-0 text-[10px] text-[#7c3aed] transition-transform group-open:rotate-180">▼</span>
+                    <span className="shrink-0 text-[10px] text-[#6b7280] transition-transform group-open:rotate-180">▼</span>
                   </summary>
-                  <p className="mt-3 text-sm leading-relaxed text-[#7c3aed]">{faq.a}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-[#9ca3af]">{faq.a}</p>
                 </details>
               ))}
             </div>
@@ -1338,22 +1266,22 @@ export default function HomePage() {
         </section>
 
         {/* ─── CTA Final ─────────────────────────────────────────────────────── */}
-        <section className="border-t border-[#7c3aed]/[0.15] px-6 py-24">
+        <section className="border-t border-[#1e3a5f] px-6 py-24">
           <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#7c3aed]/30 bg-[#7c3aed]/8 px-4 py-1.5 text-xs text-[#7c3aed]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#7c3aed] animate-pulse" />
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#3730a3] bg-[#1e1b4b] px-4 py-1.5 text-xs text-[#818cf8]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#818cf8] animate-pulse" />
               Hâlâ kararsız mısınız? Önce ücretsiz deneyin.
             </div>
-            <h2 className="mb-3 text-2xl font-bold tracking-tight md:text-4xl">Hemen Başlayın</h2>
-            <p className="mb-2 text-sm text-[#7c3aed]">Ücretsiz test ile kaliteyi görün, sonra karar verin.</p>
-            <p className="mb-8 text-xs text-[#7c3aed]">Kredi kartı gerekmez · 12 saatlik erişim · Anında kurulum</p>
+            <h2 className="mb-3 text-2xl font-bold tracking-tight md:text-4xl text-white">Hemen Başlayın</h2>
+            <p className="mb-2 text-sm text-[#9ca3af]">Ücretsiz test ile kaliteyi görün, sonra karar verin.</p>
+            <p className="mb-8 text-xs text-[#6b7280]">Kredi kartı gerekmez · 12 saatlik erişim · Anında kurulum</p>
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <button onClick={() => handleOpenModal()}
-                className="rounded-xl bg-[#7c3aed] px-10 py-4 font-semibold text-white shadow-xl shadow-[#7c3aed]/25 transition-all hover:bg-[#6d28d9] hover:scale-[1.02]">
+                className="rounded-xl bg-[#6366f1] px-10 py-4 font-semibold text-white shadow-xl shadow-[#6366f1]/25 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
                 ⚡ Ücretsiz Test Al
               </button>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl bg-[#25d366] ... text-white transition-all hover:bg-[#1ebe5d]">
+                className="flex items-center justify-center gap-2 rounded-xl bg-[#25d366] px-8 py-4 font-semibold text-white transition-all hover:bg-[#1ebe5d]">
                 💬 WhatsApp ile İletişim
               </a>
             </div>
@@ -1363,30 +1291,30 @@ export default function HomePage() {
       </main>
 
       {/* ─── Footer ──────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-[#7c3aed]/[0.15] bg-[#ede9fe] px-6 py-12 text-center text-sm text-[#7c3aed]">
-        <p className="mb-1 font-semibold text-[#7c3aed]">Galya IPTV</p>
-        <p className="mb-1 text-xs text-[#7c3aed]">Türkiye'nin en kaliteli 4K IPTV hizmeti · 85.000+ kanal · 10.000+ aktif kullanıcı</p>
+      <footer className="border-t border-[#1e3a5f] bg-[#0d1117] px-6 py-12 text-center text-sm text-[#6b7280]">
+        <p className="mb-1 font-semibold text-[#818cf8]">Galya IPTV</p>
+        <p className="mb-1 text-xs text-[#6b7280]">Türkiye'nin en kaliteli 4K IPTV hizmeti · 85.000+ kanal · 10.000+ aktif kullanıcı</p>
         <p>© {new Date().getFullYear()} Galya IPTV. Tüm hakları saklıdır.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-5 text-xs">
-          <Link href="/blog" className="transition-colors hover:text-[#1e1b4b]">Blog</Link>
-          <Link href="/#paketler" className="transition-colors hover:text-[#1e1b4b]">IPTV Fiyatları</Link>
-          <Link href="/#yorumlar" className="transition-colors hover:text-[#1e1b4b]">Yorumlar</Link>
-          <Link href="/#sss" className="transition-colors hover:text-[#1e1b4b]">S.S.S</Link>
-          <Link href="/iletisim" className="transition-colors hover:text-[#1e1b4b]">İletişim</Link>
-          <Link href="/blog/iptv-nedir" className="transition-colors hover:text-[#1e1b4b]">IPTV Nedir?</Link>
-          <Link href="/blog/iptv-kurulum" className="transition-colors hover:text-[#1e1b4b]">Kurulum Rehberi</Link>
+          <Link href="/blog" className="transition-colors hover:text-white">Blog</Link>
+          <Link href="/#paketler" className="transition-colors hover:text-white">IPTV Fiyatları</Link>
+          <Link href="/#yorumlar" className="transition-colors hover:text-white">Yorumlar</Link>
+          <Link href="/#sss" className="transition-colors hover:text-white">S.S.S</Link>
+          <Link href="/iletisim" className="transition-colors hover:text-white">İletişim</Link>
+          <Link href="/blog/iptv-nedir" className="transition-colors hover:text-white">IPTV Nedir?</Link>
+          <Link href="/blog/iptv-kurulum" className="transition-colors hover:text-white">Kurulum Rehberi</Link>
         </div>
       </footer>
 
       {/* ─── Mobil Sticky CTA ───────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#7c3aed]/[0.15] bg-white/95 px-3 py-2 backdrop-blur-md md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#1e3a5f] bg-[#030712]/95 px-3 py-2 backdrop-blur-md md:hidden">
         <div className="flex gap-2">
           <button onClick={() => handleOpenModal()}
-            className="flex-1 rounded-lg bg-[#7c3aed] py-2 text-xs font-semibold text-white shadow-lg shadow-[#7c3aed]/20 transition-colors hover:bg-[#6d28d9]">
+            className="flex-1 rounded-lg bg-[#6366f1] py-2 text-xs font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-colors hover:bg-[#4f46e5]">
             ⚡ Ücretsiz Test Al
           </button>
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
-            className="flex flex-1 items-center justify-center rounded-lg bg-[#25d366] ... text-white transition-colors hover:bg-[#1ebe5d]">
+            className="flex flex-1 items-center justify-center rounded-lg bg-[#25d366] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1ebe5d]">
             💬 WhatsApp
           </a>
         </div>
@@ -1394,10 +1322,10 @@ export default function HomePage() {
 
       {/* ─── Desktop Sticky CTA ─────────────────────────────────────────────── */}
       <div className="fixed bottom-6 right-6 z-40 hidden md:flex flex-col gap-2 items-end">
-        <div className="rounded-xl border border-[#7c3aed]/30 bg-white/95 p-3 shadow-2xl backdrop-blur-md w-52">
-          <p className="mb-2 text-[11px] text-[#7c3aed] text-center">⭐ 12 aylık paket popüler</p>
+        <div className="rounded-xl border border-[#1e3a5f] bg-[#111827]/95 p-3 shadow-2xl backdrop-blur-md w-52">
+          <p className="mb-2 text-[11px] text-[#818cf8] text-center">⭐ 12 aylık paket popüler</p>
           <button onClick={() => handleOpenModal()}
-            className="mb-1.5 w-full rounded-lg bg-[#7c3aed] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#6d28d9]">
+            className="mb-1.5 w-full rounded-lg bg-[#6366f1] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#4f46e5]">
             ⚡ Ücretsiz Test Al
           </button>
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
@@ -1411,20 +1339,18 @@ export default function HomePage() {
       {showSpinPopup && (
         <div
           className="fixed inset-0 z-[65] flex items-center justify-center p-4"
-          style={{ background:'rgba(109,40,217,0.15)', backdropFilter:'blur(8px)' }}
+          style={{ background:'rgba(3,7,18,0.8)', backdropFilter:'blur(8px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowSpinPopup(false); }}
         >
-          <div className="relative w-full max-w-xs rounded-2xl p-5 shadow-2xl"
-            style={{ background:'rgba(255,255,255,0.96)', border:'1px solid rgba(109,40,217,0.2)', backdropFilter:'blur(20px)' }}>
-            {/* Başlık + kapat */}
+          <div className="relative w-full max-w-xs rounded-2xl p-5 shadow-2xl border border-[#1e3a5f] bg-[#111827]">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-base">🎡</span>
-                <span className="text-sm font-bold text-[#1e1b4b]">İndirim Kazan</span>
-                <span className="rounded-full bg-[#7c3aed]/20 px-2 py-0.5 text-[10px] font-semibold text-[#7c3aed]">Sınırlı</span>
+                <span className="text-sm font-bold text-white">İndirim Kazan</span>
+                <span className="rounded-full bg-[#1e1b4b] px-2 py-0.5 text-[10px] font-semibold text-[#818cf8]">Sınırlı</span>
               </div>
               <button onClick={() => setShowSpinPopup(false)}
-                className="flex h-6 w-6 items-center justify-center rounded-full text-[#7c3aed] transition-colors hover:bg-[#7c3aed]/[0.10] hover:text-white text-xs">
+                className="flex h-6 w-6 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#1e3a5f] hover:text-white text-xs">
                 ✕
               </button>
             </div>
@@ -1433,46 +1359,41 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ─── Sticky Spin Banner (sağ alt, kapatılabilir) ─────────────────────── */}
+      {/* ─── Sticky Spin Banner ─────────────────────────────────────────────── */}
       {!spinBannerDismissed && !showSpinPopup && (
         <div className="fixed bottom-20 right-4 z-40 md:bottom-[88px] md:right-6">
           <div className="relative">
-            {/* Kapat butonu */}
             <button onClick={() => setSpinBannerDismissed(true)}
-              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#ede9fe] border border-white/[0.12] text-[10px] text-[#7c3aed] transition-colors hover:text-[#1e1b4b] z-10">
+              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#1e3a5f] border border-[#3730a3] text-[10px] text-[#818cf8] transition-colors hover:text-white z-10">
               ✕
             </button>
-            {/* Ana buton */}
             <button onClick={() => setShowSpinPopup(true)}
-              className="flex items-center gap-2.5 rounded-2xl border border-[#7c3aed]/40 bg-white/95 px-4 py-3 shadow-2xl backdrop-blur-md transition-all hover:border-[#7c3aed]/70 hover:bg-[#ede9fe]"
-              style={{ boxShadow: '0 0 20px rgba(109,40,217,0.18)' }}>
-              {/* Dönen çark ikonu */}
+              className="flex items-center gap-2.5 rounded-2xl border border-[#3730a3] bg-[#111827] px-4 py-3 shadow-2xl backdrop-blur-md transition-all hover:border-[#6366f1]/50 hover:bg-[#1e1b4b]"
+              style={{ boxShadow: '0 0 20px rgba(99,102,241,0.15)' }}>
               <span className="text-2xl" style={{ display:'inline-block', animation:'spin-slow 4s linear infinite' }}>🎡</span>
               <div className="text-left">
-                <p className="text-xs font-bold text-[#1e1b4b] leading-tight">İndirim Kazan!</p>
-                <p className="text-[10px] text-[#7c3aed] leading-tight">Çarkı çevir, ödülünü al</p>
+                <p className="text-xs font-bold text-white leading-tight">İndirim Kazan!</p>
+                <p className="text-[10px] text-[#818cf8] leading-tight">Çarkı çevir, ödülünü al</p>
               </div>
-              {/* Canlı nokta */}
               <span className="relative flex h-2 w-2 ml-1">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#7c3aed] opacity-75"/>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#7c3aed]"/>
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#6366f1] opacity-75"/>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#6366f1]"/>
               </span>
             </button>
           </div>
         </div>
       )}
 
-      {/* spin-slow animasyonu için inline style */}
       <style>{`@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
       {/* ─── Modal ───────────────────────────────────────────────────────────── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#7c3aed]/20 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#030712]/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
           onClick={(e) => { if (e.target === e.currentTarget) handleCloseModal(); }}>
-          <div className="relative w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-6 shadow-2xl sm:rounded-2xl"
+          <div className="relative w-full max-w-md overflow-y-auto rounded-t-2xl bg-[#111827] border border-[#1e3a5f] p-6 shadow-2xl sm:rounded-2xl"
             style={{ maxHeight: '92vh' }}>
             <button onClick={handleCloseModal}
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-[#7c3aed] transition-colors hover:bg-[#7c3aed]/[0.08] hover:text-white">
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#1e3a5f] hover:text-white">
               ✕
             </button>
 
@@ -1482,28 +1403,28 @@ export default function HomePage() {
             {step === 1 && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[#1e1b4b]">Hangi cihazda kullanacaksınız?</h3>
-                  <p className="mt-1 text-sm text-[#7c3aed]">Kurulum rehberini cihazınıza göre hazırlayalım.</p>
+                  <h3 className="text-xl font-bold text-white">Hangi cihazda kullanacaksınız?</h3>
+                  <p className="mt-1 text-sm text-[#9ca3af]">Kurulum rehberini cihazınıza göre hazırlayalım.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {DEVICES.map((device) => (
                     <button key={device.id} onClick={() => setSelectedDevice(device.id)}
                       className={`flex flex-col items-start rounded-xl border p-3 text-left transition-colors ${
                         selectedDevice === device.id
-                          ? 'border-[#7c3aed]/60 bg-[#7c3aed]/10'
-                          : 'border-[#7c3aed]/[0.15] bg-[#ede9fe] hover:border-[#7c3aed]/[0.15]'
+                          ? 'border-[#6366f1]/60 bg-[#1e1b4b]'
+                          : 'border-[#1e3a5f] bg-[#0d1117] hover:border-[#3730a3]'
                       }`}>
                       <span className="mb-1 text-xl">{device.icon}</span>
-                      <span className={`text-sm font-semibold ${selectedDevice === device.id ? 'text-[#1e1b4b]' : 'text-[#1e1b4b]'}`}>{device.label}</span>
-                      <span className="text-[11px] text-[#7c3aed]">{device.sub}</span>
+                      <span className="text-sm font-semibold text-white">{device.label}</span>
+                      <span className="text-[11px] text-[#6b7280]">{device.sub}</span>
                     </button>
                   ))}
                 </div>
                 <button onClick={() => setStep(1.5 as ModalStep)} disabled={!selectedDevice}
-                  className="w-full rounded-xl bg-[#7c3aed] py-3 font-semibold text-white transition-colors hover:bg-[#6d28d9] disabled:opacity-40">
+                  className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5] disabled:opacity-40">
                   Devam Et →
                 </button>
-                <p className="text-center text-xs text-[#7c3aed]">Kredi kartı gerekmez · 12 saatlik ücretsiz erişim</p>
+                <p className="text-center text-xs text-[#6b7280]">Kredi kartı gerekmez · 12 saatlik ücretsiz erişim</p>
               </div>
             )}
 
@@ -1511,11 +1432,11 @@ export default function HomePage() {
             {step === (1.5 as ModalStep) && (
               <div className="space-y-3">
                 <div>
-                  <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-[#7c3aed]/[0.15] bg-[#f5f3ff] px-2.5 py-1 text-xs text-[#7c3aed]">
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-[#1e3a5f] bg-[#0d1117] px-2.5 py-1 text-xs text-[#9ca3af]">
                     {DEVICES.find(d => d.id === selectedDevice)?.icon} {DEVICES.find(d => d.id === selectedDevice)?.label} seçildi
                   </div>
-                  <h3 className="text-xl font-bold text-[#1e1b4b]">En çok ne izleyeceksiniz?</h3>
-                  <p className="mt-1 text-sm text-[#7c3aed]">Birden fazla seçebilirsiniz.</p>
+                  <h3 className="text-xl font-bold text-white">En çok ne izleyeceksiniz?</h3>
+                  <p className="mt-1 text-sm text-[#9ca3af]">Birden fazla seçebilirsiniz.</p>
                 </div>
                 <div className="space-y-2">
                   {PURPOSES.map((p) => {
@@ -1525,35 +1446,34 @@ export default function HomePage() {
                         prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id]
                       )}
                         className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
-                          selected ? 'border-[#7c3aed]/60 bg-[#7c3aed]/10' : 'border-[#7c3aed]/[0.15] bg-[#ede9fe] hover:border-[#7c3aed]/[0.15]'
+                          selected ? 'border-[#6366f1]/60 bg-[#1e1b4b]' : 'border-[#1e3a5f] bg-[#0d1117] hover:border-[#3730a3]'
                         }`}>
                         <span className="text-lg">{p.icon}</span>
                         <div className="flex-1">
-                          <div className={`text-sm font-semibold ${selected ? 'text-[#1e1b4b]' : 'text-[#1e1b4b]'}`}>{p.label}</div>
-                          <div className="text-[11px] text-[#7c3aed]">{p.sub}</div>
+                          <div className="text-sm font-semibold text-white">{p.label}</div>
+                          <div className="text-[11px] text-[#6b7280]">{p.sub}</div>
                         </div>
                         <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-all ${
-                          selected ? 'border-[#7c3aed] bg-[#7c3aed] text-white' : 'border-[#7c3aed]/[0.15]'
+                          selected ? 'border-[#6366f1] bg-[#6366f1] text-white' : 'border-[#1e3a5f]'
                         }`}>{selected ? '✓' : ''}</div>
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Paket önerisi */}
                 {recommendedPkg && selectedPurposes.length > 0 && (
-                  <div className="rounded-xl border border-[#7c3aed]/30 bg-[#7c3aed]/8 px-4 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#7c3aed]">✨ Size En Uygun Paket</p>
-                    <p className="mt-0.5 text-sm font-bold text-[#1e1b4b]">{recommendedPkg}</p>
-                    <p className="text-[11px] text-[#7c3aed]">Seçimlerinize göre bu paketi öneriyoruz.</p>
+                  <div className="rounded-xl border border-[#3730a3] bg-[#1e1b4b]/50 px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#818cf8]">✨ Size En Uygun Paket</p>
+                    <p className="mt-0.5 text-sm font-bold text-white">{recommendedPkg}</p>
+                    <p className="text-[11px] text-[#9ca3af]">Seçimlerinize göre bu paketi öneriyoruz.</p>
                   </div>
                 )}
 
                 <button onClick={() => setStep(2)}
-                  className="w-full rounded-xl bg-[#7c3aed] py-3 font-semibold text-white transition-colors hover:bg-[#6d28d9]">
+                  className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">
                   Testi Başlat →
                 </button>
-                <button onClick={() => setStep(1)} className="w-full text-xs text-[#7c3aed] transition-colors hover:text-[#7c3aed]">← Geri dön</button>
+                <button onClick={() => setStep(1)} className="w-full text-xs text-[#6b7280] transition-colors hover:text-[#9ca3af]">← Geri dön</button>
               </div>
             )}
 
@@ -1561,66 +1481,65 @@ export default function HomePage() {
             {step === 2 && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[#1e1b4b]">E-posta Adresiniz</h3>
-                  <p className="mt-1 text-sm text-[#7c3aed]">Test bilgilerini göndereceğimiz e-posta adresinizi girin.</p>
+                  <h3 className="text-xl font-bold text-white">E-posta Adresiniz</h3>
+                  <p className="mt-1 text-sm text-[#9ca3af]">Test bilgilerini göndereceğimiz e-posta adresinizi girin.</p>
                 </div>
                 {selectedDevice && (
                   <div className="flex flex-wrap gap-2">
-                    <div className="rounded-lg border border-[#7c3aed]/[0.15] bg-[#f5f3ff] px-3 py-1.5 text-xs text-[#7c3aed]">
+                    <div className="rounded-lg border border-[#1e3a5f] bg-[#0d1117] px-3 py-1.5 text-xs text-[#9ca3af]">
                       {DEVICES.find(d => d.id === selectedDevice)?.icon} {DEVICES.find(d => d.id === selectedDevice)?.label}
                     </div>
                     {selectedPurposes.map(pid => {
                       const p = PURPOSES.find(x => x.id === pid);
                       return p ? (
-                        <div key={pid} className="rounded-lg border border-[#7c3aed]/[0.15] bg-[#f5f3ff] px-3 py-1.5 text-xs text-[#7c3aed]">
+                        <div key={pid} className="rounded-lg border border-[#1e3a5f] bg-[#0d1117] px-3 py-1.5 text-xs text-[#9ca3af]">
                           {p.icon} {p.label}
                         </div>
                       ) : null;
                     })}
                     {recommendedPkg && (
-                      <div className="rounded-lg border border-[#7c3aed]/30 bg-[#7c3aed]/10 px-3 py-1.5 text-xs text-[#7c3aed]">
+                      <div className="rounded-lg border border-[#3730a3] bg-[#1e1b4b]/50 px-3 py-1.5 text-xs text-[#818cf8]">
                         ✨ Öneri: {recommendedPkg}
                       </div>
                     )}
                   </div>
                 )}
                 <input ref={emailInputRef} type="email" placeholder="ornek@email.com"
-                  className="w-full rounded-xl border border-[#7c3aed]/[0.15] bg-[#7c3aed]/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-[#7c3aed] transition-colors focus:border-[#7c3aed]/60"
+                  className="w-full rounded-xl border border-[#1e3a5f] bg-[#0d1117] px-4 py-3 text-sm text-white outline-none placeholder:text-[#4b5563] transition-colors focus:border-[#6366f1]/60"
                   value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()} />
-                <p className="text-xs text-[#7c3aed]">Geçici e-posta adresleri kabul edilmemektedir.</p>
+                <p className="text-xs text-[#6b7280]">Geçici e-posta adresleri kabul edilmemektedir.</p>
                 <button onClick={() => handleSendOtp(false)} disabled={loading}
-                  className="w-full rounded-xl bg-[#7c3aed] py-3 font-semibold text-white transition-colors hover:bg-[#6d28d9] disabled:opacity-50">
+                  className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5] disabled:opacity-50">
                   {loading ? 'Gönderiliyor...' : 'Doğrulama Kodu Gönder'}
                 </button>
-                {statusMsg && <p className="text-center text-xs text-amber-700">{statusMsg}</p>}
+                {statusMsg && <p className="text-center text-xs text-amber-400">{statusMsg}</p>}
                 <div className="flex justify-between text-xs">
-                  <button onClick={() => setStep(1.5 as ModalStep)} className="text-[#7c3aed] transition-colors hover:text-[#7c3aed]">← Geri dön</button>
-                  <button onClick={() => handleSendOtp(true)} disabled={loading} className="text-[#7c3aed] transition-colors hover:text-[#7c3aed]">
+                  <button onClick={() => setStep(1.5 as ModalStep)} className="text-[#6b7280] transition-colors hover:text-[#9ca3af]">← Geri dön</button>
+                  <button onClick={() => handleSendOtp(true)} disabled={loading} className="text-[#818cf8] transition-colors hover:text-[#a5b4fc]">
                     Daha önce test aldım →
                   </button>
                 </div>
-                <div className="border-t border-[#7c3aed]/[0.15] pt-3"><WaButton /></div>
+                <div className="border-t border-[#1e3a5f] pt-3"><WaButton /></div>
               </div>
             )}
 
-            {/* ── ADIM 3: OTP (6 kutulu) ─────────────────────────────────────── */}
+            {/* ── ADIM 3: OTP ─────────────────────────────────────────────────── */}
             {step === 3 && (
               <div className="space-y-4 text-center">
                 <div>
-                  <h3 className="text-xl font-bold text-[#1e1b4b]">Kodu Doğrula</h3>
-                  <p className="mt-1 text-sm text-[#7c3aed]">
-                    <span className="text-[#1e1b4b]">{email}</span> adresine gönderilen 6 haneli kodu girin.
+                  <h3 className="text-xl font-bold text-white">Kodu Doğrula</h3>
+                  <p className="mt-1 text-sm text-[#9ca3af]">
+                    <span className="text-white">{email}</span> adresine gönderilen 6 haneli kodu girin.
                   </p>
                 </div>
 
-                {/* 6 kutulu OTP */}
                 <OTPInput value={otp} onChange={setOtp} />
 
-                <p className="text-xs text-[#7c3aed]">Spam klasörünü de kontrol edin.</p>
-                {statusMsg && <p className="text-xs text-[#7c3aed]">{statusMsg}</p>}
+                <p className="text-xs text-[#6b7280]">Spam klasörünü de kontrol edin.</p>
+                {statusMsg && <p className="text-xs text-[#9ca3af]">{statusMsg}</p>}
 
                 {isCreating ? (
-                  <div className="rounded-xl border border-[#7c3aed]/[0.15] bg-[#f5f3ff] p-4">
+                  <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1117] p-4">
                     <CreatingProgress />
                   </div>
                 ) : (
@@ -1632,32 +1551,30 @@ export default function HomePage() {
 
                 {!isCreating && (
                   <div className="flex justify-between text-xs">
-                    <button onClick={() => { setStep(2); setOtp(''); }} className="text-[#7c3aed] transition-colors hover:text-[#7c3aed]">← Geri dön</button>
+                    <button onClick={() => { setStep(2); setOtp(''); }} className="text-[#6b7280] transition-colors hover:text-[#9ca3af]">← Geri dön</button>
                     <button onClick={() => handleSendOtp(isRecovery)} disabled={loading || resendCooldown > 0}
-                      className="text-[#7c3aed] transition-colors hover:text-[#7c3aed] disabled:text-[#7c3aed]">
+                      className="text-[#818cf8] transition-colors hover:text-[#a5b4fc] disabled:text-[#4b5563]">
                       {resendCooldown > 0 ? `Tekrar gönder (${resendCooldown}s)` : 'Tekrar gönder'}
                     </button>
                   </div>
                 )}
-                {!isCreating && <div className="border-t border-[#7c3aed]/[0.15] pt-3"><WaButton /></div>}
+                {!isCreating && <div className="border-t border-[#1e3a5f] pt-3"><WaButton /></div>}
               </div>
             )}
 
             {/* ── ADIM 4: Test Bilgileri ──────────────────────────────────────── */}
             {step === 4 && (
               <div className="space-y-4">
-                {/* Başlık */}
                 <div className="text-center">
-                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-2xl">✅</div>
-                  <h3 className="text-xl font-bold text-[#1e1b4b]">{isRecovery ? 'Bilgileriniz Hazır' : 'Testiniz Açıldı!'}</h3>
-                  <p className="mt-1 text-sm text-[#7c3aed]">
-                    Bilgiler <span className="text-[#1e1b4b]">{email}</span> adresine gönderildi.
+                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-950/60 text-2xl">✅</div>
+                  <h3 className="text-xl font-bold text-white">{isRecovery ? 'Bilgileriniz Hazır' : 'Testiniz Açıldı!'}</h3>
+                  <p className="mt-1 text-sm text-[#9ca3af]">
+                    Bilgiler <span className="text-white">{email}</span> adresine gönderildi.
                   </p>
                 </div>
 
                 {trialCredentials && (
-                  <div className="rounded-xl border border-[#7c3aed]/[0.15] bg-[#ede9fe] p-4 space-y-0">
-                    {/* Süre sayacı */}
+                  <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1117] p-4 space-y-0">
                     <div className="mb-3 flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <span className="relative flex h-2 w-2">
@@ -1669,43 +1586,39 @@ export default function HomePage() {
                       <Countdown startedAt={trialCredentials.startedAt} />
                     </div>
 
-                    {/* Bilgiler */}
-                    <div className="divide-y divide-[#7c3aed]/10">
+                    <div className="divide-y divide-[#1e3a5f]">
                       {[
                         { label: 'Sunucu URL', value: 'http://pro4kiptv.xyz:2086', copy: 'http://pro4kiptv.xyz:2086/' },
                         { label: 'Kullanıcı Adı', value: trialCredentials.username, copy: trialCredentials.username },
                         { label: 'Şifre', value: trialCredentials.password, copy: trialCredentials.password },
                       ].map(row => (
                         <div key={row.label} className="flex items-center justify-between py-2.5 gap-2">
-                          <span className="text-xs text-[#7c3aed] shrink-0">{row.label}</span>
+                          <span className="text-xs text-[#6b7280] shrink-0">{row.label}</span>
                           <div className="flex items-center gap-1 min-w-0">
-                            <span className="rounded-md bg-[#7c3aed]/10 px-2 py-0.5 font-mono text-xs font-bold text-[#7c3aed] truncate max-w-[140px]">{row.value}</span>
+                            <span className="rounded-md bg-[#1e1b4b] px-2 py-0.5 font-mono text-xs font-bold text-[#818cf8] truncate max-w-[140px]">{row.value}</span>
                             <CopyButton value={row.copy} />
                           </div>
                         </div>
                       ))}
                     </div>
 
-                    {/* M3U */}
-                    <div className="mt-3 rounded-lg border border-[#7c3aed]/20 bg-[#7c3aed]/5 p-3">
+                    <div className="mt-3 rounded-lg border border-[#1e3a5f] bg-[#111827] p-3">
                       <div className="mb-1.5 flex items-center justify-between">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#7c3aed]">M3U Linki</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#6b7280]">M3U Linki</span>
                         <CopyButton value={m3uLink} />
                       </div>
-                      <p className="break-all font-mono text-[10px] leading-relaxed text-[#1e1b4b]">{m3uLink}</p>
+                      <p className="break-all font-mono text-[10px] leading-relaxed text-[#9ca3af]">{m3uLink}</p>
                     </div>
                   </div>
                 )}
 
-                {/* CTA butonları */}
-                <button
-                  onClick={() => setStep(5 as ModalStep)}
-                  className="w-full rounded-xl bg-[#7c3aed] py-3 font-semibold text-white transition-colors hover:bg-[#6d28d9]">
+                <button onClick={() => setStep(5 as ModalStep)}
+                  className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">
                   📲 Kurulumu Göster →
                 </button>
                 <WaButton label="💬 Beğendiyseniz Satın Alın" />
                 <button onClick={handleCloseModal}
-                  className="w-full rounded-lg border border-[#7c3aed]/[0.15] py-2.5 text-sm text-[#7c3aed] transition-colors hover:text-[#1e1b4b]">
+                  className="w-full rounded-lg border border-[#1e3a5f] py-2.5 text-sm text-[#6b7280] transition-colors hover:text-white">
                   Pencereyi Kapat
                 </button>
               </div>
@@ -1715,13 +1628,12 @@ export default function HomePage() {
             {step === 5 && (
               <div className="space-y-4">
                 <div className="text-center">
-                  <h3 className="text-xl font-bold text-[#1e1b4b]">Kurulum Rehberi</h3>
-                  <p className="mt-1 text-sm text-[#7c3aed]">Adım adım cihazına kuralım</p>
+                  <h3 className="text-xl font-bold text-white">Kurulum Rehberi</h3>
+                  <p className="mt-1 text-sm text-[#9ca3af]">Adım adım cihazına kuralım</p>
                 </div>
 
-                {/* Sonraki adımlar */}
-                <div className="rounded-xl border border-[#7c3aed]/[0.15] bg-[#f5f3ff] p-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#7c3aed]">📋 Ne Yapmalısınız?</p>
+                <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1117] p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#6b7280]">📋 Ne Yapmalısınız?</p>
                   <ol className="space-y-2.5">
                     {[
                       { n: '1', text: 'Uygulamayı cihazınıza indirin', sub: selectedDevice ? INSTALL_GUIDES[selectedDevice as DeviceId]?.app : 'IPTV Smarters Pro' },
@@ -1730,38 +1642,37 @@ export default function HomePage() {
                       { n: '4', text: 'Memnunsan paketi al', sub: 'WhatsApp\'tan kolayca satın alabilirsin' },
                     ].map(item => (
                       <li key={item.n} className="flex items-start gap-3">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#7c3aed]/20 text-[10px] font-bold text-[#7c3aed]">{item.n}</span>
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1e1b4b] text-[10px] font-bold text-[#818cf8]">{item.n}</span>
                         <div>
-                          <p className="text-xs font-medium text-[#7c3aed]">{item.text}</p>
-                          <p className="text-[11px] text-[#7c3aed]">{item.sub}</p>
+                          <p className="text-xs font-medium text-white">{item.text}</p>
+                          <p className="text-[11px] text-[#6b7280]">{item.sub}</p>
                         </div>
                       </li>
                     ))}
                   </ol>
                 </div>
 
-                {/* Cihaza özel kurulum adımları */}
                 {selectedDevice && INSTALL_GUIDES[selectedDevice as DeviceId] && (() => {
                   const guide = INSTALL_GUIDES[selectedDevice as DeviceId];
                   return (
-                    <div className="rounded-xl border border-[#7c3aed]/[0.15] bg-[#ede9fe] p-4">
+                    <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1117] p-4">
                       <div className="mb-3 flex items-center gap-2">
                         <span className="text-base">{DEVICES.find(d => d.id === selectedDevice)?.icon}</span>
                         <div>
-                          <p className="text-xs font-semibold text-[#1e1b4b]">Kurulum Adımları</p>
-                          <p className="text-[11px] text-[#7c3aed]">{guide.app}</p>
+                          <p className="text-xs font-semibold text-white">Kurulum Adımları</p>
+                          <p className="text-[11px] text-[#6b7280]">{guide.app}</p>
                         </div>
                       </div>
                       <ol className="space-y-2">
                         {guide.steps.map((s, i) => (
-                          <li key={i} className="flex gap-2.5 text-xs text-[#7c3aed]">
-                            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#7c3aed]/20 text-[10px] font-bold text-[#7c3aed]">{i + 1}</span>
+                          <li key={i} className="flex gap-2.5 text-xs text-[#9ca3af]">
+                            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#1e1b4b] text-[10px] font-bold text-[#818cf8]">{i + 1}</span>
                             <span>{s}</span>
                           </li>
                         ))}
                       </ol>
                       {guide.note && (
-                        <p className="mt-3 rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-700">
+                        <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-[11px] leading-relaxed text-amber-400">
                           💡 {guide.note}
                         </p>
                       )}
@@ -1771,11 +1682,11 @@ export default function HomePage() {
 
                 <WaButton label="💬 Beğendiyseniz Satın Alın" />
                 <button onClick={() => setStep(4 as ModalStep)}
-                  className="w-full text-xs text-[#7c3aed] transition-colors hover:text-[#7c3aed]">
+                  className="w-full text-xs text-[#6b7280] transition-colors hover:text-[#9ca3af]">
                   ← Test bilgilerine dön
                 </button>
                 <button onClick={handleCloseModal}
-                  className="w-full rounded-lg border border-[#7c3aed]/[0.15] py-2.5 text-sm text-[#7c3aed] transition-colors hover:text-[#1e1b4b]">
+                  className="w-full rounded-lg border border-[#1e3a5f] py-2.5 text-sm text-[#6b7280] transition-colors hover:text-white">
                   Pencereyi Kapat
                 </button>
               </div>
@@ -1784,17 +1695,17 @@ export default function HomePage() {
             {/* ── ADIM 6: Daha önce test alındı ──────────────────────────────── */}
             {step === 6 && (
               <div className="space-y-4 py-2 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-2xl">⏳</div>
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-950/40 text-2xl">⏳</div>
                 <div>
-                  <h3 className="text-xl font-bold text-[#1e1b4b]">Daha Önce Test Aldınız</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[#7c3aed]">{alreadyUsedMsg}</p>
+                  <h3 className="text-xl font-bold text-white">Daha Önce Test Aldınız</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[#9ca3af]">{alreadyUsedMsg}</p>
                 </div>
                 <WaButton label="💬 WhatsApp ile Satın Al" />
                 <button onClick={() => { setStep(1); setEmail(''); setAlreadyUsedMsg(''); }}
-                  className="w-full text-xs text-[#7c3aed] transition-colors hover:text-[#7c3aed]">
+                  className="w-full text-xs text-[#818cf8] transition-colors hover:text-[#a5b4fc]">
                   Farklı e-posta ile dene
                 </button>
-                <button onClick={handleCloseModal} className="w-full text-xs text-[#7c3aed] transition-colors hover:text-[#7c3aed]">Kapat</button>
+                <button onClick={handleCloseModal} className="w-full text-xs text-[#6b7280] transition-colors hover:text-[#9ca3af]">Kapat</button>
               </div>
             )}
 
