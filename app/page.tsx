@@ -234,8 +234,10 @@ function spinValidatePhone(raw: string): { valid: boolean; normalized: string; e
   let d = raw.replace(/\D/g, '');
   if (d.startsWith('90')) d = d.slice(2);
   if (d.startsWith('0'))  d = d.slice(1);
-  if (d.length !== 10 || !d.startsWith('5'))
-    return { valid: false, normalized: '', error: 'Geçerli bir GSM numarası girin (05xx xxx xx xx)' };
+  // 10 haneli (05xx → 5xx) veya 9 haneli (5xxxxxxxxx) kabul et — normalize: daima 10 hane (0'sız)
+  if ((d.length !== 10 && d.length !== 9) || !d.startsWith('5'))
+    return { valid: false, normalized: '', error: 'Geçerli bir GSM numarası girin (05xx veya 5xx formatında)' };
+  // 9 hane gelirse (örn. kullanıcı 5xx... yazdıysa) başına 0 eklemeden normalize: zaten 5 ile başlıyor, sakla
   return { valid: true, normalized: d, error: '' };
 }
 function spinPickPrize(): number {
@@ -245,7 +247,7 @@ function spinPickPrize(): number {
 }
 function spinEaseOut(t: number) { return 1 - Math.pow(1 - t, 4); }
 function spinFormatPhone(val: string) {
-  const d = val.replace(/\D/g, '').slice(0, 11);
+  const d = val.replace(/\D/g, '').slice(0, 11); // 05xx = 11, 5xx = 10 — ikisini de al
   if (d.length <= 4) return d;
   if (d.length <= 7) return `${d.slice(0,4)} ${d.slice(4)}`;
   if (d.length <= 9) return `${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7)}`;
