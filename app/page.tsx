@@ -922,7 +922,7 @@ export default function HomePage() {
                       <img
                         src={pkg.logo}
                         alt={pkg.logoAlt}
-                        style={{ width: '100%', maxWidth: '260px', height: '96px', objectFit: 'contain' }}
+                        style={{ width: '100%', maxWidth: '360px', height: '96px', objectFit: 'contain' }}
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).style.display = 'none';
                           const fb = e.currentTarget.nextElementSibling as HTMLElement;
