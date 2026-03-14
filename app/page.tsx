@@ -34,23 +34,23 @@ function formatTL(n: number): string {
 }
 
 // ─── Animasyonlu fiyat sayacı bileşeni ───────────────────────────────────────
-function AnimatedPrice({ target, popular }: { target: number; popular: boolean }) {
-  const [display, setDisplay] = useState(target);
-  const prevRef = useRef(target);
-  const rafRef  = useRef<number>(0);
+function AnimatedPrice({ target, monthly, popular }: { target: number; monthly: number; popular: boolean }) {
+  const [display, setDisplay]       = useState(target);
+  const [displayMo, setDisplayMo]   = useState(monthly);
+  const prevRef   = useRef(target);
+  const prevMoRef = useRef(monthly);
+  const rafRef    = useRef<number>(0);
+  const rafMoRef  = useRef<number>(0);
 
   useEffect(() => {
     const from = prevRef.current;
     const to   = target;
-    if (from === to) return;
+    if (from === to) { setDisplay(to); return; }
     prevRef.current = to;
-
-    const duration = 600; // ms
+    const duration = 550;
     const startTime = performance.now();
-
     const animate = (now: number) => {
       const t = Math.min((now - startTime) / duration, 1);
-      // ease-out cubic
       const eased = 1 - Math.pow(1 - t, 3);
       setDisplay(from + (to - from) * eased);
       if (t < 1) rafRef.current = requestAnimationFrame(animate);
@@ -60,15 +60,44 @@ function AnimatedPrice({ target, popular }: { target: number; popular: boolean }
     return () => cancelAnimationFrame(rafRef.current);
   }, [target]);
 
-  const formatted = formatTL(display);
-  const [integer, decimal] = formatted.split(',');
+  useEffect(() => {
+    const from = prevMoRef.current;
+    const to   = monthly;
+    if (from === to) { setDisplayMo(to); return; }
+    prevMoRef.current = to;
+    const duration = 550;
+    const startTime = performance.now();
+    const animate = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayMo(from + (to - from) * eased);
+      if (t < 1) rafMoRef.current = requestAnimationFrame(animate);
+      else setDisplayMo(to);
+    };
+    rafMoRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafMoRef.current);
+  }, [monthly]);
+
+  // Toplam fiyat — büyük
+  const fmtTotal = formatTL(display);
+  const [totInt, totDec] = fmtTotal.split(',');
+
+  // Aylık fiyat — küçük parantez içi
+  const fmtMo = formatTL(displayMo);
 
   return (
-    <div className="flex items-end justify-center gap-0.5">
-      <span className={`text-5xl font-extrabold tracking-tight tabular-nums leading-none ${popular ? 'text-white' : 'text-white'}`}>
-        ₺{integer}
+    <div className="flex items-center justify-center gap-2">
+      {/* Ana büyük rakam */}
+      <div className="flex items-end gap-0.5 leading-none">
+        <span className="text-[2.6rem] font-extrabold tracking-tight tabular-nums text-white">
+          ₺{totInt}
+        </span>
+        <span className="mb-1 text-lg font-bold tabular-nums text-white">,{totDec}</span>
+      </div>
+      {/* Aylık küçük — sadece çok aylıkta göster */}
+      <span className="mb-0.5 self-end text-[13px] font-medium tabular-nums text-[#6b7280]">
+        (₺{fmtMo}/Ay)
       </span>
-      <span className={`mb-1 text-xl font-bold tabular-nums ${popular ? 'text-[#93c5fd]' : 'text-[#6b7280]'}`}>,{decimal}</span>
     </div>
   );
 }
@@ -865,156 +894,111 @@ export default function HomePage() {
             </div>
 
             {/* ── Paket Kartları ──────────────────────────────────────────────── */}
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-3 items-start">
               {categoryPackages.map((pkg) => {
-                const dur = DURATIONS.find(d => d.key === selectedDuration)!;
-                const totalPrice = calcTotalPrice(pkg.basePrice, dur.months, dur.discount);
+                const dur         = DURATIONS.find(d => d.key === selectedDuration)!;
+                const totalPrice  = calcTotalPrice(pkg.basePrice, dur.months, dur.discount);
+                const monthlyPrice = totalPrice / dur.months;
                 const originalTotal = pkg.basePrice * dur.months;
                 const waText = `${pkg.waMsg} (${dur.label} paket, ₺${formatTL(totalPrice)})`;
+
                 return (
-                  <div key={pkg.id} className={`relative flex flex-col rounded-2xl border p-6 transition-all ${
+                  <div key={pkg.id} className={`relative flex flex-col rounded-2xl border transition-all ${
                     pkg.popular
-                      ? 'border-[#3b82f6]/70 bg-[#0d1525] shadow-2xl shadow-[#3b82f6]/15'
-                      : 'border-[#1e3a5f] bg-[#0d1117] hover:border-[#3b82f6]/40'
-                  }`}>
+                      ? 'border-[#3b82f6]/80 bg-[#0c1628] shadow-2xl shadow-[#3b82f6]/20'
+                      : 'border-[#1e2d42] bg-[#0a1020] hover:border-[#3b82f6]/30'
+                  }`} style={{ padding: '28px 24px 24px' }}>
+
+                    {/* EN POPÜLER rozeti */}
                     {pkg.popular && (
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#3b82f6] px-5 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-[#3b82f6]/40">
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#3b82f6] px-5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-lg">
                         EN POPÜLER
                       </div>
                     )}
 
-<div className="rounded-3xl border border-blue-500/40 bg-[#050b16] px-8 pt-6 pb-8">
-  {/* Üst rozet */}
-  {pkg.popular && (
-    <div className="mb-4 flex justify-center">
-      <span className="rounded-full bg-blue-500 px-5 py-2 text-sm font-bold text-white shadow-[0_0_25px_rgba(59,130,246,0.45)]">
-        EN POPÜLER
-      </span>
-    </div>
-  )}
+                    {/* ── LOGO — görseldeki gibi büyük ── */}
+                    <div className="mb-4 flex items-center justify-center" style={{ height: '96px' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={pkg.logo}
+                        alt={pkg.logoAlt}
+                        style={{ width: '100%', maxWidth: '260px', height: '96px', objectFit: 'contain' }}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          const fb = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (fb) fb.style.display = 'flex';
+                        }}
+                      />
+                      {/* Fallback: logo yokken */}
+                      <div className="hidden w-full h-24 items-center justify-center">
+                        <span className="text-2xl font-extrabold tracking-tight text-white">{pkg.name}</span>
+                      </div>
+                    </div>
 
-  {/* Logo alanı */}
-  <div className="mb-6 flex items-center justify-center">
-    {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img
-      src={pkg.logo}
-      alt={pkg.logoAlt}
-      className="block h-auto w-full max-w-[300px] object-contain"
-      onError={(e) => {
-        (e.currentTarget as HTMLImageElement).style.display = 'none';
-        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-        if (fallback) fallback.style.display = 'flex';
-      }}
-    />
+                    {/* ── Açıklama ── */}
+                    <p className="mb-4 text-center text-[13px] leading-relaxed text-[#8b9ab3]">{pkg.desc}</p>
 
-    <div
-      style={{ display: 'none' }}
-      className="hidden min-h-[60px] w-full items-center justify-center text-center text-2xl font-semibold text-white"
-    >
-      {pkg.name}
-    </div>
-  </div>
-
-  {/* Açıklama */}
-  <p className="mb-8 text-center text-[15px] leading-7 text-slate-300">
-    {pkg.description}
-  </p>
-
-  {/* Fiyat */}
-  <div className="mb-8 text-center">
-    <div className="flex items-end justify-center gap-1">
-      <span className="text-6xl font-extrabold tracking-tight text-white">
-        ₺{pkg.price}
-      </span>
-      <span className="mb-1 text-2xl font-semibold text-blue-200">
-        .43
-      </span>
-    </div>
-
-    <div className="mt-2 text-lg text-slate-400">
-      6 aylık toplam
-    </div>
-
-    <div className="mt-3 flex items-center justify-center gap-3">
-      <span className="text-base text-slate-500 line-through">
-        ₺{pkg.oldPrice}
-      </span>
-      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-400">
-        %5 tasarruf
-      </span>
-    </div>
-  </div>
-
-  {/* Çizgi */}
-  <div className="mb-8 border-t border-white/10" />
-
-  {/* Özellikler */}
-  <ul className="space-y-4">
-    {pkg.features.map((feature, i) => (
-      <li key={i} className="flex items-start gap-3 text-left text-white">
-        <span className="mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
-          ✓
-        </span>
-        <span className="text-[15px] leading-7 text-slate-200">{feature}</span>
-      </li>
-    ))}
-  </ul>
-</div>
-
-                    {/* Açıklama */}
-                    <p className="mb-6 text-center text-sm leading-relaxed text-[#9ca3af]">{pkg.desc}</p>
-
-                    {/* Fiyat — animasyonlu, TOPLAM gösterim */}
-                    <div className="mb-2 text-center">
-                      <AnimatedPrice target={totalPrice} popular={pkg.popular} />
-                      <p className="mt-1.5 text-xs text-[#6b7280]">
-                        {dur.months === 1
-                          ? 'aylık'
-                          : `${dur.months} aylık toplam`}
-                      </p>
+                    {/* ── Fiyat bloğu — görseldeki düzen ── */}
+                    <div className="mb-4 text-center">
+                      {/* İndirim rozeti (sadece indirimli durumlarda) */}
                       {dur.discount > 0 && (
-                        <div className="mt-2 flex items-center justify-center gap-2">
-                          <span className="text-xs line-through text-[#4b5563]">₺{formatTL(originalTotal)}</span>
-                          <span className="rounded-full bg-emerald-950/70 px-2 py-0.5 text-[11px] font-semibold text-emerald-400">
-                            %{dur.discount} tasarruf
+                        <div className="mb-2 flex justify-center">
+                          <span className="rounded-full bg-[#166534] px-3 py-0.5 text-xs font-bold text-[#4ade80]">
+                            %{dur.discount} İndirim
                           </span>
                         </div>
                       )}
+
+                      {/* Üstü çizili orijinal + aylık — tek satır, küçük */}
+                      {dur.discount > 0 && (
+                        <p className="mb-1 text-[12px] text-[#4b5563]">
+                          <span className="line-through">₺{formatTL(originalTotal)}</span>
+                          <span className="ml-2 line-through text-[#4b5563]">(₺{formatTL(pkg.basePrice)}/Ay)</span>
+                        </p>
+                      )}
+
+                      {/* Büyük toplam + aylık yanında */}
+                      <AnimatedPrice
+                        target={totalPrice}
+                        monthly={monthlyPrice}
+                        popular={pkg.popular}
+                      />
                     </div>
 
-                    {/* Ayırıcı */}
-                    <div className={`my-5 h-px ${pkg.popular ? 'bg-[#1e3a5f]' : 'bg-[#1a2535]'}`} />
+                    {/* ── Ayırıcı ── */}
+                    <div className="mb-4 h-px bg-[#1a2d44]" />
 
-                    {/* Özellikler */}
-                    <ul className="mb-6 flex-1 space-y-2.5">
+                    {/* ── Özellikler ── */}
+                    <ul className="mb-5 space-y-2">
                       {pkg.features.map((f) => (
-                        <li key={f.text} className="flex items-center gap-2.5 text-sm">
-                          <svg className="h-4 w-4 shrink-0 text-[#3b82f6]" viewBox="0 0 20 20" fill="currentColor">
+                        <li key={f.text} className="flex items-center gap-2.5 text-[13px]">
+                          <svg className="h-[18px] w-[18px] shrink-0 text-[#3b82f6]" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd"/>
                           </svg>
-                          <span className={f.bold ? 'font-semibold text-white' : 'text-[#9ca3af]'}>{f.text}</span>
+                          <span className={f.bold ? 'font-bold text-white' : 'text-[#9ca3af]'}>{f.text}</span>
                         </li>
                       ))}
                     </ul>
 
-                    {/* CTA */}
-                    <a href={`${WHATSAPP_BASE}?text=${encodeURIComponent(waText)}`} target="_blank" rel="noopener noreferrer"
-                      className={`flex w-full items-center justify-center rounded-xl py-3.5 text-sm font-bold transition-all ${
+                    {/* ── CTA Butonu ── */}
+                    <a
+                      href={`${WHATSAPP_BASE}?text=${encodeURIComponent(waText)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`flex w-full items-center justify-center rounded-xl py-3.5 text-[15px] font-bold transition-all ${
                         pkg.popular
                           ? 'bg-[#3b82f6] text-white shadow-lg shadow-[#3b82f6]/30 hover:bg-[#2563eb]'
-                          : 'border border-[#2a3a4a] bg-[#111827] text-white hover:border-[#3b82f6]/50 hover:bg-[#1e2a3a]'
-                      }`}>
+                          : 'border border-[#243448] bg-[#111c2d] text-white hover:border-[#3b82f6]/50 hover:bg-[#162035]'
+                      }`}
+                    >
                       {pkg.ctaLabel}
                     </a>
-                    <button onClick={() => handleOpenModal(pkg.name)} className="mt-2 flex w-full items-center justify-center rounded-xl border border-[#1e3a5f] py-2.5 text-xs font-medium text-[#818cf8] transition-all hover:border-[#3730a3] hover:text-white">
-                      ⚡ Önce Ücretsiz Test Al
-                    </button>
                   </div>
                 );
               })}
             </div>
 
-            <p className="mt-6 text-center text-xs text-[#4b5563]">
+            <p className="mt-5 text-center text-xs text-[#374151]">
               * Paket fiyatları seçilen cihaz sayısı ve bölgeye göre değişiklik gösterebilir.
             </p>
           </div>
