@@ -867,7 +867,7 @@ export default function HomePage() {
   const [exitPopupShown, setExitPopupShown] = useState(false);
   const [recommendedPkg, setRecommendedPkg] = useState('');
   // ─── Spin popup state ──────────────────────────────────────────────────────
-  const [showSpinPopup, setShowSpinPopup] = useState(false);
+  const [showSpinPopup,       setShowSpinPopup]       = useState(false);
   const [spinBannerDismissed, setSpinBannerDismissed] = useState(false);
   const toastIdRef = useRef(0);
 
@@ -887,19 +887,6 @@ export default function HomePage() {
     const id = setInterval(() => setResendCooldown((c) => Math.max(c - 1, 0)), 1000);
     return () => clearInterval(id);
   }, [resendCooldown]);
-
-  // ─── Spin popup: 3 sn sonra otomatik aç (oturumda 1 kez) ────────────────
-  useEffect(() => {
-    const LS_SPIN_POPUP = 'galya_spin_popup_shown';
-    try {
-      if (localStorage.getItem(LS_SPIN_POPUP)) return; // bu oturumda zaten gösterildi
-    } catch { return; }
-    const id = setTimeout(() => {
-      setShowSpinPopup(true);
-      try { localStorage.setItem(LS_SPIN_POPUP, '1'); } catch {}
-    }, 3000);
-    return () => clearTimeout(id);
-  }, []);
 
   useEffect(() => {
     if (step === 2) setTimeout(() => emailInputRef.current?.focus(), 100);
