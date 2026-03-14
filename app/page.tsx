@@ -883,26 +883,82 @@ export default function HomePage() {
                       </div>
                     )}
 
-{/* Logo */}
-<div className="flex items-center justify-center py-2 mb-4">
-  {/* eslint-disable-next-line @next/next/no-img-element */}
-  <img
-    src={pkg.logo}
-    alt={pkg.logoAlt}
-    className="w-full max-w-[360px] h-auto object-contain transition-transform duration-300 hover:scale-105"
-    onError={(e) => {
-      (e.currentTarget as HTMLImageElement).style.display = 'none';
-      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-      if (fallback) fallback.style.display = 'block';
-    }}
-  />
+<div className="rounded-3xl border border-blue-500/40 bg-[#050b16] px-8 pt-6 pb-8">
+  {/* Üst rozet */}
+  {pkg.popular && (
+    <div className="mb-4 flex justify-center">
+      <span className="rounded-full bg-blue-500 px-5 py-2 text-sm font-bold text-white shadow-[0_0_25px_rgba(59,130,246,0.45)]">
+        EN POPÜLER
+      </span>
+    </div>
+  )}
 
-  <div
-    style={{ display: 'none' }}
-    className="text-white text-lg font-semibold text-center"
-  >
-    {pkg.name}
+  {/* Logo alanı */}
+  <div className="mb-6 flex items-center justify-center">
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img
+      src={pkg.logo}
+      alt={pkg.logoAlt}
+      className="block h-auto w-full max-w-[300px] object-contain"
+      onError={(e) => {
+        (e.currentTarget as HTMLImageElement).style.display = 'none';
+        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+        if (fallback) fallback.style.display = 'flex';
+      }}
+    />
+
+    <div
+      style={{ display: 'none' }}
+      className="hidden min-h-[60px] w-full items-center justify-center text-center text-2xl font-semibold text-white"
+    >
+      {pkg.name}
+    </div>
   </div>
+
+  {/* Açıklama */}
+  <p className="mb-8 text-center text-[15px] leading-7 text-slate-300">
+    {pkg.description}
+  </p>
+
+  {/* Fiyat */}
+  <div className="mb-8 text-center">
+    <div className="flex items-end justify-center gap-1">
+      <span className="text-6xl font-extrabold tracking-tight text-white">
+        ₺{pkg.price}
+      </span>
+      <span className="mb-1 text-2xl font-semibold text-blue-200">
+        .43
+      </span>
+    </div>
+
+    <div className="mt-2 text-lg text-slate-400">
+      6 aylık toplam
+    </div>
+
+    <div className="mt-3 flex items-center justify-center gap-3">
+      <span className="text-base text-slate-500 line-through">
+        ₺{pkg.oldPrice}
+      </span>
+      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-400">
+        %5 tasarruf
+      </span>
+    </div>
+  </div>
+
+  {/* Çizgi */}
+  <div className="mb-8 border-t border-white/10" />
+
+  {/* Özellikler */}
+  <ul className="space-y-4">
+    {pkg.features.map((feature, i) => (
+      <li key={i} className="flex items-start gap-3 text-left text-white">
+        <span className="mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
+          ✓
+        </span>
+        <span className="text-[15px] leading-7 text-slate-200">{feature}</span>
+      </li>
+    ))}
+  </ul>
 </div>
 
                     {/* Açıklama */}
