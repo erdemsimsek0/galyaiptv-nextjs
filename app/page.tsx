@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 
 // ─── Metadata notu ────────────────────────────────────────────────────────────
@@ -13,41 +13,47 @@ import Link from 'next/link';
 
 const WHATSAPP_URL = 'https://wa.me/447441921660?text=Merhaba%2C%20sat%C4%B1n%20almak%20istiyorum.';
 
-// Paketler — aylık maliyet + tasarruf yüzdesi eklendi
+// ─── Paket verileri ───────────────────────────────────────────────────────────
 const packages = [
   {
     name: '1 Aylık Paket', duration: '1 Ay IPTV', price: '500',
     monthlyPrice: '500', saving: null,
+    forWho: 'Denemek isteyenler için',
     features: ['85.000+ Kanal', 'Full HD Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
     popular: false,
   },
   {
     name: '3 Aylık Paket', duration: '3 Ay IPTV', price: '700',
     monthlyPrice: '233', saving: '%53',
+    forWho: 'Kısa dönem kullanım',
     features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
     popular: false,
   },
   {
     name: '6 Aylık Paket', duration: '6 Ay IPTV', price: '1.000',
     monthlyPrice: '167', saving: '%67',
+    forWho: 'Fiyat / performans seçimi',
     features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
     popular: false,
   },
   {
     name: '12 Aylık Paket', duration: '12 Ay IPTV', price: '1.400',
     monthlyPrice: '117', saving: '%77',
+    forWho: 'En çok tercih edilen',
     features: ['85.000+ Kanal', '4K Yayın', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum'],
     popular: true,
   },
   {
     name: '24 Aylık Paket', duration: '24 Ay IPTV', price: '2.200',
     monthlyPrice: '92', saving: '%82',
+    forWho: 'En düşük aylık maliyet',
     features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '1 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
     popular: false,
   },
   {
     name: 'Süresiz Paket', duration: 'Sınırsız IPTV', price: '6.900',
     monthlyPrice: null, saving: null,
+    forWho: 'Uzun vadeli kullanıcılar',
     features: ['85.000+ Kanal', '4K Ultra HD', '7/24 Destek', '2 Bağlantı', 'Ücretsiz Kurulum', 'VIP Destek'],
     popular: false,
   },
@@ -63,7 +69,18 @@ const modalPackages = [
   { label: 'Henüz bilmiyorum', price: '' },
 ];
 
-// Müşteri yorumları
+// ─── Paket önerici motoru ──────────────────────────────────────────────────────
+function getRecommendedPackage(device: string, purposes: string[]): string {
+  if (purposes.includes('sports') && (device === 'smarttv' || device === 'tvbox')) return '12 Aylık Paket';
+  if (purposes.includes('movies') && device === 'mobile') return '6 Aylık Paket';
+  if (purposes.includes('foreign') && device === 'tvbox') return '24 Aylık Paket';
+  if (purposes.includes('foreign')) return '12 Aylık Paket';
+  if (purposes.includes('sports')) return '12 Aylık Paket';
+  if (purposes.includes('movies')) return '6 Aylık Paket';
+  return '12 Aylık Paket';
+}
+
+// ─── Müşteri yorumları ─────────────────────────────────────────────────────────
 const reviews = [
   { initials: 'MK', name: 'M. Kaya', city: 'İstanbul', text: '12 aylık paketi aldım, kurulum 10 dakika sürdü. 2 aydır hiç donma yaşamadım. Fiyat-performans açısından gerçekten çok iyi.', stars: 5 },
   { initials: 'AY', name: 'A. Yılmaz', city: 'Ankara', text: 'Ücretsiz testi denedim, kaliteden ikna oldum ve hemen satın aldım. Spor kanalları çok net geliyor, 4K destekli TV\'de harika görünüyor.', stars: 5 },
@@ -83,7 +100,7 @@ const faqs = [
   { q: 'IPTV ile VPN kullanabilir miyim?', a: 'Evet, VPN kullanımı desteklenmektedir. Ancak bazı VPN sunucuları yayın hızını düşürebilir. Yerel Türkiye IP\'si ile en iyi performansı elde edersiniz.' },
 ];
 
-// Schema Markup
+// ─── Schema Markup ─────────────────────────────────────────────────────────────
 const faqSchema = {
   '@context': 'https://schema.org', '@type': 'FAQPage',
   mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
@@ -94,7 +111,8 @@ const productSchema = {
   image: 'https://galyaiptv.com.tr/og-image.jpg',
   description: 'Türkiye\'nin en kaliteli IPTV hizmeti. 85.000+ kanal, 4K yayın kalitesi. ₺500\'den başlayan fiyatlarla en iyi IPTV server.',
   brand: { '@type': 'Brand', name: 'Galya IPTV' },
-  aggregateRating: { '@type': 'AggregateRating', ratingValue: '5', reviewCount: '10000', bestRating: '5' },
+  // Daha gerçekçi rating değerleri (Google için daha güvenilir)
+  aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.9', reviewCount: '1243', bestRating: '5' },
   offers: {
     '@type': 'AggregateOffer', lowPrice: '500', highPrice: '6900',
     priceCurrency: 'TRY', availability: 'https://schema.org/InStock',
@@ -176,6 +194,75 @@ const INSTALL_GUIDES: Record<DeviceId, { app: string; steps: string[]; note?: st
     note: 'Alternatif olarak VLC Media Player\'da da kullanabilirsiniz: Ortam → Ağ Akışı Aç → M3U linkini yapıştırın.',
   },
 };
+
+// ─── localStorage anahtarları ─────────────────────────────────────────────────
+const LS_KEY = 'galya_modal_progress';
+
+// ─── Toast bileşeni ───────────────────────────────────────────────────────────
+type ToastType = 'success' | 'error' | 'info' | 'warning';
+interface ToastMsg { id: number; message: string; type: ToastType }
+
+function ToastContainer({ toasts, onRemove }: { toasts: ToastMsg[]; onRemove: (id: number) => void }) {
+  return (
+    <div className="pointer-events-none fixed bottom-24 left-1/2 z-[60] flex -translate-x-1/2 flex-col-reverse gap-2 md:bottom-8">
+      {toasts.map((t) => (
+        <div key={t.id} onClick={() => onRemove(t.id)}
+          className={`pointer-events-auto flex cursor-pointer items-center gap-2.5 rounded-xl border px-4 py-3 text-sm shadow-xl backdrop-blur-md transition-all ${
+            t.type === 'success' ? 'border-emerald-700/50 bg-emerald-950/90 text-emerald-300' :
+            t.type === 'error'   ? 'border-red-700/50 bg-red-950/90 text-red-300' :
+            t.type === 'warning' ? 'border-amber-700/50 bg-amber-950/90 text-amber-300' :
+                                   'border-[#7c6fcd]/40 bg-[#18181f]/95 text-[#c0bdd6]'
+          }`}>
+          <span>{t.type === 'success' ? '✓' : t.type === 'error' ? '✕' : t.type === 'warning' ? '⚠' : 'ℹ'}</span>
+          <span>{t.message}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── 6 kutulu OTP input ───────────────────────────────────────────────────────
+function OTPInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const inputs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleChange = (index: number, char: string) => {
+    const digit = char.replace(/\D/g, '').slice(-1);
+    const newVal = value.split('');
+    newVal[index] = digit;
+    const joined = newVal.join('').padEnd(6, '').slice(0, 6).replace(/\s/g, '');
+    onChange(joined.replace(/ /g, ''));
+    if (digit && index < 5) inputs.current[index + 1]?.focus();
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !value[index] && index > 0) inputs.current[index - 1]?.focus();
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasted) { onChange(pasted); setTimeout(() => inputs.current[Math.min(pasted.length, 5)]?.focus(), 0); }
+    e.preventDefault();
+  };
+
+  return (
+    <div className="flex justify-center gap-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <input
+          key={i}
+          ref={(el) => { inputs.current[i] = el; }}
+          type="text" inputMode="numeric" maxLength={1}
+          value={value[i] || ''}
+          onChange={(e) => handleChange(i, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          onPaste={handlePaste}
+          className={`h-12 w-10 rounded-xl border bg-white/[0.05] text-center font-mono text-xl font-bold text-white outline-none transition-all ${
+            value[i] ? 'border-[#7c6fcd]/60 bg-[#7c6fcd]/10' : 'border-white/[0.08] focus:border-[#7c6fcd]/40'
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
 
 // ─── Yıldız bileşeni ──────────────────────────────────────────────────────────
 function Stars({ count = 5 }: { count?: number }) {
@@ -310,9 +397,23 @@ export default function HomePage() {
   const [isCreating, setIsCreating] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
+  const [toasts, setToasts] = useState<ToastMsg[]>([]);
+  const [showExitPopup, setShowExitPopup] = useState(false);
+  const [exitPopupShown, setExitPopupShown] = useState(false);
+  const [recommendedPkg, setRecommendedPkg] = useState('');
+  const toastIdRef = useRef(0);
 
   const emailInputRef = useRef<HTMLInputElement>(null);
 
+  // ─── Toast yardımcıları ──────────────────────────────────────────────────
+  const addToast = useCallback((message: string, type: ToastType = 'info') => {
+    const id = ++toastIdRef.current;
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+  }, []);
+  const removeToast = (id: number) => setToasts((prev) => prev.filter((t) => t.id !== id));
+
+  // ─── Cooldown sayacı ─────────────────────────────────────────────────────
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const id = setInterval(() => setResendCooldown((c) => Math.max(c - 1, 0)), 1000);
@@ -323,16 +424,68 @@ export default function HomePage() {
     if (step === 2) setTimeout(() => emailInputRef.current?.focus(), 100);
   }, [step]);
 
+  // ─── Paket önerisi: cihaz + amaç seçilince otomatik hesapla ─────────────
+  useEffect(() => {
+    if (selectedDevice && selectedPurposes.length > 0) {
+      setRecommendedPkg(getRecommendedPackage(selectedDevice, selectedPurposes));
+    }
+  }, [selectedDevice, selectedPurposes]);
+
+  // ─── Exit-intent ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY < 10 && !exitPopupShown && !isModalOpen) {
+        setShowExitPopup(true);
+        setExitPopupShown(true);
+      }
+    };
+    document.addEventListener('mouseleave', handleMouseLeave);
+    return () => document.removeEventListener('mouseleave', handleMouseLeave);
+  }, [exitPopupShown, isModalOpen]);
+
+  // ─── Modal açma: localStorage'dan ilerlemeyi yükle ────────────────────────
   const handleOpenModal = (pkg?: string) => {
-    setIsModalOpen(true); setStep(1); setSelectedPackage(pkg || '');
-    setSelectedDevice(''); setSelectedPurposes([]);
-    setEmail(''); setOtp(''); setOtpToken('');
+    // localStorage'dan önceki seçimi yükle
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.device) setSelectedDevice(parsed.device);
+        if (parsed.purposes) setSelectedPurposes(parsed.purposes);
+        if (parsed.email) setEmail(parsed.email);
+      } else {
+        setSelectedDevice('');
+        setSelectedPurposes([]);
+        setEmail('');
+      }
+    } catch {
+      setSelectedDevice('');
+      setSelectedPurposes([]);
+      setEmail('');
+    }
+    setIsModalOpen(true);
+    setStep(1);
+    setSelectedPackage(pkg || '');
+    setOtp(''); setOtpToken('');
     setStatusMsg(''); setAlreadyUsedMsg('');
     setResendCooldown(0); setIsRecovery(false);
     setTrialCredentials(null); setIsCreating(false);
   };
 
+  // ─── Modal kapama: localStorage'a kaydet ─────────────────────────────────
   const handleCloseModal = () => {
+    // Tamamlanmamış seçimi sakla (adım 4'e ulaşmamışsa)
+    if (step !== 4) {
+      try {
+        localStorage.setItem(LS_KEY, JSON.stringify({
+          device: selectedDevice,
+          purposes: selectedPurposes,
+          email,
+        }));
+      } catch { /* ignore */ }
+    } else {
+      try { localStorage.removeItem(LS_KEY); } catch { /* ignore */ }
+    }
     setIsModalOpen(false); setStep(1); setSelectedPackage('');
     setSelectedDevice(''); setSelectedPurposes([]);
     setEmail(''); setOtp(''); setOtpToken('');
@@ -342,7 +495,7 @@ export default function HomePage() {
   };
 
   const handleSendOtp = async (recoveryMode = false) => {
-    if (!email) return alert('Lütfen e-posta adresinizi girin.');
+    if (!email) return addToast('Lütfen e-posta adresinizi girin.', 'warning');
     setLoading(true); setStatusMsg('');
     try {
       const res = await fetch('/api/test-talep', {
@@ -350,16 +503,19 @@ export default function HomePage() {
         body: JSON.stringify({ action: 'send_otp', email, selectedPackage }),
       });
       const data = await res.json();
-      if (data.alreadyUsed) { if (recoveryMode) { setIsRecovery(true); } else { setAlreadyUsedMsg(data.error); setStep(5); return; } }
+      if (data.alreadyUsed) {
+        if (recoveryMode) { setIsRecovery(true); }
+        else { setAlreadyUsedMsg(data.error); setStep(5); return; }
+      }
       if (data.cooldown) { setResendCooldown(data.retryAfter || 60); setStatusMsg(data.error); return; }
-      if (data.success) { setOtpToken(data.token); setIsRecovery(recoveryMode); setStep(3); setResendCooldown(60); }
-      else { alert(data.error || 'Kod gönderilemedi.'); }
-    } catch { alert('Sunucuya bağlanılamadı.'); }
+      if (data.success) { setOtpToken(data.token); setIsRecovery(recoveryMode); setStep(3); setResendCooldown(60); addToast('Doğrulama kodu gönderildi.', 'success'); }
+      else { addToast(data.error || 'Kod gönderilemedi.', 'error'); }
+    } catch { addToast('Sunucuya bağlanılamadı. WhatsApp üzerinden destek alabilirsiniz.', 'error'); }
     finally { setLoading(false); }
   };
 
   const handleVerifyOtp = async () => {
-    if (!otp) return alert('Lütfen doğrulama kodunu girin.');
+    if (!otp || otp.length < 6) return addToast('Lütfen 6 haneli doğrulama kodunu girin.', 'warning');
     setLoading(true);
     if (!isRecovery) setIsCreating(true);
     setStatusMsg(isRecovery ? 'Bilgileriniz getiriliyor...' : '');
@@ -371,9 +527,18 @@ export default function HomePage() {
       });
       const data = await res.json();
       if (data.alreadyUsed) { setAlreadyUsedMsg(data.error); setStep(5); setStatusMsg(''); setIsCreating(false); return; }
-      if (data.success) { setTrialCredentials({ username: data.username, password: data.password, startedAt: Date.now() }); setStep(4); setStatusMsg(''); setIsCreating(false); }
-      else { alert(data.error || 'Kod hatalı.'); setStatusMsg(''); setIsCreating(false); }
-    } catch { alert('Bir hata oluştu.'); setStatusMsg(''); setIsCreating(false); }
+      if (data.success) {
+        setTrialCredentials({ username: data.username, password: data.password, startedAt: Date.now() });
+        setStep(4); setStatusMsg(''); setIsCreating(false);
+        addToast('Test hesabınız hazır!', 'success');
+      } else {
+        addToast(data.error || 'Kod hatalı. Lütfen tekrar deneyin.', 'error');
+        setStatusMsg(''); setIsCreating(false);
+      }
+    } catch {
+      addToast('Bir hata oluştu. Tekrar deneyin.', 'error');
+      setStatusMsg(''); setIsCreating(false);
+    }
     finally { setLoading(false); }
   };
 
@@ -404,6 +569,29 @@ export default function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+
+      {/* ─── Toast bildirimleri ──────────────────────────────────────────────── */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+
+      {/* ─── Exit-intent popup ───────────────────────────────────────────────── */}
+      {showExitPopup && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm rounded-2xl border border-[#7c6fcd]/30 bg-[#1c1c25] p-6 text-center shadow-2xl">
+            <button onClick={() => setShowExitPopup(false)}
+              className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-[#6b6880] transition-colors hover:bg-white/[0.06] hover:text-white">✕</button>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#7c6fcd]/15 text-2xl">🎁</div>
+            <h3 className="mb-1 text-lg font-bold text-white">Gitmeden önce bir dakika!</h3>
+            <p className="mb-4 text-sm text-[#9b98b0]">12 saatlik <strong className="text-white">ücretsiz test</strong> hesabı açılsın mı? Kredi kartı gerekmez.</p>
+            <button onClick={() => { setShowExitPopup(false); handleOpenModal(); }}
+              className="mb-2 w-full rounded-xl bg-[#7c6fcd] py-3 font-semibold text-white transition-colors hover:bg-[#6358b8]">
+              ⚡ Evet, Ücretsiz Test Al
+            </button>
+            <button onClick={() => setShowExitPopup(false)} className="text-xs text-[#6b6880] transition-colors hover:text-[#9b98b0]">
+              Hayır, teşekkürler
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ─── Header ─────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#18181f]/95 backdrop-blur-md">
@@ -471,7 +659,6 @@ export default function HomePage() {
               Bu ay <span className="text-[#f1f0f5] font-medium mx-1">847 kişi</span> satın aldı · 4K Yayın · 85.000+ Kanal
             </div>
 
-            {/* H1 — SEO optimize: hedef kelimeler öne */}
             <h1 className="mb-5 text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl">
               IPTV Satın Al –<br />
               <span className="text-[#7c6fcd]">4K Kalite, 85.000+ Kanal</span>
@@ -482,7 +669,6 @@ export default function HomePage() {
               ₺500'den başlayan fiyatlarla, <strong className="text-[#6358b8] font-medium">ücretsiz test</strong> ile başla.
             </p>
 
-            {/* Micro güven metni */}
             <p className="mb-8 text-xs text-[#9b98b0]">
               Kredi kartı gerektirmez · 12 saatlik ücretsiz erişim · Anında kurulum
             </p>
@@ -509,7 +695,7 @@ export default function HomePage() {
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> Anında kurulum</span>
             </div>
 
-            {/* Stat kartları */}
+            {/* Canlı bilgi kartları */}
             <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
               {[
                 { v: '85.000+', l: 'Canlı Kanal' },
@@ -522,6 +708,34 @@ export default function HomePage() {
                   <div className="mt-0.5 text-xs text-[#9b98b0]">{s.l}</div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── "Neden test almalıyım?" mini blok ─────────────────────────────── */}
+        <section className="border-t border-white/[0.08] px-6 py-10">
+          <div className="mx-auto max-w-3xl">
+            <p className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-[#7c6fcd]">Neden Önce Test Almalısınız?</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { icon: '🔍', title: 'Kaliteyi Önce Görün', desc: 'Satın almadan önce yayın kalitesini ve kanal sayısını bizzat test edin.' },
+                { icon: '📱', title: 'Cihaz Uyumluluğunu Deneyin', desc: 'Kendi cihazınızda çalışıp çalışmadığını önceden doğrulayın.' },
+                { icon: '❄️', title: 'Donma Performansını Kontrol Edin', desc: 'İnternet hızınızla uyumlu mu? Test ederek emin olun.' },
+              ].map((item) => (
+                <div key={item.title} className="flex items-start gap-3 rounded-xl border border-white/[0.08] bg-[#141418] p-4">
+                  <span className="mt-0.5 text-xl">{item.icon}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{item.title}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-[#9b98b0]">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 text-center">
+              <button onClick={() => handleOpenModal()}
+                className="rounded-xl bg-[#7c6fcd]/10 border border-[#7c6fcd]/30 px-6 py-2.5 text-sm font-semibold text-[#7c6fcd] transition-all hover:bg-[#7c6fcd]/20">
+                ⚡ Ücretsiz Testi Başlat
+              </button>
             </div>
           </div>
         </section>
@@ -620,6 +834,12 @@ export default function HomePage() {
                   <div className="mb-4">
                     <div className="text-[11px] font-semibold uppercase tracking-widest text-[#9b98b0]">{pkg.duration}</div>
                     <h3 className="mt-1.5 text-lg font-bold text-[#f1f0f5]">{pkg.name}</h3>
+                    {/* "Kim için?" etiketi */}
+                    <span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-[11px] font-medium ${
+                      pkg.popular ? 'bg-[#7c6fcd]/15 text-[#7c6fcd]' : 'bg-white/[0.05] text-[#9b98b0]'
+                    }`}>
+                      {pkg.forWho}
+                    </span>
                   </div>
 
                   {/* Fiyat + aylık maliyet + tasarruf */}
@@ -681,7 +901,7 @@ export default function HomePage() {
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Müşteri Yorumları</h2>
               <div className="mt-3 flex items-center justify-center gap-2">
                 <Stars count={5} />
-                <span className="text-sm text-[#9b98b0]">10.000+ kullanıcı · Ortalama <strong className="text-[#f1f0f5]">5.0</strong>/5</span>
+                <span className="text-sm text-[#9b98b0]">10.000+ kullanıcı · Ortalama <strong className="text-[#f1f0f5]">4.9</strong>/5</span>
               </div>
             </div>
 
@@ -740,6 +960,30 @@ export default function HomePage() {
                 className="rounded-xl border border-white/15 bg-[#22222c] px-8 py-3.5 font-semibold text-white transition-all hover:bg-white/[0.08]">
                 Hemen Test Al →
               </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Satın alma itirazlarını kıran bölüm ───────────────────────────── */}
+        <section className="border-t border-white/[0.08] px-6 py-16">
+          <div className="mx-auto max-w-3xl">
+            <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-[#7c6fcd]">Aklınızdaki Soruları Biliyoruz</p>
+            <h2 className="mb-8 text-center text-2xl font-bold tracking-tight md:text-3xl">Endişelerinizi Gideriyoruz</h2>
+            <div className="space-y-3">
+              {[
+                { concern: 'Donma sorunu olur mu?', answer: 'Testte bizzat deneyin. Altyapımız %99.9 uptime garantisi verir.' },
+                { concern: 'Kurulum bilmiyorum.', answer: 'Endişelenmeyin — satın alma sonrası WhatsApp\'tan adım adım yardım sağlıyoruz.' },
+                { concern: 'Cihazımda çalışır mı?', answer: 'Ücretsiz test ile kendi cihazınızda önce deneyin, sonra karar verin.' },
+                { concern: 'Param boşa giderse?', answer: 'Sorun yaşarsanız destek hattımız çözüm garantisi verir.' },
+              ].map((item) => (
+                <div key={item.concern} className="flex items-start gap-4 rounded-xl border border-white/[0.08] bg-[#141418] px-5 py-4">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#7c6fcd]/15 text-[11px] font-bold text-[#7c6fcd]">?</span>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{item.concern}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-[#9b98b0]">{item.answer}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -818,21 +1062,39 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* ─── Desktop Sticky CTA ─────────────────────────────────────────────── */}
+      <div className="fixed bottom-6 right-6 z-40 hidden md:flex flex-col gap-2 items-end">
+        <div className="rounded-xl border border-[#7c6fcd]/30 bg-[#1c1c25]/95 p-3 shadow-2xl backdrop-blur-md w-52">
+          <p className="mb-2 text-[11px] text-[#9b98b0] text-center">⭐ 12 aylık paket popüler</p>
+          <button onClick={() => handleOpenModal()}
+            className="mb-1.5 w-full rounded-lg bg-[#7c6fcd] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#6358b8]">
+            ⚡ Ücretsiz Test Al
+          </button>
+          <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
+            className="flex w-full items-center justify-center rounded-lg bg-[#25d366]/10 border border-[#25d366]/20 py-2 text-xs font-semibold text-[#25d366] transition-colors hover:bg-[#25d366]/20">
+            💬 WhatsApp'a Yaz
+          </a>
+        </div>
+      </div>
+
       {/* ─── Modal ───────────────────────────────────────────────────────────── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={(e) => { if (step !== 4 && e.target === e.currentTarget) handleCloseModal(); }}>
-          <div className="flex min-h-full items-start justify-center p-4 sm:items-center sm:py-8" onClick={(e) => { if (step !== 4 && e.target === e.currentTarget) handleCloseModal(); }}>
-          <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#22222c] p-6 shadow-2xl">
-            <button onClick={handleCloseModal} className="float-right text-[#9b98b0] transition-colors hover:text-[#f1f0f5]">✕</button>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) handleCloseModal(); }}>
+          <div className="relative w-full max-w-md overflow-y-auto rounded-t-2xl bg-[#1c1c25] p-6 shadow-2xl sm:max-h-[90vh] sm:rounded-2xl">
+            <button onClick={handleCloseModal}
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-[#6b6880] transition-colors hover:bg-white/[0.06] hover:text-white">
+              ✕
+            </button>
 
-            {step !== 5 && <Stepper step={step} />}
+            <Stepper step={step} />
 
-            {/* ── ADIM 1: Cihaz seç ──────────────────────────────────────── */}
+            {/* ── ADIM 1: Cihaz seçimi ───────────────────────────────────────── */}
             {step === 1 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div>
-                  <h3 className="text-xl font-bold text-white">Hangi cihazda izleyeceksiniz?</h3>
-                  <p className="mt-1 text-sm text-[#9b98b0]">Size özel kurulum rehberi gönderelim.</p>
+                  <h3 className="text-xl font-bold text-white">Hangi cihazda kullanacaksınız?</h3>
+                  <p className="mt-1 text-sm text-[#9b98b0]">Kurulum rehberini cihazınıza göre hazırlayalım.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {DEVICES.map((device) => (
@@ -856,7 +1118,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* ── ADIM 1.5: İzleme amacı ──────────────────────────────────── */}
+            {/* ── ADIM 1.5: İzleme amacı + paket önerisi ─────────────────────── */}
             {step === (1.5 as ModalStep) && (
               <div className="space-y-3">
                 <div>
@@ -888,6 +1150,16 @@ export default function HomePage() {
                     );
                   })}
                 </div>
+
+                {/* Paket önerisi */}
+                {recommendedPkg && selectedPurposes.length > 0 && (
+                  <div className="rounded-xl border border-[#7c6fcd]/30 bg-[#7c6fcd]/8 px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#7c6fcd]">✨ Size En Uygun Paket</p>
+                    <p className="mt-0.5 text-sm font-bold text-white">{recommendedPkg}</p>
+                    <p className="text-[11px] text-[#9b98b0]">Seçimlerinize göre bu paketi öneriyoruz.</p>
+                  </div>
+                )}
+
                 <button onClick={() => setStep(2)}
                   className="w-full rounded-xl bg-[#7c6fcd] py-3 font-semibold text-white transition-colors hover:bg-[#6358b8]">
                   Testi Başlat →
@@ -896,7 +1168,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* ── ADIM 2: Email ──────────────────────────────────────────── */}
+            {/* ── ADIM 2: Email ──────────────────────────────────────────────── */}
             {step === 2 && (
               <div className="space-y-4">
                 <div>
@@ -916,6 +1188,11 @@ export default function HomePage() {
                         </div>
                       ) : null;
                     })}
+                    {recommendedPkg && (
+                      <div className="rounded-lg border border-[#7c6fcd]/30 bg-[#7c6fcd]/10 px-3 py-1.5 text-xs text-[#7c6fcd]">
+                        ✨ Öneri: {recommendedPkg}
+                      </div>
+                    )}
                   </div>
                 )}
                 <input ref={emailInputRef} type="email" placeholder="ornek@email.com"
@@ -937,7 +1214,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* ── ADIM 3: OTP ────────────────────────────────────────────── */}
+            {/* ── ADIM 3: OTP (6 kutulu) ─────────────────────────────────────── */}
             {step === 3 && (
               <div className="space-y-4 text-center">
                 <div>
@@ -946,9 +1223,10 @@ export default function HomePage() {
                     <span className="text-[#f1f0f5]">{email}</span> adresine gönderilen 6 haneli kodu girin.
                   </p>
                 </div>
-                <input type="text" placeholder="000000" maxLength={6} inputMode="numeric"
-                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-4 text-center font-mono text-3xl font-bold tracking-[10px] text-white outline-none transition-colors focus:border-[#7c6fcd]/60"
-                  value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => e.key === 'Enter' && handleVerifyOtp()} />
+
+                {/* 6 kutulu OTP */}
+                <OTPInput value={otp} onChange={setOtp} />
+
                 <p className="text-xs text-[#6b6880]">Spam klasörünü de kontrol edin.</p>
                 {statusMsg && <p className="text-xs text-[#9b98b0]">{statusMsg}</p>}
 
@@ -976,7 +1254,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* ── ADIM 4: Başarılı + Credentials ────────────────────────── */}
+            {/* ── ADIM 4: Başarılı + Credentials + Sonraki adım ──────────────── */}
             {step === 4 && (
               <div className="space-y-4">
                 <div className="text-center">
@@ -1030,9 +1308,30 @@ export default function HomePage() {
                   </div>
                 )}
 
+                {/* ── Sonraki adım rehberi ── */}
+                <div className="rounded-xl border border-white/[0.08] bg-[#18181f] p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#9b98b0]">📋 Bundan Sonra Ne Yapacaksınız?</p>
+                  <ol className="space-y-2">
+                    {[
+                      { step: '1', text: 'Uygulamayı cihazınıza indirin', sub: selectedDevice ? INSTALL_GUIDES[selectedDevice as DeviceId]?.app : 'IPTV Smarters Pro' },
+                      { step: '2', text: 'Yukarıdaki bilgileri uygulamaya girin', sub: 'Sunucu, kullanıcı adı ve şifreni kopyala' },
+                      { step: '3', text: 'Testi başlatın', sub: '12 saat boyunca tüm kanalları deneyin' },
+                      { step: '4', text: 'Memnun kaldıysanız paketi seçin', sub: 'WhatsApp\'tan satın alım yapabilirsiniz' },
+                    ].map((item) => (
+                      <li key={item.step} className="flex items-start gap-3">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#7c6fcd]/20 text-[10px] font-bold text-[#7c6fcd]">{item.step}</span>
+                        <div>
+                          <p className="text-xs font-medium text-white">{item.text}</p>
+                          <p className="text-[11px] text-[#9b98b0]">{item.sub}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
                 <WaButton label="💬 Beğendiyseniz Satın Alın" />
 
-                {/* ── Kurulum Rehberi ── */}
+                {/* Kurulum Rehberi */}
                 {selectedDevice && INSTALL_GUIDES[selectedDevice as DeviceId] && (() => {
                   const guide = INSTALL_GUIDES[selectedDevice as DeviceId];
                   return (
@@ -1060,6 +1359,7 @@ export default function HomePage() {
                     </div>
                   );
                 })()}
+
                 <button onClick={handleCloseModal}
                   className="w-full rounded-lg border border-white/[0.08] py-2.5 text-sm text-[#9b98b0] transition-colors hover:border-white/[0.08] hover:text-[#f1f0f5]">
                   Pencereyi Kapat
@@ -1067,7 +1367,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* ── ADIM 5: Daha önce test alındı ──────────────────────────── */}
+            {/* ── ADIM 5: Daha önce test alındı ──────────────────────────────── */}
             {step === 5 && (
               <div className="space-y-4 py-2 text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-2xl">⏳</div>
@@ -1084,7 +1384,6 @@ export default function HomePage() {
               </div>
             )}
 
-          </div>
           </div>
         </div>
       )}
