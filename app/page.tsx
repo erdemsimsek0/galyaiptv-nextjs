@@ -14,70 +14,81 @@ import Link from 'next/link';
 const WHATSAPP_URL = 'https://wa.me/447441921660?text=Merhaba%2C%20sat%C4%B1n%20almak%20istiyorum.';
 const WHATSAPP_BASE = 'https://wa.me/447441921660';
 
+// ─── Süre seçenekleri ve iskonto oranları ────────────────────────────────────
+type DurationKey = '1ay' | '6ay' | '12ay';
+const DURATIONS: { key: DurationKey; label: string; discount: number; badge?: string }[] = [
+  { key: '1ay',  label: '1 Ay',  discount: 0 },
+  { key: '6ay',  label: '6 Ay',  discount: 5,  badge: '%5 İNDİRİM' },
+  { key: '12ay', label: '12 Ay', discount: 20, badge: '%20 İNDİRİM' },
+];
+
+// Fiyat hesapla (kuruş hassasiyeti için .90 sabit)
+function calcPrice(base: number, discount: number): string {
+  if (discount === 0) return base.toFixed(2).replace('.', ',').replace(',00', ',90').replace(/\d+,/, (m) => m) ;
+  const discounted = base * (1 - discount / 100);
+  // .90 ile bitir
+  return Math.floor(discounted).toFixed(0) + ',90';
+}
+
 // ─── Kategori Paketleri (ana sayfa gösterimi) ─────────────────────────────────
+// Sıra: Sports (sol) → Max (orta, popüler) → Cinema (sağ) — görsele uygun
 const categoryPackages = [
   {
-    id: 'sinema',
-    icon: '🎬',
-    name: 'Sinema',
-    tag: 'Film & Dizi',
-    desc: 'Aylık yalnızca',
-    price: '129',
-    priceNote: '/ay',
-    forWho: 'Film & dizi severlere',
+    id: 'spor',
+    // Logo dosyası: /public/paket-logoları/logo-sports.png
+    logo: '/paket-logoları/logo-sports.png',
+    logoAlt: 'Montana Sports',
+    name: 'Montana Sports',
+    desc: 'Tüm spor yayınları ve TV kanalları — maçlar, turnuvalar tek yerde.',
+    basePrice: 159.90,
     features: [
-      '85.000+ Film & Dizi Arşivi',
-      'Popüler ve yeni eklenenler',
-      'Altyazı & Dublaj seçenekleri',
-      '4K / FHD Sinema Kalitesi',
-      'Telefon, Tablet, Smart TV',
-      '7/24 Teknik Destek',
+      { bold: true,  text: 'Canlı Spor Kanalları ve Maç Yayınları' },
+      { bold: true,  text: 'Avrupa ve Yerel Spor Kanalları Tek Yerde' },
+      { bold: false, text: 'HD / FHD / 4K Akıcı Yayın Deneyimi' },
+      { bold: false, text: 'Hızlı Kanal Geçişi ve Stabil İzleme' },
+      { bold: false, text: 'Smart TV ve Tüm Cihazlarla Uyumlu' },
     ],
     popular: false,
-    ctaLabel: '🎬 İzlemeye Başla',
-    waMsg: 'Sinema paketi hakkında bilgi almak istiyorum.',
+    ctaLabel: 'Spora Başla',
+    waMsg: 'Sports paketi hakkında bilgi almak istiyorum.',
   },
   {
-    id: 'allinone',
-    icon: '⭐',
-    name: 'All-in-One',
-    tag: 'TV + Spor + Film + Dizi',
-    desc: 'Aylık yalnızca',
-    price: '229',
-    priceNote: '/ay',
-    forWho: 'Her şey tek pakette',
+    id: 'max',
+    // Logo dosyası: /public/paket-logoları/logo-max.png
+    logo: '/paket-logoları/logo-max.png',
+    logoAlt: 'Montana Max',
+    name: 'Montana Max',
+    desc: 'Tüm içeriklere sınırsız erişim — film, dizi, spor ve TV kanalları bir arada.',
+    basePrice: 229.90,
     features: [
-      '85.000+ Kanal & İçerik',
-      'Canlı Spor + Film + Dizi',
-      '40+ Ülke Canlı Kanalları',
-      '4K HDR Görüntü Kalitesi',
-      'Sınırsız Cihaz Desteği',
-      'VIP 7/24 Teknik Destek',
+      { bold: true,  text: 'TV + Spor + Film + Dizi Tek Pakette' },
+      { bold: true,  text: '15.000+ Güncel İçerik ve Platform Arşivi' },
+      { bold: false, text: 'Yetişkin İçeriklere Dahil Erişim' },
+      { bold: false, text: 'HD / FHD / 4K Yüksek Kalite Yayın' },
+      { bold: false, text: 'Tüm Cihazlarda Kesintisiz İzleme' },
     ],
     popular: true,
-    ctaLabel: '⭐ En Popüleri Seç',
-    waMsg: 'All-in-One paketi hakkında bilgi almak istiyorum.',
+    ctaLabel: 'En Popüleri Seç',
+    waMsg: 'Max paketi hakkında bilgi almak istiyorum.',
   },
   {
-    id: 'spor',
-    icon: '⚽',
-    name: 'Spor',
-    tag: 'Canlı Spor Yayınları',
-    desc: 'Aylık yalnızca',
-    price: '159',
-    priceNote: '/ay',
-    forWho: 'Spor tutkunlarına',
+    id: 'cinema',
+    // Logo dosyası: /public/paket-logoları/logo-cinema.png
+    logo: '/paket-logoları/logo-cinema.png',
+    logoAlt: 'Montana Cinema',
+    name: 'Montana Cinema',
+    desc: '15.000+ film ve dizi seçkisi — en popüler ve sevilen yapımlar bir arada.',
+    basePrice: 129.90,
     features: [
-      'beIN Sports, S Sport, Exxen',
-      'Premier Lig, Süper Lig, La Liga',
-      'Avrupa & Yerli Spor Kanalları',
-      '4K Maç Yayınları',
-      'Hızlı Kanal Geçişi (<2 sn)',
-      '7/24 Teknik Destek',
+      { bold: true,  text: '15.000+ Film ve Dizi Arşivi' },
+      { bold: true,  text: 'En Popüler ve Yeni Eklenen Yapımlar' },
+      { bold: false, text: 'Altyazı ve Dublaj Seçenekleri' },
+      { bold: false, text: 'HD / FHD / 4K Sinema Kalitesi' },
+      { bold: false, text: 'Telefon, Tablet ve Smart TV Uyumlu' },
     ],
     popular: false,
-    ctaLabel: '⚽ Spora Başla',
-    waMsg: 'Spor paketi hakkında bilgi almak istiyorum.',
+    ctaLabel: 'İzlemeye Başla',
+    waMsg: 'Cinema paketi hakkında bilgi almak istiyorum.',
   },
 ];
 
@@ -561,6 +572,7 @@ export default function HomePage() {
   const [showSpinPopup, setShowSpinPopup] = useState(false);
   const [spinBannerDismissed, setSpinBannerDismissed] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<DurationKey>('6ay');
   const toastIdRef = useRef(0);
   const emailInputRef = useRef<HTMLInputElement>(null);
 
@@ -776,68 +788,124 @@ export default function HomePage() {
         {/* ─── PAKETLER ────────────────────────────────────────────────────────── */}
         <section id="paketler" className="px-6 py-20">
           <div className="mx-auto max-w-5xl">
-            <div className="mb-10 text-center">
+            <div className="mb-8 text-center">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Abonelik Paketleri</p>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Sizin İçin Doğru Paket</h2>
-              <p className="mt-3 text-sm text-[#9ca3af]">İhtiyacınıza göre seçin · WhatsApp üzerinden saniyeler içinde aktif</p>
+              <p className="mt-3 text-sm text-[#9ca3af]">Süreye göre seçin · Uzun süre seç, daha fazla tasarruf et</p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-              {categoryPackages.map((pkg) => (
-                <div key={pkg.id} className={`relative flex flex-col rounded-2xl border p-6 transition-all ${pkg.popular ? 'border-[#6366f1]/60 bg-[#111827] shadow-2xl shadow-[#6366f1]/10' : 'border-[#1e3a5f] bg-[#111827] hover:border-[#3730a3]'}`}>
-                  {pkg.popular && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-[#6366f1] to-[#4f46e5] px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-[#6366f1]/30">
-                      ⭐ En Popüler
-                    </div>
-                  )}
-                  <div className="mb-5">
-                    <div className="mb-2 text-2xl">{pkg.icon}</div>
-                    <div className="text-[11px] font-semibold uppercase tracking-widest text-[#818cf8]">{pkg.tag}</div>
-                    <h3 className="mt-1 text-2xl font-bold text-white">{pkg.name}</h3>
-                    <p className="mt-1 text-[11px] text-[#6b7280]">{pkg.forWho}</p>
-                  </div>
-
-                  <div className="mb-2 flex items-end gap-1">
-                    <span className="text-4xl font-extrabold text-white">₺{pkg.price}</span>
-                    <span className="mb-1 text-sm text-[#6b7280]">{pkg.priceNote}</span>
-                  </div>
-                  <p className="mb-5 text-xs text-[#6b7280]">Tek seferlik ödeme ile yıllık seçenekler mevcut</p>
-
-                  <ul className="mb-6 flex-1 space-y-2.5">
-                    {pkg.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2.5 text-sm text-[#9ca3af]">
-                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${pkg.popular ? 'bg-[#1e1b4b] text-[#818cf8]' : 'bg-emerald-950/60 text-emerald-400'}`}>✓</span>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <a href={`${WHATSAPP_BASE}?text=${encodeURIComponent(pkg.waMsg)}`} target="_blank" rel="noopener noreferrer"
-                    className={`mb-3 flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold transition-all ${pkg.popular ? 'bg-[#6366f1] text-white shadow-md shadow-[#6366f1]/25 hover:bg-[#4f46e5]' : 'border border-[#1e3a5f] bg-[#0d1117] text-[#9ca3af] hover:bg-[#1e3a5f]/40 hover:border-[#3730a3] hover:text-white'}`}>
-                    💬 {pkg.ctaLabel}
-                  </a>
-                  <button onClick={() => handleOpenModal(pkg.name)} className="flex w-full items-center justify-center rounded-xl border border-[#1e3a5f] py-2.5 text-xs font-medium text-[#818cf8] transition-all hover:border-[#3730a3] hover:text-white">
-                    ⚡ Önce Ücretsiz Test Al
+            {/* ── Süre Seçici ──────────────────────────────────────────────────── */}
+            <div className="mb-10 flex justify-center">
+              <div className="inline-flex rounded-2xl border border-[#1e3a5f] bg-[#0d1117] p-1.5 gap-1">
+                {DURATIONS.map((d) => (
+                  <button
+                    key={d.key}
+                    onClick={() => setSelectedDuration(d.key)}
+                    className="relative flex flex-col items-center"
+                  >
+                    {/* İndirim rozeti */}
+                    {d.badge && (
+                      <span className={`absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white ${d.discount === 20 ? 'bg-emerald-500' : 'bg-[#22c55e]'}`}>
+                        {d.badge}
+                      </span>
+                    )}
+                    <span className={`rounded-xl px-8 py-3 text-sm font-semibold transition-all ${
+                      selectedDuration === d.key
+                        ? 'bg-[#3b82f6] text-white shadow-lg shadow-[#3b82f6]/30'
+                        : 'text-[#6b7280] hover:text-white'
+                    }`}>
+                      {d.label}
+                    </span>
                   </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 rounded-xl border border-[#1e3a5f] bg-[#111827] p-5">
-              <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Süre Bazlı Fiyatlar</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-                {packages.map((pkg) => (
-                  <a key={pkg.name} href={`${WHATSAPP_BASE}?text=${encodeURIComponent(`Merhaba, ${pkg.name} satın almak istiyorum.`)}`} target="_blank" rel="noopener noreferrer"
-                    className={`flex flex-col items-center rounded-xl border p-3 text-center text-xs transition-all hover:border-[#3730a3] hover:text-white ${pkg.popular ? 'border-[#6366f1]/50 bg-[#1e1b4b]/60 text-[#818cf8]' : 'border-[#1e3a5f] bg-[#0d1117] text-[#6b7280]'}`}>
-                    <span className={`font-bold text-base ${pkg.popular ? 'text-[#818cf8]' : 'text-white'}`}>₺{pkg.price}</span>
-                    <span>{pkg.duration}</span>
-                    {pkg.saving && <span className="mt-1 rounded-md bg-emerald-950/60 px-1.5 py-0.5 text-[10px] text-emerald-400">{pkg.saving} tasarruf</span>}
-                    {pkg.popular && <span className="mt-1 rounded-md bg-[#1e1b4b] px-1.5 py-0.5 text-[10px] text-[#818cf8]">⭐ Popüler</span>}
-                  </a>
                 ))}
               </div>
-              <p className="mt-3 text-center text-xs text-[#6b7280]">💬 WhatsApp üzerinden satın al · Kurulum desteği dahil</p>
             </div>
+
+            {/* ── Paket Kartları ──────────────────────────────────────────────── */}
+            <div className="grid gap-6 md:grid-cols-3">
+              {categoryPackages.map((pkg) => {
+                const dur = DURATIONS.find(d => d.key === selectedDuration)!;
+                const price = calcPrice(pkg.basePrice, dur.discount);
+                const waText = `${pkg.waMsg} (${dur.label} paket)`;
+                return (
+                  <div key={pkg.id} className={`relative flex flex-col rounded-2xl border p-6 transition-all ${
+                    pkg.popular
+                      ? 'border-[#3b82f6]/70 bg-[#0d1525] shadow-2xl shadow-[#3b82f6]/15'
+                      : 'border-[#1e3a5f] bg-[#0d1117] hover:border-[#3b82f6]/40'
+                  }`}>
+                    {pkg.popular && (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#3b82f6] px-5 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-[#3b82f6]/40">
+                        EN POPÜLER
+                      </div>
+                    )}
+
+                    {/* Logo */}
+                    <div className="mb-5 flex items-center justify-center h-16">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={pkg.logo}
+                        alt={pkg.logoAlt}
+                        className="max-h-14 w-auto object-contain"
+                        onError={(e) => {
+                          // Logo yoksa fallback metin göster
+                          (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'block';
+                        }}
+                      />
+                      <span className="hidden text-xl font-bold text-white">{pkg.name}</span>
+                    </div>
+
+                    {/* Açıklama */}
+                    <p className="mb-5 text-center text-sm leading-relaxed text-[#9ca3af]">{pkg.desc}</p>
+
+                    {/* Fiyat */}
+                    <div className="mb-5 text-center">
+                      <div className="flex items-end justify-center gap-1">
+                        <span className="text-4xl font-extrabold tracking-tight text-white">₺{price}</span>
+                        <span className="mb-1.5 text-sm text-[#6b7280]">₺/Ay</span>
+                      </div>
+                      {dur.discount > 0 && (
+                        <p className="mt-1 text-xs text-[#9ca3af]">
+                          <span className="line-through text-[#4b5563]">₺{pkg.basePrice.toFixed(2).replace('.', ',')}</span>
+                          <span className="ml-1.5 rounded-md bg-emerald-950/60 px-1.5 py-0.5 text-emerald-400">%{dur.discount} indirim</span>
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Özellikler */}
+                    <ul className="mb-6 flex-1 space-y-2.5">
+                      {pkg.features.map((f) => (
+                        <li key={f.text} className="flex items-center gap-2.5 text-sm">
+                          {/* Mavi check ikonu — görseldeki gibi */}
+                          <svg className="h-4 w-4 shrink-0 text-[#3b82f6]" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd"/>
+                          </svg>
+                          <span className={f.bold ? 'font-semibold text-white' : 'text-[#9ca3af]'}>{f.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* CTA */}
+                    <a href={`${WHATSAPP_BASE}?text=${encodeURIComponent(waText)}`} target="_blank" rel="noopener noreferrer"
+                      className={`flex w-full items-center justify-center rounded-xl py-3.5 text-sm font-bold transition-all ${
+                        pkg.popular
+                          ? 'bg-[#3b82f6] text-white shadow-lg shadow-[#3b82f6]/30 hover:bg-[#2563eb]'
+                          : 'border border-[#2a3a4a] bg-[#111827] text-white hover:border-[#3b82f6]/50 hover:bg-[#1e2a3a]'
+                      }`}>
+                      {pkg.ctaLabel}
+                    </a>
+                    <button onClick={() => handleOpenModal(pkg.name)} className="mt-2 flex w-full items-center justify-center rounded-xl border border-[#1e3a5f] py-2.5 text-xs font-medium text-[#818cf8] transition-all hover:border-[#3730a3] hover:text-white">
+                      ⚡ Önce Ücretsiz Test Al
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="mt-6 text-center text-xs text-[#4b5563]">
+              * Paket fiyatları seçilen cihaz sayısı ve bölgeye göre değişiklik gösterebilir.
+            </p>
           </div>
         </section>
 
@@ -896,38 +964,114 @@ export default function HomePage() {
         </section>
 
         {/* ─── PLATFORMLAR ─────────────────────────────────────────────────────── */}
-        <section id="platformlar" className="border-t border-[#1e3a5f] bg-[#0d1117] px-6 py-20">
-          <div className="mx-auto max-w-5xl">
-            <div className="mb-10 text-center">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Cihaz Uyumluluğu</p>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Tüm Cihazlarda Çalışır</h2>
-              <p className="mt-3 text-sm text-[#9ca3af]">Tek hesapla TV'de başla, telefonda devam et — aynı kalite, sınırsız cihaz</p>
-            </div>
+        <section id="platformlar" className="border-t border-[#1e3a5f] bg-[#0a0f1a] px-6 py-20">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:gap-16">
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                { icon: '📺', label: 'Smart TV', sub: 'Samsung, LG, Sony, Vestel' },
-                { icon: '📱', label: 'Android Telefon', sub: 'Tüm Android cihazlar' },
-                { icon: '🍎', label: 'iPhone / iPad', sub: 'iOS 14 ve üzeri' },
-                { icon: '📦', label: 'Android TV Box', sub: 'Tüm Android Box\'lar' },
-                { icon: '🔥', label: 'Fire TV Stick', sub: 'Amazon Fire TV' },
-                { icon: '💻', label: 'Windows PC', sub: 'Windows 10/11' },
-                { icon: '🖥️', label: 'macOS', sub: 'Mac bilgisayarlar' },
-                { icon: '📟', label: 'MAG Cihazlar', sub: 'MAG 256, 322, 352+' },
-              ].map((d) => (
-                <div key={d.label} className="flex items-center gap-3 rounded-xl border border-[#1e3a5f] bg-[#111827] p-4 transition-all hover:border-[#3730a3]">
-                  <span className="text-2xl">{d.icon}</span>
+              {/* Sol: Başlık + cihaz grid */}
+              <div className="lg:w-[45%] shrink-0">
+                <h2 className="mb-4 text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl">
+                  Anında Aç, <span className="text-[#3b82f6]">Her</span><br />
+                  Ekranda <span className="text-[#3b82f6]">İzle</span>
+                </h2>
+                <p className="mb-8 text-sm leading-relaxed text-[#9ca3af] max-w-md">
+                  Tek hesabınla televizyonda başla, telefonda devam et.
+                  Kurulum gerektirmez, cihaz sınırı yok — nerede olursan
+                  ol, aynı kalitede izlemeye devam et.
+                </p>
+
+                {/* Cihaz ikonu grid — 4 sütun, görseldeki gibi */}
+                <div className="grid grid-cols-4 gap-3 sm:grid-cols-4">
+                  {[
+                    { icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/>
+                        <path d="M8 21h8M12 17v4"/>
+                      </svg>
+                    ), label: 'Smart TV' },
+                    { icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/>
+                        <path d="M8 21h8M12 17v4"/><circle cx="19" cy="5" r="1.5" fill="currentColor"/>
+                      </svg>
+                    ), label: 'Android TV' },
+                    { icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                        <path d="M8 12l2 2 4-4"/>
+                      </svg>
+                    ), label: 'Fire TV Stick' },
+                    { icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7">
+                        <rect x="7" y="2" width="10" height="20" rx="2"/>
+                        <circle cx="12" cy="18" r="1" fill="currentColor"/>
+                      </svg>
+                    ), label: 'iPhone' },
+                    { icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7">
+                        <rect x="5" y="2" width="14" height="20" rx="2"/>
+                        <circle cx="12" cy="18" r="1" fill="currentColor"/>
+                      </svg>
+                    ), label: 'Android' },
+                    { icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7">
+                        <rect x="3" y="4" width="18" height="13" rx="1.5"/>
+                        <path d="M9 21h6M12 17v4"/>
+                      </svg>
+                    ), label: 'iPad / Tablet' },
+                    { icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7">
+                        <rect x="2" y="4" width="20" height="14" rx="1.5"/>
+                        <path d="M2 18h20M8 22h8"/>
+                      </svg>
+                    ), label: 'Windows' },
+                    { icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7">
+                        <rect x="2" y="4" width="20" height="14" rx="1.5"/>
+                        <path d="M6 22h12M12 18v4"/>
+                      </svg>
+                    ), label: 'macOS' },
+                  ].map((d) => (
+                    <div key={d.label} className="flex flex-col items-center gap-2 rounded-xl border border-[#1e2a3a] bg-[#111827] px-3 py-4 transition-colors hover:border-[#3b82f6]/40">
+                      <span className="text-[#9ca3af]">{d.icon}</span>
+                      <span className="text-center text-xs font-medium text-[#9ca3af]">{d.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sağ: Uygulama mockup görseli */}
+              <div className="relative flex-1 flex items-center justify-center">
+                {/* 
+                  Kendi görselin: /public/platform-mockup.png
+                  Bu dosyayı /public/ klasörüne yükle.
+                */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/platform-mockup.png"
+                  alt="Galya IPTV Uygulama Ekranı"
+                  className="w-full max-w-xl rounded-2xl object-contain drop-shadow-2xl"
+                  onError={(e) => {
+                    // Görsel yokken placeholder göster
+                    (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    const ph = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (ph) ph.style.display = 'flex';
+                  }}
+                />
+                {/* Placeholder — görsel eklenince otomatik gizlenir */}
+                <div className="hidden w-full max-w-xl aspect-video items-center justify-center rounded-2xl border-2 border-dashed border-[#1e3a5f] bg-[#111827]/60 text-center p-8">
                   <div>
-                    <p className="text-sm font-semibold text-white">{d.label}</p>
-                    <p className="text-[11px] text-[#6b7280]">{d.sub}</p>
+                    <div className="mb-3 text-4xl opacity-30">🖥️</div>
+                    <p className="text-sm font-semibold text-[#4b5563]">platform-mockup.png</p>
+                    <p className="mt-1 text-xs text-[#374151]">/public/ klasörüne yükle</p>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            <div className="mt-8 rounded-xl border border-[#3730a3]/50 bg-[#1e1b4b]/30 p-5 text-center">
-              <p className="text-sm text-[#9ca3af]">TV'de izlemeye başlayın, telefonunuzda kaldığınız yerden devam edin.</p>
-              <p className="mt-1 text-sm font-semibold text-white">Hesap sınırı yok · Aynı kalite · Tek fiyat</p>
+                {/* "4K Kristal Netliğinde" overlay rozeti */}
+                <div className="absolute right-4 top-4 rounded-xl border border-[#3b82f6]/40 bg-[#0d1525]/90 px-3 py-2 backdrop-blur-sm">
+                  <span className="text-xs font-bold text-[#3b82f6]">4K Kristal Netliğinde</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
