@@ -198,6 +198,471 @@ const INSTALL_GUIDES: Record<DeviceId, { app: string; steps: string[]; note?: st
 // ─── localStorage anahtarları ─────────────────────────────────────────────────
 const LS_KEY = 'galya_modal_progress';
 
+// ─── Spin Wheel sabitleri ─────────────────────────────────────────────────────
+const WHATSAPP_BASE = 'https://wa.me/447441921660';
+const LS_SPIN_KEY   = 'galya_spin_entries'; // { [phone]: { prizeIndex, wonAt } }
+const SPIN_PRIZES = [
+  { label: '%5 İndirim',      chance: 0.30, bg: '#2e2760', text: '#c4b8ff' },
+  { label: '%10 İndirim',     chance: 0.25, bg: '#3d3380', text: '#d6ccff' },
+  { label: '+7 Gün Ücretsiz', chance: 0.20, bg: '#25245a', text: '#a5b4fc' },
+  { label: '+15 Gün Hediye',  chance: 0.15, bg: '#38286e', text: '#c084fc' },
+  { label: '%20 İndirim',     chance: 0.02, bg: '#5b21b6', text: '#ffffff' },
+  { label: '%8 İndirim',      chance: 0.08, bg: '#282660', text: '#c4b8ff' },
+] as const;
+type SpinPrize = typeof SPIN_PRIZES[number];
+const SPIN_SEG_ANGLE  = 360 / SPIN_PRIZES.length;  // 60° her dilim
+const SPIN_DURATION   = 5200;                        // ms
+const PRIZE_VALID_MS  = 15 * 60 * 1000;             // 15 dakika
+
+interface SpinEntry { prizeIndex: number; wonAt: number }
+interface SpinMap   { [phone: string]: SpinEntry }
+
+// ─── Spin yardımcıları ────────────────────────────────────────────────────────
+function spinLoadEntries(): SpinMap {
+  try {
+    const raw = localStorage.getItem(LS_SPIN_KEY);
+    if (!raw) return {};
+    const p = JSON.parse(raw);
+    return (typeof p === 'object' && p !== null) ? p as SpinMap : {};
+  } catch { localStorage.removeItem(LS_SPIN_KEY); return {}; }
+}
+function spinSaveEntry(phone: string, entry: SpinEntry) {
+  const m = spinLoadEntries(); m[phone] = entry;
+  localStorage.setItem(LS_SPIN_KEY, JSON.stringify(m));
+}
+function spinValidatePhone(raw: string): { valid: boolean; normalized: string; error: string } {
+  let d = raw.replace(/\D/g, '');
+  if (d.startsWith('90')) d = d.slice(2);
+  if (d.startsWith('0'))  d = d.slice(1);
+  if (d.length !== 10 || !d.startsWith('5'))
+    return { valid: false, normalized: '', error: 'Geçerli bir GSM numarası girin (05xx xxx xx xx)' };
+  return { valid: true, normalized: d, error: '' };
+}
+function spinPickPrize(): number {
+  let r = Math.random(), c = 0;
+  for (let i = 0; i < SPIN_PRIZES.length; i++) { c += SPIN_PRIZES[i].chance; if (r < c) return i; }
+  return 0;
+}
+function spinEaseOut(t: number) { return 1 - Math.pow(1 - t, 4); }
+function spinFormatPhone(val: string) {
+  const d = val.replace(/\D/g, '').slice(0, 11);
+  if (d.length <= 4) return d;
+  if (d.length <= 7) return `${d.slice(0,4)} ${d.slice(4)}`;
+  if (d.length <= 9) return `${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7)}`;
+  return `${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7,9)} ${d.slice(9)}`;
+}
+function spinFmtCountdown(ms: number) {
+  const s = Math.ceil(ms / 1000), m = Math.floor(s / 60);
+  return `${m}:${String(s % 60).padStart(2,'0')}`;
+}
+function spinBuildWaUrl(label: string) {
+  return `${WHATSAPP_BASE}?text=${encodeURIComponent(`Merhaba, kampanyadan "${label}" kazandım. Satın almak istiyorum.`)}`;
+}
+
+// ─── SpinWheel SVG bileşeni ───────────────────────────────────────────────────
+function SpinWheelSVG({ rotation }: { rotation: number }) {
+  const cx = 150, cy = 150, r = 138, inner = 28;
+  return (
+    <svg viewBox="0 0 300 300" className="w-full h-full" style={{ transform: `rotate(${rotation}deg)` }}>
+      <defs>
+        <radialGradient id="sg-cg" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#6d28d9"/>
+        </radialGradient>
+      </defs>
+      {/* Dış parıltı halkası */}
+      <circle cx={cx} cy={cy} r={r+5} fill="none" stroke="rgba(124,111,205,0.25)" strokeWidth="9"/>
+      {/* Dilimler */}
+      {SPIN_PRIZES.map((p, i) => {
+        const a1 = (i*SPIN_SEG_ANGLE - 90) * Math.PI/180;
+        const a2 = ((i+1)*SPIN_SEG_ANGLE - 90) * Math.PI/180;
+        const x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1);
+        const x2=cx+r*Math.cos(a2), y2=cy+r*Math.sin(a2);
+        const am=(a1+a2)/2, lr=r*0.63;
+        const lx=cx+lr*Math.cos(am), ly=cy+lr*Math.sin(am);
+        const rot=(am*180/Math.PI)+90;
+        return (
+          <g key={i}>
+            <path d={`M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 0 1 ${x2} ${y2}Z`}
+              fill={p.bg} stroke="rgba(255,255,255,0.07)" strokeWidth="1"/>
+            <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle"
+              fill={p.text} fontSize="10.5" fontWeight="700" fontFamily="system-ui,sans-serif"
+              transform={`rotate(${rot},${lx},${ly})`} style={{userSelect:'none'}}>
+              {p.label}
+            </text>
+          </g>
+        );
+      })}
+      {/* Bölme çizgileri */}
+      {SPIN_PRIZES.map((_,i) => {
+        const a=(i*SPIN_SEG_ANGLE-90)*Math.PI/180;
+        return <line key={`l${i}`} x1={cx} y1={cy} x2={cx+r*Math.cos(a)} y2={cy+r*Math.sin(a)}
+          stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>;
+      })}
+      {/* Süsleme noktaları */}
+      {Array.from({length:12}).map((_,i)=>{
+        const a=(i*30-90)*Math.PI/180, pr=r+7;
+        return <circle key={`d${i}`} cx={cx+pr*Math.cos(a)} cy={cy+pr*Math.sin(a)} r="3.5"
+          fill={i%2===0?'#7c6fcd':'#a78bfa'} opacity="0.85"/>;
+      })}
+      {/* Merkez */}
+      <circle cx={cx} cy={cy} r={inner+5} fill="rgba(0,0,0,0.45)"/>
+      <circle cx={cx} cy={cy} r={inner} fill="url(#sg-cg)"/>
+      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle"
+        fill="white" fontSize="9" fontWeight="800" fontFamily="system-ui,sans-serif"
+        style={{userSelect:'none'}}>ÇEVİR</text>
+    </svg>
+  );
+}
+
+// ─── SpinSection bileşeni (page içine gömülü) ─────────────────────────────────
+function SpinSection({ onOpenModal }: { onOpenModal: () => void }) {
+  type SpinPhase = 'form' | 'ready' | 'spinning' | 'result' | 'already_won';
+  const [sPhone,    setPhone]    = useState('');
+  const [sPhoneErr, setPhoneErr] = useState('');
+  const [sNorm,     setNorm]     = useState('');
+  const [sPhase,    setPhase]    = useState<SpinPhase>('form');
+  const [sRot,      setRot]      = useState(0);
+  const [sWonIdx,   setWonIdx]   = useState<number|null>(null);
+  const [sWonAt,    setWonAt]    = useState<number|null>(null);
+  const [sSound,    setSound]    = useState(true);
+  const audCtx  = useRef<AudioContext|null>(null);
+  const rafRef  = useRef<number|null>(null);
+  const startTs = useRef<number|null>(null);
+  const startRt = useRef(0);
+  const targetR = useRef(0);
+  const [winCount] = useState(() => 128 + Math.floor(Math.random()*40));
+
+  // Countdown
+  const expiresAt = sWonAt ? sWonAt + PRIZE_VALID_MS : null;
+  const [remaining, setRemaining] = useState(0);
+  useEffect(() => {
+    if (!expiresAt) return;
+    const tick = () => setRemaining(Math.max(0, expiresAt - Date.now()));
+    tick(); const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [expiresAt]);
+  const expired = remaining === 0 && expiresAt !== null;
+
+  // Ses
+  const playTick = useCallback(() => {
+    if (!sSound) return;
+    try {
+      if (!audCtx.current) audCtx.current = new (window.AudioContext||(window as any).webkitAudioContext)();
+      const ctx=audCtx.current, o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value=700+Math.random()*500;
+      g.gain.setValueAtTime(0.06,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.04);
+      o.start(); o.stop(ctx.currentTime+0.04);
+    } catch {}
+  }, [sSound]);
+
+  const playWin = useCallback(() => {
+    if (!sSound) return;
+    try {
+      if (!audCtx.current) audCtx.current = new (window.AudioContext||(window as any).webkitAudioContext)();
+      const ctx=audCtx.current;
+      [523,659,784,1047].forEach((f,i) => {
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value=f;
+        g.gain.setValueAtTime(0,ctx.currentTime+i*0.13);
+        g.gain.linearRampToValueAtTime(0.14,ctx.currentTime+i*0.13+0.05);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.13+0.32);
+        o.start(ctx.currentTime+i*0.13); o.stop(ctx.currentTime+i*0.13+0.35);
+      });
+    } catch {}
+  }, [sSound]);
+
+  useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
+
+  function handlePhoneSubmit() {
+    const {valid, normalized, error} = spinValidatePhone(sPhone);
+    if (!valid) { setPhoneErr(error); return; }
+    setPhoneErr(''); setNorm(normalized);
+    const entries = spinLoadEntries();
+    if (entries[normalized]) {
+      setWonIdx(entries[normalized].prizeIndex);
+      setWonAt(entries[normalized].wonAt);
+      setPhase('already_won'); return;
+    }
+    // IP kontrolü — backend entegrasyonu:
+    // const res = await fetch('/api/spin/check', {method:'POST',body:JSON.stringify({phone:normalized})});
+    // const d = await res.json(); if (d.used) { setPhase('already_won'); return; }
+    setPhase('ready');
+  }
+
+  function startSpin() {
+    const idx = spinPickPrize();
+    const BASE_TURNS = 6;
+    const center = idx * SPIN_SEG_ANGLE + SPIN_SEG_ANGLE / 2;
+    const stop   = 360 - center + 90;
+    const total  = BASE_TURNS * 360 + (stop % 360);
+    startRt.current = sRot % 360;
+    targetR.current = sRot + total;
+    setWonIdx(idx); setPhase('spinning');
+    startTs.current = null;
+    let lastSeg = 0;
+
+    function animate(ts: number) {
+      if (!startTs.current) startTs.current = ts;
+      const elapsed = ts - startTs.current;
+      const prog = Math.min(elapsed / SPIN_DURATION, 1);
+      const eased = spinEaseOut(prog);
+      const cur = startRt.current + eased * total;
+      setRot(cur);
+      const curSeg = Math.floor((cur % 360) / SPIN_SEG_ANGLE);
+      if (curSeg !== lastSeg) { playTick(); lastSeg = curSeg; }
+      if (prog < 1) { rafRef.current = requestAnimationFrame(animate); }
+      else {
+        setRot(targetR.current % 360);
+        const now = Date.now();
+        setWonAt(now);
+        spinSaveEntry(sNorm, { prizeIndex: idx, wonAt: now });
+        // Backend kayıt — entegrasyon:
+        // fetch('/api/spin/record',{method:'POST',headers:{'Content-Type':'application/json'},
+        //   body:JSON.stringify({phone:sNorm,prizeIndex:idx,wonAt:now})});
+        playWin(); setPhase('result');
+      }
+    }
+    rafRef.current = requestAnimationFrame(animate);
+  }
+
+  const wonPrize: SpinPrize | null = sWonIdx !== null ? SPIN_PRIZES[sWonIdx] : null;
+  const waUrl = wonPrize ? spinBuildWaUrl(wonPrize.label) : WHATSAPP_URL;
+
+  // ─── Sonuç / CTA ortak parçası ─────────────────────────────────────────────
+  const ResultBlock = () => wonPrize ? (
+    <div className="space-y-3 mt-4">
+      {/* Kazanılan ödül kutusu */}
+      <div className={`rounded-xl border p-5 text-center transition-all ${
+        expired
+          ? 'border-white/[0.06] bg-[#1a1a22] opacity-50'
+          : 'border-[#7c6fcd]/40 bg-gradient-to-b from-[#7c6fcd]/20 to-[#7c6fcd]/[0.04]'
+      }`}>
+        <div className="text-3xl mb-2">🏆</div>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[#a78bfa] mb-1">
+          {expired ? 'Ödül Süresi Doldu' : 'Tebrikler! Kazandın:'}
+        </p>
+        <p className={`text-3xl font-extrabold tracking-tight ${expired ? 'text-[#4b4860]' : 'text-white'}`}>
+          {wonPrize.label}
+        </p>
+      </div>
+
+      {/* Countdown */}
+      {!expired && (
+        <div className="flex items-center justify-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-2.5">
+          <span className="text-base">⏱</span>
+          <span className="text-sm text-amber-400">
+            Bu ödül <strong>{spinFmtCountdown(remaining)}</strong> içinde kullanılabilir
+          </span>
+        </div>
+      )}
+
+      {/* CTA butonları */}
+      {!expired ? (
+        <div className="space-y-2">
+          <a href={waUrl} target="_blank" rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition-all hover:bg-[#1ebe5d] active:scale-[0.98]">
+            💬 WhatsApp&apos;tan Kullan
+          </a>
+          <button onClick={onOpenModal}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7c6fcd] to-[#6d28d9] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#7c6fcd]/20 transition-all hover:opacity-90 active:scale-[0.98]">
+            🛒 Kazandığın Ödüyle Ücretsiz Test Al
+          </button>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-white/[0.06] bg-[#22222c] p-4 text-center">
+          <p className="mb-3 text-sm text-[#9b98b0]">Ödül süresi doldu — paketler hâlâ uygun fiyatlı!</p>
+          <a href="/#paketler"
+            className="inline-flex items-center gap-1 rounded-lg bg-[#7c6fcd]/20 px-4 py-2 text-sm font-semibold text-[#a78bfa] transition-colors hover:bg-[#7c6fcd]/30">
+            Paketlere Git →
+          </a>
+        </div>
+      )}
+      <p className="text-center text-[11px] text-[#4b4860]">
+        Ödülünüzü WhatsApp mesajında göstererek kullanabilirsiniz.
+      </p>
+    </div>
+  ) : null;
+
+  return (
+    <section className="relative border-t border-white/[0.08] overflow-hidden px-4 py-16 sm:px-6">
+      {/* Arka plan efektleri */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-[350px] w-[550px] rounded-full bg-[#7c6fcd]/7 blur-3xl"/>
+        <div className="absolute bottom-0 right-0 h-[250px] w-[250px] rounded-full bg-[#6d28d9]/5 blur-3xl"/>
+      </div>
+
+      <div className="relative mx-auto max-w-2xl">
+        {/* Başlık */}
+        <div className="mb-8 text-center">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#7c6fcd]/30 bg-[#7c6fcd]/10 px-4 py-1.5 text-xs font-semibold text-[#a78bfa]">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#a78bfa]"/>
+            Sınırlı Süre Kampanyası
+          </div>
+          <h2 className="mb-2 text-3xl font-extrabold tracking-tight text-white md:text-4xl">
+            🎡 Çevir, Kazan!
+          </h2>
+          <p className="mx-auto max-w-md text-sm leading-relaxed text-[#9b98b0]">
+            WhatsApp numaranı gir, çarkı bir kez çevir ve özel indirimini kap.{' '}
+            <span className="font-semibold text-[#a78bfa]">Her numara sadece 1 hak.</span>
+          </p>
+        </div>
+
+        {/* Kazanan sayacı + ses */}
+        <div className="mb-6 flex items-center justify-center gap-2">
+          <div className="flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-4 py-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"/>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"/>
+            </span>
+            <span className="text-xs text-emerald-400">
+              Bugün <strong>{winCount} kişi</strong> ödül kazandı
+            </span>
+          </div>
+          <button onClick={() => setSound(v=>!v)}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.08] bg-[#22222c] text-sm text-[#9b98b0] transition-colors hover:text-white"
+            title={sSound ? 'Sesi kapat' : 'Sesi aç'}>
+            {sSound ? '🔊' : '🔇'}
+          </button>
+        </div>
+
+        {/* Ana kart */}
+        <div className="rounded-2xl border border-white/[0.08] bg-[#141418] p-6 shadow-2xl">
+
+          {/* FORM */}
+          {sPhase === 'form' && (
+            <div className="space-y-5">
+              {/* Ödül şeridi */}
+              <div className="flex flex-wrap gap-2 justify-center">
+                {SPIN_PRIZES.map((p,i) => (
+                  <span key={i} className="rounded-full border border-[#7c6fcd]/20 bg-[#7c6fcd]/10 px-3 py-1 text-xs font-semibold text-[#c4b8ff]">
+                    {p.label}
+                  </span>
+                ))}
+              </div>
+
+              <div className="rounded-xl border border-[#7c6fcd]/15 bg-[#7c6fcd]/5 p-4 text-center">
+                <p className="text-sm text-[#9b98b0]">
+                  ✨ Çarkı çevirmek için WhatsApp numaranı gir.{' '}
+                  <span className="text-xs text-[#6b6880]">Numaran hiçbir amaçla paylaşılmaz.</span>
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-[#9b98b0]">WhatsApp Numaranız</label>
+                <div className="flex gap-2">
+                  <div className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-[#22222c] px-3 py-2.5 text-sm text-[#9b98b0] whitespace-nowrap">
+                    🇹🇷 +90
+                  </div>
+                  <input type="tel" inputMode="numeric" placeholder="05xx xxx xx xx"
+                    value={sPhone}
+                    onChange={e => { setPhone(spinFormatPhone(e.target.value)); setPhoneErr(''); }}
+                    onKeyDown={e => e.key === 'Enter' && handlePhoneSubmit()}
+                    className="flex-1 rounded-lg border border-white/[0.08] bg-[#22222c] px-3 py-2.5 text-sm text-[#f1f0f5] placeholder-[#4b4860] outline-none transition-colors focus:border-[#7c6fcd]/50 focus:ring-1 focus:ring-[#7c6fcd]/30"/>
+                </div>
+                {sPhoneErr && <p className="mt-1.5 text-xs text-red-400">{sPhoneErr}</p>}
+              </div>
+
+              <button onClick={handlePhoneSubmit}
+                className="w-full rounded-xl bg-gradient-to-r from-[#7c6fcd] to-[#6d28d9] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#7c6fcd]/25 transition-all hover:opacity-90 active:scale-[0.98]">
+                🎡 Çarkı Çevirmek İstiyorum
+              </button>
+              <p className="text-center text-[11px] text-[#4b4860]">
+                Her numara yalnızca 1 kez katılabilir. Ödül 15 dakika geçerlidir.
+              </p>
+            </div>
+          )}
+
+          {/* ÇARK ALANI (ready / spinning / result) */}
+          {(sPhase === 'ready' || sPhase === 'spinning' || sPhase === 'result') && (
+            <div className="space-y-5">
+              {/* Çark */}
+              <div className="relative mx-auto flex h-72 w-72 items-center justify-center sm:h-80 sm:w-80">
+                {/* Gösterge (pointer) */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-10 flex flex-col items-center">
+                  <div className="w-0 h-0" style={{
+                    borderLeft:'10px solid transparent', borderRight:'10px solid transparent',
+                    borderTop:'22px solid #a78bfa',
+                    filter:'drop-shadow(0 2px 6px rgba(167,139,250,0.6))',
+                  }}/>
+                </div>
+                <SpinWheelSVG rotation={sRot}/>
+              </div>
+
+              {sPhase === 'ready' && (
+                <div className="space-y-3">
+                  <p className="text-center text-sm text-[#9b98b0]">Hazırsın! Çarkı çevir ve ödülünü kazan.</p>
+                  <button onClick={startSpin}
+                    className="w-full rounded-xl bg-gradient-to-r from-[#7c6fcd] to-[#6d28d9] py-4 text-base font-bold text-white shadow-lg shadow-[#7c6fcd]/30 transition-all hover:opacity-90 active:scale-[0.98]">
+                    🎯 ÇARKI ÇEVİR!
+                  </button>
+                </div>
+              )}
+
+              {sPhase === 'spinning' && (
+                <p className="text-center text-sm font-semibold text-[#a78bfa] animate-pulse">⏳ Çark dönüyor...</p>
+              )}
+
+              {sPhase === 'result' && <ResultBlock/>}
+            </div>
+          )}
+
+          {/* DAHA ÖNCE KAZANILDI */}
+          {sPhase === 'already_won' && (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-center">
+                <div className="mb-2 text-2xl">⚠️</div>
+                <p className="text-sm font-semibold text-amber-400">Bu numara daha önce kampanyaya katıldı</p>
+                <p className="mt-1 text-xs text-[#9b98b0]">Daha önce kazandığın ödül aşağıda gösterilmektedir.</p>
+              </div>
+              <ResultBlock/>
+              <button onClick={() => { setPhone(''); setNorm(''); setPhase('form'); setPhoneErr(''); }}
+                className="w-full rounded-lg border border-white/[0.08] py-2.5 text-xs text-[#6b6880] transition-colors hover:text-[#9b98b0]">
+                Farklı numara ile dene
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Referans kartı */}
+        <div className="mt-4 rounded-xl border border-[#7c6fcd]/20 bg-gradient-to-r from-[#7c6fcd]/10 to-pink-900/5 p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#7c6fcd]/20 text-xl">👥</div>
+            <div className="flex-1">
+              <p className="mb-0.5 text-sm font-bold text-white">Arkadaşına Öner, +3 Ay Kazan!</p>
+              <p className="mb-3 text-xs leading-relaxed text-[#9b98b0]">
+                Arkadaşın Galya IPTV&apos;ye üye olursa{' '}
+                <span className="font-semibold text-[#a78bfa]">+3 ay ücretsiz uzatma</span> hakkı kazanırsın.
+              </p>
+              <a href={`${WHATSAPP_BASE}?text=${encodeURIComponent('Merhaba, referans programı hakkında bilgi almak istiyorum.')}`}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#7c6fcd]/30 bg-[#7c6fcd]/10 px-3 py-1.5 text-xs font-semibold text-[#a78bfa] transition-colors hover:bg-[#7c6fcd]/20">
+                💬 Referans Kodumu Al
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Güven çubuğu */}
+        <div className="mt-4 flex flex-wrap justify-center gap-3">
+          {[
+            { icon:'🔒', text:'Tek Kullanım Hakkı' },
+            { icon:'⏱', text:'15 Dk Geçerli' },
+            { icon:'📞', text:'7/24 WhatsApp Destek' },
+            { icon:'✅', text:'Ücretsiz Test' },
+          ].map((item,i) => (
+            <div key={i} className="flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-[#141418] px-3 py-1.5 text-xs text-[#9b98b0]">
+              <span>{item.icon}</span><span>{item.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Toast bileşeni ───────────────────────────────────────────────────────────
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 interface ToastMsg { id: number; message: string; type: ToastType }
@@ -963,6 +1428,9 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* ─── Spin-to-Win Çark Bölümü ────────────────────────────────────────── */}
+        <SpinSection onOpenModal={handleOpenModal}/>
 
         {/* ─── Satın alma itirazlarını kıran bölüm ───────────────────────────── */}
         <section className="border-t border-white/[0.08] px-6 py-16">
