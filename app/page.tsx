@@ -487,16 +487,16 @@ function SpinSection({ onOpenModal }: { onOpenModal: () => void }) {
   ) : null;
 
   return (
-    <section className="relative border-t border-white/[0.08] overflow-hidden px-4 py-16 sm:px-6">
+    <div className="relative w-full">
       {/* Arka plan efektleri */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-[350px] w-[550px] rounded-full bg-[#7c6fcd]/7 blur-3xl"/>
-        <div className="absolute bottom-0 right-0 h-[250px] w-[250px] rounded-full bg-[#6d28d9]/5 blur-3xl"/>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 h-[280px] w-[420px] rounded-full bg-[#7c6fcd]/8 blur-3xl"/>
+        <div className="absolute bottom-0 right-0 h-[180px] w-[180px] rounded-full bg-[#6d28d9]/6 blur-3xl"/>
       </div>
 
-      <div className="relative mx-auto max-w-2xl">
+      <div className="relative">
         {/* Başlık */}
-        <div className="mb-8 text-center">
+        <div className="mb-6 text-center">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#7c6fcd]/30 bg-[#7c6fcd]/10 px-4 py-1.5 text-xs font-semibold text-[#a78bfa]">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#a78bfa]"/>
             Sınırlı Süre Kampanyası
@@ -659,7 +659,7 @@ function SpinSection({ onOpenModal }: { onOpenModal: () => void }) {
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -866,6 +866,9 @@ export default function HomePage() {
   const [showExitPopup, setShowExitPopup] = useState(false);
   const [exitPopupShown, setExitPopupShown] = useState(false);
   const [recommendedPkg, setRecommendedPkg] = useState('');
+  // ─── Spin popup state ──────────────────────────────────────────────────────
+  const [showSpinPopup, setShowSpinPopup] = useState(false);
+  const [spinBannerDismissed, setSpinBannerDismissed] = useState(false);
   const toastIdRef = useRef(0);
 
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -884,6 +887,19 @@ export default function HomePage() {
     const id = setInterval(() => setResendCooldown((c) => Math.max(c - 1, 0)), 1000);
     return () => clearInterval(id);
   }, [resendCooldown]);
+
+  // ─── Spin popup: 3 sn sonra otomatik aç (oturumda 1 kez) ────────────────
+  useEffect(() => {
+    const LS_SPIN_POPUP = 'galya_spin_popup_shown';
+    try {
+      if (localStorage.getItem(LS_SPIN_POPUP)) return; // bu oturumda zaten gösterildi
+    } catch { return; }
+    const id = setTimeout(() => {
+      setShowSpinPopup(true);
+      try { localStorage.setItem(LS_SPIN_POPUP, '1'); } catch {}
+    }, 3000);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     if (step === 2) setTimeout(() => emailInputRef.current?.focus(), 100);
@@ -1429,9 +1445,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ─── Spin-to-Win Çark Bölümü ────────────────────────────────────────── */}
-        <SpinSection onOpenModal={handleOpenModal}/>
-
         {/* ─── Satın alma itirazlarını kıran bölüm ───────────────────────────── */}
         <section className="border-t border-white/[0.08] px-6 py-16">
           <div className="mx-auto max-w-3xl">
@@ -1544,6 +1557,61 @@ export default function HomePage() {
           </a>
         </div>
       </div>
+
+      {/* ─── Spin Popup Modal ────────────────────────────────────────────────── */}
+      {showSpinPopup && (
+        <div className="fixed inset-0 z-[65] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowSpinPopup(false); }}>
+          <div className="relative w-full max-w-md overflow-y-auto rounded-t-2xl bg-[#1c1c25] p-6 shadow-2xl sm:max-h-[92vh] sm:rounded-2xl">
+            {/* Kapat */}
+            <button onClick={() => setShowSpinPopup(false)}
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-[#6b6880] transition-colors hover:bg-white/[0.06] hover:text-white z-10">
+              ✕
+            </button>
+            {/* Rozet */}
+            <div className="mb-4 flex justify-center">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#7c6fcd]/30 bg-[#7c6fcd]/10 px-4 py-1.5 text-xs font-semibold text-[#a78bfa]">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#a78bfa]"/>
+                Sınırlı Süre Kampanyası
+              </span>
+            </div>
+            {/* Spin içeriği */}
+            <SpinSection onOpenModal={() => { setShowSpinPopup(false); handleOpenModal(); }}/>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Sticky Spin Banner (sağ alt, kapatılabilir) ─────────────────────── */}
+      {!spinBannerDismissed && !showSpinPopup && (
+        <div className="fixed bottom-20 right-4 z-40 md:bottom-[88px] md:right-6">
+          <div className="relative">
+            {/* Kapat butonu */}
+            <button onClick={() => setSpinBannerDismissed(true)}
+              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#22222c] border border-white/[0.12] text-[10px] text-[#9b98b0] transition-colors hover:text-white z-10">
+              ✕
+            </button>
+            {/* Ana buton */}
+            <button onClick={() => setShowSpinPopup(true)}
+              className="flex items-center gap-2.5 rounded-2xl border border-[#7c6fcd]/40 bg-[#1c1c25]/95 px-4 py-3 shadow-2xl backdrop-blur-md transition-all hover:border-[#7c6fcd]/70 hover:bg-[#22222c]"
+              style={{ boxShadow: '0 0 20px rgba(124,111,205,0.25)' }}>
+              {/* Dönen çark ikonu */}
+              <span className="text-2xl" style={{ display:'inline-block', animation:'spin-slow 4s linear infinite' }}>🎡</span>
+              <div className="text-left">
+                <p className="text-xs font-bold text-white leading-tight">İndirim Kazan!</p>
+                <p className="text-[10px] text-[#a78bfa] leading-tight">Çarkı çevir, ödülünü al</p>
+              </div>
+              {/* Canlı nokta */}
+              <span className="relative flex h-2 w-2 ml-1">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#a78bfa] opacity-75"/>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#7c6fcd]"/>
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* spin-slow animasyonu için inline style */}
+      <style>{`@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
       {/* ─── Modal ───────────────────────────────────────────────────────────── */}
       {isModalOpen && (
