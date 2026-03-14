@@ -385,21 +385,47 @@ function SpinSection({ onOpenModal }: { onOpenModal: () => void }) {
 
   function startSpin(norm: string) {
     const idx = spinPickPrize();
-    const total = 6*360 + ((360-(idx*SPIN_SEG_ANGLE+SPIN_SEG_ANGLE/2)+90)%360);
-    startRt.current = sRot % 360;
+
+    // ── Açı hesabı ──────────────────────────────────────────────────────────
+    // SVG'de dilimler -90° offset ile çiziliyor:
+    //   dilim i'nin ortası = i * 60 + 30  derece (SVG koordinatında)
+    //   ama SVG -90° ile başladığından gerçek açı = i*60 + 30 - 90
+    //
+    // Pointer üstte (SVG'de 0° = sağ, -90° = üst demek).
+    // Çark rotate(R) yapılınca, SVG'deki bir nokta (açı A) ekrandaki
+    // (A + R) konumuna gelir. Pointer -90°'de, yani:
+    //   A + R ≡ -90°  →  R = -90 - A  →  R = -90 - (i*60 + 30 - 90) = -i*60 - 30
+    //
+    // Pozitif (saat yönü) dönüş istiyoruz + 5 tam tur ekle:
+    //   finalRotation = 5*360 + (360 - ((i*60 + 30) % 360))
+    //   Bu formül: hedefe en kısa saat yönü mesafesini + 5 tur verir.
+
+    const segCenter = (idx * SPIN_SEG_ANGLE + SPIN_SEG_ANGLE / 2) % 360;
+    // Çarkı saat yönünde döndürerek bu segCenter'ı pointer'a (üst = 0°) getir:
+    const toTop = (360 - segCenter) % 360;
+    // Mevcut rotasyonu normalize et
+    const currentNorm = ((sRot % 360) + 360) % 360;
+    // Ne kadar daha dönmeli (en az 0, en fazla 360 — saat yönü)
+    const extraToTarget = (toTop - currentNorm + 360) % 360;
+    // Toplam dönüş: 5 tam tur + hedefe kalan mesafe
+    const total = 5 * 360 + extraToTarget;
+
+    startRt.current = sRot;
     setWonIdx(idx); setPhase('spinning');
     startTs.current = null;
-    let lastSeg = 0;
+    let lastSeg = -1;
+
     function animate(ts: number) {
       if (!startTs.current) startTs.current = ts;
       const prog = Math.min((ts - startTs.current) / SPIN_DURATION, 1);
       const cur = startRt.current + spinEaseOut(prog) * total;
       setRot(cur);
-      const seg = Math.floor((cur%360)/SPIN_SEG_ANGLE);
+      const seg = Math.floor(((cur % 360 + 360) % 360) / SPIN_SEG_ANGLE);
       if (seg !== lastSeg) { playTick(); lastSeg = seg; }
       if (prog < 1) { rafRef.current = requestAnimationFrame(animate); }
       else {
-        setRot((startRt.current + total) % 360);
+        // Kesin hedef rotasyon
+        setRot(startRt.current + total);
         const now = Date.now();
         setWonAt(now);
         spinSaveEntry(norm, { prizeIndex: idx, wonAt: now });
