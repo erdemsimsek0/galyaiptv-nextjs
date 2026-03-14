@@ -15,10 +15,10 @@ const WHATSAPP_URL = 'https://wa.me/447441921660?text=Merhaba%2C%20sat%C4%B1n%20
 const WHATSAPP_BASE = 'https://wa.me/447441921660';
 
 // ─── Süre seçenekleri ve iskonto oranları ────────────────────────────────────
-type DurationKey = '1ay' | '6ay' | '12ay';
+type DurationKey = '3ay' | '6ay' | '12ay';
 const DURATIONS: { key: DurationKey; label: string; months: number; discount: number; badge?: string }[] = [
-  { key: '1ay',  label: '1 Ay',  months: 1,  discount: 0 },
-  { key: '6ay',  label: '6 Ay',  months: 6,  discount: 5,  badge: '%5 İNDİRİM' },
+  { key: '3ay',  label: '3 Ay',  months: 3,  discount: 0 },
+  { key: '6ay',  label: '6 Ay',  months: 6,  discount: 5,  badge: '%5 İNDİRİM'  },
   { key: '12ay', label: '12 Ay', months: 12, discount: 20, badge: '%20 İNDİRİM' },
 ];
 
@@ -455,6 +455,8 @@ function VisitorCount() {
 // ─── Ana bileşen ──────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
   const [step, setStep] = useState<ModalStep>(1);
   const [selectedPackage, setSelectedPackage] = useState('');
   const [selectedDevice, setSelectedDevice] = useState<DeviceId | ''>('');
@@ -552,6 +554,11 @@ export default function HomePage() {
     <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] py-3 text-sm font-bold text-white transition-colors hover:bg-[#1ebe5d]">{label}</a>
   );
 
+  const openAuth = (mode: 'login' | 'register' = 'register') => {
+    setAuthMode(mode);
+    setShowAuthModal(true);
+  };
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
@@ -567,7 +574,7 @@ export default function HomePage() {
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#1e1b4b] text-2xl">🎁</div>
             <h3 className="mb-1 text-lg font-bold text-white">Gitmeden önce bir dakika!</h3>
             <p className="mb-4 text-sm text-[#9ca3af]">3 saatlik <strong className="text-white">ücretsiz test</strong> hesabı açılsın mı?</p>
-            <button onClick={() => { setShowExitPopup(false); handleOpenModal(); }} className="mb-2 w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">⚡ Evet, Ücretsiz Test Al</button>
+            <button onClick={() => { setShowExitPopup(false); openAuth(); }} className="mb-2 w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">⚡ Evet, Ücretsiz Test Al</button>
             <button onClick={() => setShowExitPopup(false)} className="text-xs text-[#6b7280] transition-colors hover:text-[#9ca3af]">Hayır, teşekkürler</button>
           </div>
         </div>
@@ -646,7 +653,7 @@ export default function HomePage() {
               {[{ href: '/#paketler', label: 'Paketler' }, { href: '/#ozellikler', label: 'Özellikler' }, { href: '/#platformlar', label: 'Platformlar' }, { href: '/#yorumlar', label: 'Yorumlar' }, { href: '/#sss', label: 'S.S.S' }, { href: '/kurulum-rehberi', label: 'Kurulum Rehberi' }].map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-[#9ca3af] transition-colors hover:bg-[#1e3a5f]/30 hover:text-white">{item.label}</Link>
               ))}
-              <button onClick={() => { setMobileMenuOpen(false); handleOpenModal(); }} className="mt-2 rounded-xl bg-[#3b82f6] py-3 text-sm font-bold text-white">Kayıt Ol</button>
+              <button onClick={() => { setMobileMenuOpen(false); openAuth(); }} className="mt-2 rounded-xl bg-[#3b82f6] py-3 text-sm font-bold text-white">Kayıt Ol</button>
             </div>
           </div>
         )}
@@ -697,7 +704,7 @@ export default function HomePage() {
               {/* CTA butonları */}
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
-                  onClick={() => handleOpenModal()}
+                  onClick={() => openAuth()}
                   className="flex items-center justify-center gap-2 rounded-xl bg-[#3b82f6] px-7 py-3.5 text-base font-bold text-white shadow-xl shadow-[#3b82f6]/30 transition-all hover:bg-[#2563eb] hover:scale-[1.02]"
                 >
                   Ücretsiz Dene →
@@ -871,11 +878,9 @@ export default function HomePage() {
                       ))}
                     </ul>
 
-                    {/* ── CTA Butonu ── */}
-                    <a
-                      href={`${WHATSAPP_BASE}?text=${encodeURIComponent(waText)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    {/* ── CTA Butonu — Ödeme sayfasına yönlendir ── */}
+                    <Link
+                      href={`/odeme?paket=${encodeURIComponent(pkg.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${totalPrice.toFixed(2)}&orijinal=${originalTotal.toFixed(2)}&indirim=${dur.discount}`}
                       className={`flex w-full items-center justify-center rounded-xl py-3.5 text-[15px] font-bold transition-all ${
                         pkg.popular
                           ? 'bg-[#3b82f6] text-white shadow-lg shadow-[#3b82f6]/30 hover:bg-[#2563eb]'
@@ -883,6 +888,15 @@ export default function HomePage() {
                       }`}
                     >
                       {pkg.ctaLabel}
+                    </Link>
+                    {/* WhatsApp alternatif */}
+                    <a
+                      href={`${WHATSAPP_BASE}?text=${encodeURIComponent(waText)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#1e2d42] py-2.5 text-xs font-medium text-[#25d366] transition-all hover:border-[#25d366]/30 hover:bg-[#25d366]/5"
+                    >
+                      💬 WhatsApp ile Satın Al
                     </a>
                   </div>
                 );
@@ -942,7 +956,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-8 text-center">
-              <button onClick={() => handleOpenModal()} className="rounded-xl bg-[#1e1b4b] border border-[#3730a3] px-8 py-3.5 font-semibold text-[#818cf8] transition-all hover:bg-[#312e81] hover:text-white">
+              <button onClick={() => openAuth()} className="rounded-xl bg-[#1e1b4b] border border-[#3730a3] px-8 py-3.5 font-semibold text-[#818cf8] transition-all hover:bg-[#312e81] hover:text-white">
                 ⚡ Ücretsiz Test İle Dene
               </button>
             </div>
@@ -1094,7 +1108,7 @@ export default function HomePage() {
 
             <div className="mt-10 text-center">
               <p className="mb-4 text-sm text-[#9ca3af]">Siz de denemek ister misiniz?</p>
-              <button onClick={() => handleOpenModal()} className="rounded-xl bg-[#6366f1] px-8 py-3.5 font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
+              <button onClick={() => openAuth()} className="rounded-xl bg-[#6366f1] px-8 py-3.5 font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
                 Ücretsiz Test Al →
               </button>
             </div>
@@ -1149,7 +1163,7 @@ export default function HomePage() {
                 <div className="rounded-xl border border-[#1e3a5f] bg-[#111827] p-5 text-center">
                   <p className="mb-1 text-sm font-semibold text-white">10.200+ aktif kullanıcı Galya IPTV'yi tercih ediyor</p>
                   <p className="mb-4 text-xs text-[#6b7280]">Ücretsiz test ile başlayın, beğenirseniz satın alın</p>
-                  <button onClick={() => handleOpenModal()} className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">
+                  <button onClick={() => openAuth()} className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">
                     ⚡ Ücretsiz Test Al
                   </button>
                   <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-[#1e3a5f] py-2.5 text-sm text-[#25d366] transition-colors hover:border-[#25d366]/40">
@@ -1179,7 +1193,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <button onClick={() => handleOpenModal()} className="rounded-xl bg-[#6366f1] px-10 py-4 font-semibold text-white shadow-xl shadow-[#6366f1]/25 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
+              <button onClick={() => openAuth()} className="rounded-xl bg-[#6366f1] px-10 py-4 font-semibold text-white shadow-xl shadow-[#6366f1]/25 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
                 ⚡ Ücretsiz Test Al
               </button>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-[#25d366] px-8 py-4 font-semibold text-white transition-all hover:bg-[#1ebe5d]">
@@ -1224,7 +1238,7 @@ export default function HomePage() {
       {/* ─── Mobil Sticky CTA ───────────────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#1e3a5f] bg-[#030712]/95 px-3 py-2 backdrop-blur-md md:hidden">
         <div className="flex gap-2">
-          <button onClick={() => handleOpenModal()} className="flex-1 rounded-lg bg-[#6366f1] py-2 text-xs font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-colors hover:bg-[#4f46e5]">⚡ Ücretsiz Test Al</button>
+          <button onClick={() => openAuth()} className="flex-1 rounded-lg bg-[#6366f1] py-2 text-xs font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-colors hover:bg-[#4f46e5]">⚡ Ücretsiz Test Al</button>
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex flex-1 items-center justify-center rounded-lg bg-[#25d366] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1ebe5d]">💬 WhatsApp</a>
         </div>
       </div>
@@ -1233,11 +1247,71 @@ export default function HomePage() {
       <div className="fixed bottom-6 right-6 z-40 hidden md:flex flex-col gap-2 items-end">
         <div className="rounded-xl border border-[#1e3a5f] bg-[#111827]/95 p-3 shadow-2xl backdrop-blur-md w-52">
           <p className="mb-2 text-[11px] text-[#818cf8] text-center">⭐ 10.200+ aktif kullanıcı</p>
-          <button onClick={() => handleOpenModal()} className="mb-1.5 w-full rounded-lg bg-[#6366f1] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#4f46e5]">⚡ Ücretsiz Test Al</button>
+          <button onClick={() => openAuth()} className="mb-1.5 w-full rounded-lg bg-[#6366f1] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#4f46e5]">⚡ Ücretsiz Test Al</button>
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center rounded-lg bg-[#25d366]/10 border border-[#25d366]/20 py-2 text-xs font-semibold text-[#25d366] transition-colors hover:bg-[#25d366]/20">💬 WhatsApp&apos;a Yaz</a>
         </div>
       </div>
 
+
+      {/* ─── Auth Modal (Giriş / Kayıt) ─────────────────────────────────────── */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#030712]/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAuthModal(false); }}>
+          <div className="relative w-full max-w-sm overflow-y-auto rounded-t-2xl border border-[#1e2d42] bg-[#0a1525] p-6 shadow-2xl sm:rounded-2xl" style={{ maxHeight: '92vh' }}>
+            <button onClick={() => setShowAuthModal(false)}
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#1e3a5f] hover:text-white">✕</button>
+
+            {/* Sekme geçişi */}
+            <div className="mb-6 flex rounded-xl border border-[#1e2d42] bg-[#060e1a] p-1">
+              <button onClick={() => setAuthMode('register')}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${authMode === 'register' ? 'bg-[#3b82f6] text-white shadow' : 'text-[#6b7280] hover:text-white'}`}>
+                Kayıt Ol
+              </button>
+              <button onClick={() => setAuthMode('login')}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${authMode === 'login' ? 'bg-[#3b82f6] text-white shadow' : 'text-[#6b7280] hover:text-white'}`}>
+                Giriş Yap
+              </button>
+            </div>
+
+            {authMode === 'register' ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-white">Hesap Oluştur</h3>
+                  <p className="mt-1 text-sm text-[#6b7280]">Ücretsiz test için kayıt olun</p>
+                </div>
+                <a href="/kayit"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#1e2d42] bg-white py-3 text-sm font-bold text-[#111] transition-all hover:bg-gray-100">
+                  E-posta ile Kayıt Ol →
+                </a>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-[#1e2d42]" />
+                  <span className="text-[11px] text-[#374151]">veya</span>
+                  <div className="flex-1 h-px bg-[#1e2d42]" />
+                </div>
+                <p className="text-center text-xs text-[#6b7280]">
+                  Zaten hesabınız var mı?{' '}
+                  <button onClick={() => setAuthMode('login')} className="text-[#3b82f6] hover:underline">Giriş yapın</button>
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-white">Hoş Geldiniz</h3>
+                  <p className="mt-1 text-sm text-[#6b7280]">Hesabınıza giriş yapın</p>
+                </div>
+                <a href="/giris"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#1e2d42] bg-white py-3 text-sm font-bold text-[#111] transition-all hover:bg-gray-100">
+                  E-posta ile Giriş Yap →
+                </a>
+                <p className="text-center text-xs text-[#6b7280]">
+                  Hesabınız yok mu?{' '}
+                  <button onClick={() => setAuthMode('register')} className="text-[#3b82f6] hover:underline">Kayıt olun</button>
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ─── Modal ───────────────────────────────────────────────────────────── */}
       {isModalOpen && (
