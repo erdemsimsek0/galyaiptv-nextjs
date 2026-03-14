@@ -883,22 +883,27 @@ export default function HomePage() {
                       </div>
                     )}
 
-                    {/* Logo — büyük, tam genişlik */}
-                    <div className="mb-5 flex items-center justify-center" style={{ minHeight: '80px' }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={pkg.logo}
-                        alt={pkg.logoAlt}
-                        className="w-full max-w-[440px] h-auto object-contain"
-                        style={{ maxHeight: '160px' }}
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = 'none';
-                          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                          if (fallback) fallback.style.display = 'block';
-                        }}
-                      />
-                      <span className="hidden text-2xl font-bold text-white">{pkg.name}</span>
-                    </div>
+{/* Logo */}
+<div className="flex items-center justify-center py-2 mb-4">
+  {/* eslint-disable-next-line @next/next/no-img-element */}
+  <img
+    src={pkg.logo}
+    alt={pkg.logoAlt}
+    className="w-full max-w-[360px] h-auto object-contain transition-transform duration-300 hover:scale-105"
+    onError={(e) => {
+      (e.currentTarget as HTMLImageElement).style.display = 'none';
+      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+      if (fallback) fallback.style.display = 'block';
+    }}
+  />
+
+  <div
+    style={{ display: 'none' }}
+    className="text-white text-lg font-semibold text-center"
+  >
+    {pkg.name}
+  </div>
+</div>
 
                     {/* Açıklama */}
                     <p className="mb-6 text-center text-sm leading-relaxed text-[#9ca3af]">{pkg.desc}</p>
