@@ -723,21 +723,6 @@ export default function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
-      {/* ─── Üst Bildirim Barı ──────────────────────────────────────────────── */}
-      <div className="bg-[#1e1b4b] border-b border-[#3730a3]/50 px-4 py-2">
-        <div className="mx-auto flex max-w-6xl items-center justify-between text-xs">
-          <div className="flex items-center gap-2 text-[#a5b4fc]">
-            <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" /></span>
-            <span><VisitorCount /> kişi şu anda satın alma sayfasında</span>
-          </div>
-          <div className="hidden items-center gap-1.5 sm:flex text-[#a5b4fc]">
-            <span className="text-amber-400">★★★★★</span>
-            <span className="font-semibold text-white">4.9</span>
-            <span>/ 1.243 değerlendirme</span>
-          </div>
-        </div>
-      </div>
-
       {/* ─── Exit-intent popup ──────────────────────────────────────────────── */}
       {showExitPopup && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#030712]/70 p-4 backdrop-blur-sm">
@@ -745,7 +730,7 @@ export default function HomePage() {
             <button onClick={() => setShowExitPopup(false)} className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#1e3a5f] hover:text-white">✕</button>
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#1e1b4b] text-2xl">🎁</div>
             <h3 className="mb-1 text-lg font-bold text-white">Gitmeden önce bir dakika!</h3>
-            <p className="mb-4 text-sm text-[#9ca3af]">12 saatlik <strong className="text-white">ücretsiz test</strong> hesabı açılsın mı? Kredi kartı gerekmez.</p>
+            <p className="mb-4 text-sm text-[#9ca3af]">12 saatlik <strong className="text-white">ücretsiz test</strong> hesabı açılsın mı?</p>
             <button onClick={() => { setShowExitPopup(false); handleOpenModal(); }} className="mb-2 w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">⚡ Evet, Ücretsiz Test Al</button>
             <button onClick={() => setShowExitPopup(false)} className="text-xs text-[#6b7280] transition-colors hover:text-[#9ca3af]">Hayır, teşekkürler</button>
           </div>
@@ -753,104 +738,173 @@ export default function HomePage() {
       )}
 
       {/* ─── Header ─────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-[#1e3a5f] bg-[#030712]/95 backdrop-blur-md">
+      <header className="sticky top-0 z-50 bg-[#07111f]/90 backdrop-blur-md">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link href="/" className="text-lg font-bold tracking-tight text-white">
-            Galya <span className="text-[#818cf8]">IPTV</span>
+          {/* Logo — görseldeki gibi solda */}
+          <Link href="/" className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt="Galya IPTV"
+              className="h-9 w-auto object-contain"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                const fb = e.currentTarget.nextElementSibling as HTMLElement;
+                if (fb) fb.style.display = 'flex';
+              }}
+            />
+            <span className="hidden items-center gap-1 text-lg font-bold tracking-tight text-white">
+              Galya <span className="text-[#3b82f6]">IPTV</span>
+            </span>
           </Link>
-          <div className="hidden items-center gap-7 text-sm text-[#9ca3af] md:flex">
-            <Link href="/#paketler" className="transition-colors hover:text-white">Paketler</Link>
-            <Link href="/#ozellikler" className="transition-colors hover:text-white">Özellikler</Link>
-            <Link href="/#platformlar" className="transition-colors hover:text-white">Platformlar</Link>
-            <Link href="/#yorumlar" className="transition-colors hover:text-white">Yorumlar</Link>
-            <Link href="/#sss" className="transition-colors hover:text-white">S.S.S</Link>
-            <Link href="/blog" className="transition-colors hover:text-white">Blog</Link>
-            <button onClick={() => handleOpenModal()} className="rounded-lg border border-[#3730a3] bg-[#1e1b4b] px-4 py-2 text-sm font-medium text-[#818cf8] transition-all hover:bg-[#312e81] hover:text-white">Ücretsiz Test</button>
+
+          {/* Orta nav — görseldeki pill şeklinde nav kutusu */}
+          <div className="hidden items-center md:flex">
+            <div className="flex items-center gap-1 rounded-2xl border border-[#1e2d42] bg-[#0d1a2a] px-2 py-1.5">
+              {[
+                { href: '/#paketler',   label: 'Paketler'   },
+                { href: '/#ozellikler', label: 'Özellikler' },
+                { href: '/#platformlar',label: 'Platformlar'},
+                { href: '/#yorumlar',   label: 'Yorumlar'   },
+                { href: '/#sss',        label: 'SSS'        },
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-xl px-4 py-1.5 text-sm font-medium text-[#8b9ab3] transition-colors hover:bg-[#162035] hover:text-white"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
+
+          {/* Sağ: Giriş Yap + Kayıt Ol */}
+          <div className="hidden items-center gap-3 md:flex">
+            <button
+              onClick={() => handleOpenModal()}
+              className="text-sm font-medium text-[#8b9ab3] transition-colors hover:text-white"
+            >
+              Giriş Yap
+            </button>
+            <button
+              onClick={() => handleOpenModal()}
+              className="rounded-xl bg-[#3b82f6] px-5 py-2 text-sm font-bold text-white shadow-lg shadow-[#3b82f6]/30 transition-all hover:bg-[#2563eb]"
+            >
+              Kayıt Ol
+            </button>
+          </div>
+
+          {/* Mobil hamburger */}
           <button className="flex flex-col gap-1.5 p-2 md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Menüyü aç">
             <span className={`block h-0.5 w-6 bg-white transition-all duration-200 ${mobileMenuOpen ? 'translate-y-2 rotate-45' : ''}`} />
             <span className={`block h-0.5 w-6 bg-white transition-all duration-200 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
             <span className={`block h-0.5 w-6 bg-white transition-all duration-200 ${mobileMenuOpen ? '-translate-y-2 -rotate-45' : ''}`} />
           </button>
         </nav>
+
         {mobileMenuOpen && (
           <div className="border-t border-[#1e3a5f] bg-[#0d1117] px-6 pb-4 md:hidden">
             <div className="flex flex-col gap-1 pt-3 text-sm">
-              {[{ href: '/#paketler', label: 'Paketler' }, { href: '/#ozellikler', label: 'Özellikler' }, { href: '/#platformlar', label: 'Platformlar' }, { href: '/#yorumlar', label: 'Yorumlar' }, { href: '/#sss', label: 'S.S.S' }, { href: '/blog', label: 'Blog' }, { href: '/iletisim', label: 'İletişim' }].map((item) => (
+              {[{ href: '/#paketler', label: 'Paketler' }, { href: '/#ozellikler', label: 'Özellikler' }, { href: '/#platformlar', label: 'Platformlar' }, { href: '/#yorumlar', label: 'Yorumlar' }, { href: '/#sss', label: 'S.S.S' }].map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-[#9ca3af] transition-colors hover:bg-[#1e3a5f]/30 hover:text-white">{item.label}</Link>
               ))}
-              <button onClick={() => { setMobileMenuOpen(false); handleOpenModal(); }} className="mt-2 rounded-xl bg-[#6366f1] py-3 text-sm font-semibold text-white">⚡ Ücretsiz Test Al</button>
+              <button onClick={() => { setMobileMenuOpen(false); handleOpenModal(); }} className="mt-2 rounded-xl bg-[#3b82f6] py-3 text-sm font-bold text-white">Kayıt Ol</button>
             </div>
           </div>
         )}
       </header>
 
-      <main className="bg-[#030712] text-white">
+      <main className="bg-[#07111f] text-white">
+        <section className="relative overflow-hidden">
+          {/* Arka plan glow */}
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute left-0 top-0 h-[700px] w-[600px] rounded-full bg-[#1e3a5f]/20 blur-3xl" />
+          </div>
 
-        {/* ─── HERO ───────────────────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden px-6 pb-20 pt-16 text-center">
-          {/* Glow efektleri */}
-          <div className="pointer-events-none absolute left-1/4 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-[#6366f1]/5 blur-3xl" />
-          <div className="pointer-events-none absolute right-1/4 top-10 h-[400px] w-[400px] translate-x-1/2 rounded-full bg-[#1e3a5f]/20 blur-3xl" />
+          <div className="relative mx-auto flex max-w-6xl flex-col items-start gap-10 px-6 pb-16 pt-14 lg:flex-row lg:items-center lg:gap-0">
 
-          <div className="relative mx-auto max-w-4xl">
-            {/* Badge */}
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#3730a3] bg-[#1e1b4b] px-4 py-1.5 text-xs text-[#818cf8]">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Avrupa sunucuları · %99.9 uptime garantisi · 10.200+ aktif kullanıcı
+            {/* Sol: metin içeriği */}
+            <div className="lg:w-1/2 lg:pr-10">
+              {/* Ziyaretçi sayacı badge */}
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#1e2d42] bg-[#0d1a2a] px-4 py-2 text-sm text-[#9ca3af]">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                </span>
+                Şu anda <VisitorCount /> kişi satın alma sayfasında
+              </div>
+
+              {/* Ana başlık */}
+              <h1 className="mb-5 text-5xl font-black leading-[1.05] tracking-tight md:text-6xl">
+                15.000+ İçerikli<br />
+                <span className="text-[#3b82f6]">Premium IPTV</span>
+              </h1>
+
+              {/* Alt metin */}
+              <p className="mb-6 max-w-lg text-base leading-relaxed text-[#8b9ab3]">
+                Avrupa local sunucularla kesintisiz yayın. 15.000+ içerik, tüm
+                cihazlarda çalışır.{' '}
+                <strong className="text-white">3 Saat Ücretsiz Dene — Kurulum 5 dakika.</strong>
+              </p>
+
+              {/* Özellik rozetleri — görseldeki mavi bordered pill'ler */}
+              <div className="mb-8 flex flex-wrap gap-2">
+                {['Kesintisiz Yayın', '4K HDR', 'VPN Gerekmez', 'Smart TV Direkt Çalışır'].map((b) => (
+                  <span key={b} className="flex items-center gap-1.5 rounded-full border border-[#1e3a5f] bg-[#0d1a2a] px-3.5 py-1.5 text-sm font-medium text-[#9ca3af]">
+                    <span className="text-[#3b82f6] font-bold">✓</span> {b}
+                  </span>
+                ))}
+              </div>
+
+              {/* CTA butonları */}
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={() => handleOpenModal()}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-[#3b82f6] px-7 py-3.5 text-base font-bold text-white shadow-xl shadow-[#3b82f6]/30 transition-all hover:bg-[#2563eb] hover:scale-[1.02]"
+                >
+                  Ücretsiz Dene →
+                </button>
+                <Link
+                  href="/#paketler"
+                  className="flex items-center justify-center rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-7 py-3.5 text-base font-semibold text-white transition-all hover:border-[#3b82f6]/40 hover:bg-[#162035]"
+                >
+                  Paketleri Gör
+                </Link>
+              </div>
             </div>
 
-            <h1 className="mb-5 text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl">
-              Donmayan Premium IPTV
-            </h1>
-            <p className="mx-auto mb-4 max-w-2xl text-base leading-relaxed text-[#9ca3af] md:text-lg">
-              Avrupa sunucuları ile kesintisiz yayın · <strong className="text-white">85.000+</strong> içerik · Tüm cihazlarda çalışır ·{' '}
-              <strong className="text-[#a5b4fc]">12 saatlik ücretsiz test</strong> · 5 dakikada kurulum
-            </p>
-
-            {/* Özellik rozetleri */}
-            <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
-              {['Kesintisiz Yayın', '4K HDR', 'VPN Gerekmez', 'Smart TV Direkt Çalışır', 'Kredi Kartı Gerekmez'].map((b) => (
-                <span key={b} className="rounded-full border border-[#1e3a5f] bg-[#111827] px-3 py-1 text-xs font-medium text-[#9ca3af]">{b}</span>
-              ))}
-            </div>
-
-            {/* CTA butonları */}
-            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <button onClick={() => handleOpenModal()}
-                className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-[#6366f1] to-[#4f46e5] px-8 py-4 text-base font-semibold text-white shadow-xl shadow-[#6366f1]/25 transition-all hover:shadow-[#6366f1]/40 hover:scale-[1.02]">
-                ⚡ Ücretsiz Test Al
-              </button>
-              <Link href="/#paketler" className="w-full sm:w-auto rounded-xl border border-[#1e3a5f] px-8 py-4 text-base font-semibold text-[#9ca3af] transition-all hover:bg-[#1e3a5f]/30 hover:text-white hover:border-[#3730a3]">
-                Paketleri Gör →
-              </Link>
-            </div>
-
-            <p className="mt-4 text-xs text-[#6b7280]">Kredi kartı gerekmez · 12 saatlik ücretsiz erişim · Anında kurulum</p>
-
-            {/* İstatistik grid */}
-            <div className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4">
-              {[
-                { icon: '📡', v: '%99.9', l: 'Uptime Garantisi' },
-                { icon: '⚡', v: '<2 sn', l: 'Kanal Geçiş Süresi' },
-                { icon: '🎧', v: '7/24', l: 'Canlı Destek' },
-                { icon: '⏱', v: '5 dk', l: 'Kurulum Süresi' },
-              ].map((s) => (
-                <div key={s.l} className="rounded-xl border border-[#1e3a5f] bg-[#111827] p-4 transition-colors hover:border-[#3730a3]">
-                  <div className="mb-1 text-xl">{s.icon}</div>
-                  <div className="text-xl font-bold text-[#818cf8]">{s.v}</div>
-                  <div className="mt-0.5 text-xs text-[#6b7280]">{s.l}</div>
+            {/* Sağ: mockup görseli */}
+            <div className="relative w-full lg:w-1/2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/platform-mockup.png"
+                alt="Galya IPTV Uygulama Ekranı"
+                className="w-full max-w-2xl rounded-2xl object-contain drop-shadow-2xl mx-auto lg:ml-auto lg:mr-0"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                  const ph = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (ph) ph.style.display = 'flex';
+                }}
+              />
+              {/* Placeholder */}
+              <div className="hidden w-full aspect-[4/3] items-center justify-center rounded-2xl border-2 border-dashed border-[#1e3a5f] bg-[#0d1a2a] text-center p-8">
+                <div>
+                  <div className="mb-3 text-5xl opacity-20">🖥️</div>
+                  <p className="text-sm font-semibold text-[#374151]">platform-mockup.png</p>
+                  <p className="mt-1 text-xs text-[#1f2937]">/public/ klasörüne yükle</p>
                 </div>
-              ))}
+              </div>
             </div>
+
           </div>
         </section>
 
         {/* ─── Güven rozetleri şeridi ──────────────────────────────────────────── */}
-        <div className="border-y border-[#1e3a5f] bg-[#0d1117] px-6 py-4">
+        <div className="border-y border-[#1e2d42] bg-[#0a1525] px-6 py-4">
           <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-6 md:gap-10">
-            {[{ icon: '🔒', label: 'SSL Güvenli' }, { icon: '💬', label: 'WhatsApp Destek' }, { icon: '🆓', label: '12 Saat Ücretsiz Test' }, { icon: '⚡', label: 'Anında Kurulum' }, { icon: '🌍', label: '40+ Ülke Kanalı' }, { icon: '🎬', label: '4K HDR Yayın' }].map((b) => (
-              <div key={b.label} className="flex items-center gap-2 text-xs text-[#6b7280]">
+            {[{ icon: '🔒', label: 'SSL Güvenli' }, { icon: '💬', label: 'WhatsApp Destek' }, { icon: '🆓', label: '3 Saat Ücretsiz Test' }, { icon: '⚡', label: 'Anında Kurulum' }, { icon: '🌍', label: '40+ Ülke Kanalı' }, { icon: '🎬', label: '4K HDR Yayın' }].map((b) => (
+              <div key={b.label} className="flex items-center gap-2 text-xs text-[#4b5a6e]">
                 <span className="text-base">{b.icon}</span><span>{b.label}</span>
               </div>
             ))}
@@ -922,7 +976,7 @@ export default function HomePage() {
                       <img
                         src={pkg.logo}
                         alt={pkg.logoAlt}
-                        style={{ width: '100%', maxWidth: '360px', height: '96px', objectFit: 'contain' }}
+                        style={{ width: '100%', maxWidth: '260px', height: '96px', objectFit: 'contain' }}
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).style.display = 'none';
                           const fb = e.currentTarget.nextElementSibling as HTMLElement;
