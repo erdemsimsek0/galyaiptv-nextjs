@@ -10,9 +10,10 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const post = getPostBySlug(params.slug);
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
   if (!post) return {};
   const url = 'https://galyaiptv.com.tr/blog/' + post.slug;
   const ogImage = 'https://galyaiptv.com.tr/og-image.jpg';
@@ -56,7 +57,6 @@ function getRelated(slug: string, category: string, limit = 3) {
     .slice(0, limit);
 }
 
-// Basit markdown renderer — harici import YOK
 function md(text: string): string {
   const lines = text.split('\n');
   const out: string[] = [];
@@ -98,8 +98,13 @@ function inlineMd(s: string): string {
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:#7c6fcd;text-decoration:underline">$1</a>');
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = getPostBySlug(params.slug);
+export default async function BlogPostPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
   if (!post) notFound();
 
   const related   = getRelated(post.slug, post.category);
