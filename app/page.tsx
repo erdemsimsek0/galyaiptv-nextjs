@@ -536,7 +536,12 @@ export default function HomePage() {
       const res = await fetch('/api/test-talep', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, email, otp, token: otpToken }) });
       const data = await res.json();
       if (data.alreadyUsed) { setAlreadyUsedMsg(data.error); setStep(6 as ModalStep); setStatusMsg(''); setIsCreating(false); return; }
-      if (data.success) { setTrialCredentials({ username: data.username, password: data.password, startedAt: Date.now() }); setStep(4); setStatusMsg(''); setIsCreating(false); addToast('Test hesabınız hazır!', 'success'); }
+      if (data.success) {
+        const creds = { username: data.username, password: data.password, startedAt: Date.now() };
+        setTrialCredentials(creds);
+        // Kurulum rehberi sayfasında okunabilmesi için ayrıca kaydet
+        try { localStorage.setItem('galya_trial_creds', JSON.stringify(creds)); } catch { }
+        setStep(4); setStatusMsg(''); setIsCreating(false); addToast('Test hesabınız hazır!', 'success'); }
       else { addToast(data.error || 'Kod hatalı. Lütfen tekrar deneyin.', 'error'); setStatusMsg(''); setIsCreating(false); }
     } catch { addToast('Bir hata oluştu. Tekrar deneyin.', 'error'); setStatusMsg(''); setIsCreating(false); }
     finally { setLoading(false); }
@@ -613,18 +618,18 @@ export default function HomePage() {
 
           {/* Sağ: Giriş Yap + Kayıt Ol */}
           <div className="hidden items-center gap-3 md:flex">
-            <button
-              onClick={() => handleOpenModal()}
+            <Link
+              href="/giris"
               className="text-sm font-medium text-[#8b9ab3] transition-colors hover:text-white"
             >
               Giriş Yap
-            </button>
-            <button
-              onClick={() => handleOpenModal()}
+            </Link>
+            <Link
+              href="/kayit"
               className="rounded-xl bg-[#3b82f6] px-5 py-2 text-sm font-bold text-white shadow-lg shadow-[#3b82f6]/30 transition-all hover:bg-[#2563eb]"
             >
               Kayıt Ol
-            </button>
+            </Link>
           </div>
 
           {/* Mobil hamburger */}
