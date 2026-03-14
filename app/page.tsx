@@ -889,8 +889,8 @@ export default function HomePage() {
                       <img
                         src={pkg.logo}
                         alt={pkg.logoAlt}
-                        className="w-full max-w-[220px] h-auto object-contain"
-                        style={{ maxHeight: '80px' }}
+                        className="w-full max-w-[440px] h-auto object-contain"
+                        style={{ maxHeight: '160px' }}
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).style.display = 'none';
                           const fallback = e.currentTarget.nextElementSibling as HTMLElement;
