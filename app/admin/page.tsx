@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // ─── Tipler ───────────────────────────────────────────────────────────────────
-
 type TrialRecord = {
   key: string;
   email: string;
@@ -24,15 +23,22 @@ type ApiResponse = {
   error?: string;
 };
 
-// Spin kayıtları localStorage'dan okunur (client-side)
-// Backend entegrasyonu için: GET /api/spin/records → SpinRecord[]
+interface PaymentInfo {
+  bankName:      string;
+  accountHolder: string;
+  iban:          string;
+  branch:        string;
+  note:          string;
+  updatedAt:     number;
+}
+
 type SpinRecord = {
-  phone: string;       // normalize edilmiş numara (5xxxxxxxxx)
-  prizeIndex: number;
-  prizeLabel: string;
-  wonAt: number;
+  phone:          string;
+  prizeIndex:     number;
+  prizeLabel:     string;
+  wonAt:          number;
   wonAtFormatted: string;
-  expired: boolean;
+  expired:        boolean;
 };
 
 const SPIN_PRIZES_LABELS = [
@@ -49,17 +55,16 @@ function loadSpinRecords(): SpinRecord[] {
     const map = JSON.parse(raw) as Record<string, { prizeIndex: number; wonAt: number }>;
     return Object.entries(map).map(([phone, v]) => ({
       phone,
-      prizeIndex: v.prizeIndex,
-      prizeLabel: SPIN_PRIZES_LABELS[v.prizeIndex] ?? '?',
-      wonAt: v.wonAt,
+      prizeIndex:     v.prizeIndex,
+      prizeLabel:     SPIN_PRIZES_LABELS[v.prizeIndex] ?? '?',
+      wonAt:          v.wonAt,
       wonAtFormatted: new Date(v.wonAt).toLocaleString('tr-TR'),
-      expired: Date.now() - v.wonAt > PRIZE_VALID_MS,
+      expired:        Date.now() - v.wonAt > PRIZE_VALID_MS,
     })).sort((a, b) => b.wonAt - a.wonAt);
   } catch { return []; }
 }
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────
-
 function StatCard({ label, value, icon, variant }: {
   label: string; value: number | string; icon: string;
   variant: 'purple' | 'blue' | 'green' | 'orange' | 'pink';
@@ -81,7 +86,6 @@ function StatCard({ label, value, icon, variant }: {
 }
 
 // ─── DaysLeftBadge ────────────────────────────────────────────────────────────
-
 function DaysLeftBadge({ days }: { days: number }) {
   const cls = days <= 1
     ? 'bg-red-900/40 text-red-400 border-red-800/50'
@@ -96,8 +100,9 @@ function DaysLeftBadge({ days }: { days: number }) {
 }
 
 // ─── Sekme bileşeni ───────────────────────────────────────────────────────────
-
-function Tab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function Tab({ active, onClick, children }: {
+  active: boolean; onClick: () => void; children: React.ReactNode
+}) {
   return (
     <button onClick={onClick}
       className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
@@ -110,20 +115,298 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
   );
 }
 
-// ─── Ana Component ────────────────────────────────────────────────────────────
+// ─── IBAN Yönetim Sekmesi ──────────────────────────────────────────────────────
+function PaymentInfoTab({ secret }: { secret: string }) {
+  const [info,    setInfo]    = useState<PaymentInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving,  setSaving]  = useState(false);
+  const [deleting,setDeleting]= useState(false);
+  const [msg,     setMsg]     = useState('');
+  const [msgType, setMsgType] = useState<'ok' | 'err'>('ok');
+  const [form,    setForm]    = useState({
+    bankName: '', accountHolder: '', iban: '', branch: '', note: '',
+  });
+  const [editing, setEditing] = useState(false);
 
+  const showMsg = (text: string, type: 'ok' | 'err' = 'ok') => {
+    setMsg(text); setMsgType(type);
+    setTimeout(() => setMsg(''), 4000);
+  };
+
+  const fetchInfo = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res  = await fetch('/api/payment-info');
+      const json = await res.json();
+      if (json.success) {
+        setInfo(json.data);
+        setForm({
+          bankName:      json.data.bankName,
+          accountHolder: json.data.accountHolder,
+          iban:          json.data.iban,
+          branch:        json.data.branch || '',
+          note:          json.data.note   || '',
+        });
+      } else {
+        // Henüz bilgi yok — form boş başlasın
+        setInfo(null);
+        setEditing(true);
+      }
+    } catch { showMsg('Sunucuya bağlanılamadı.', 'err'); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchInfo(); }, [fetchInfo]);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res  = await fetch('/api/payment-info', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body:    JSON.stringify(form),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setInfo(json.data); setEditing(false);
+        showMsg('✓ Ödeme bilgileri güncellendi.', 'ok');
+      } else {
+        showMsg(json.error || 'Kayıt başarısız.', 'err');
+      }
+    } catch { showMsg('Sunucuya bağlanılamadı.', 'err'); }
+    finally { setSaving(false); }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Ödeme bilgilerini silmek istediğinize emin misiniz?')) return;
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/payment-info', {
+        method: 'DELETE', headers: { 'x-admin-secret': secret },
+      });
+      const json = await res.json();
+      if (json.success) { setInfo(null); setEditing(true); showMsg('Silindi.', 'ok'); }
+      else { showMsg(json.error || 'Silinemedi.', 'err'); }
+    } catch { showMsg('Sunucu hatası.', 'err'); }
+    finally { setDeleting(false); }
+  };
+
+  const formatIBAN = (v: string) => {
+    const d = v.replace(/\s/g, '').toUpperCase();
+    return d.replace(/(.{4})/g, '$1 ').trim();
+  };
+
+  const handleIBANChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\s/g, '').toUpperCase().slice(0, 26);
+    setForm(f => ({ ...f, iban: formatIBAN(raw) }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-3 py-20 text-gray-400">
+        <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+        Yükleniyor...
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Mesaj */}
+      {msg && (
+        <div className={`rounded-xl border px-4 py-3 text-sm ${
+          msgType === 'ok'
+            ? 'border-green-800/50 bg-green-900/20 text-green-400'
+            : 'border-red-800/50 bg-red-900/20 text-red-400'
+        }`}>
+          {msg}
+        </div>
+      )}
+
+      {/* Mevcut bilgi gösterimi */}
+      {info && !editing && (
+        <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-white">Mevcut Ödeme Bilgileri</h2>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setEditing(true)}
+                className="rounded-xl bg-[#1f2937] hover:bg-[#374151] border border-[#374151] text-white px-4 py-1.5 text-sm transition-colors"
+              >
+                ✏️ Düzenle
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="rounded-xl bg-red-900/40 hover:bg-red-900/70 border border-red-800/50 text-red-400 px-4 py-1.5 text-sm transition-colors disabled:opacity-40"
+              >
+                {deleting ? '...' : '🗑 Sil'}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              { label: 'Banka Adı',      value: info.bankName },
+              { label: 'Hesap Sahibi',   value: info.accountHolder },
+              { label: 'Şube',           value: info.branch || '—' },
+              { label: 'Son Güncelleme', value: new Date(info.updatedAt).toLocaleString('tr-TR') },
+            ].map(row => (
+              <div key={row.label} className="rounded-xl border border-[#1f2937] bg-[#0f172a] p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">{row.label}</p>
+                <p className="mt-1 text-sm font-medium text-white">{row.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* IBAN — tam satır */}
+          <div className="mt-3 rounded-xl border border-[#7c3aed]/40 bg-[#1e1b4b]/30 p-4">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">IBAN</p>
+            <p className="font-mono text-lg font-bold tracking-widest text-[#a5b4fc]">
+              {info.iban.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim()}
+            </p>
+          </div>
+
+          {/* Not */}
+          {info.note && (
+            <div className="mt-3 rounded-xl border border-amber-800/30 bg-amber-950/20 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 mb-1">Ödeme Notu</p>
+              <p className="text-xs text-amber-300">{info.note}</p>
+            </div>
+          )}
+
+          {/* Ödeme sayfası linki */}
+          <div className="mt-4 rounded-xl border border-[#1f2937] bg-[#0f172a] px-4 py-3 flex items-center justify-between">
+            <span className="text-xs text-gray-400">Ödeme sayfasına git</span>
+            <a href="/odeme?paket=Max&sure=1+Ay&toplam=229.90" target="_blank" rel="noopener noreferrer"
+              className="rounded-lg bg-[#7c3aed] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#6d28d9]">
+              Önizle →
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Form */}
+      {editing && (
+        <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-white">
+              {info ? 'Ödeme Bilgilerini Düzenle' : 'Ödeme Bilgisi Ekle'}
+            </h2>
+            {info && (
+              <button onClick={() => setEditing(false)} className="text-xs text-gray-500 hover:text-white transition-colors">
+                İptal
+              </button>
+            )}
+          </div>
+
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Banka Adı */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-gray-400">Banka Adı *</label>
+                <input
+                  type="text" required
+                  placeholder="Ziraat Bankası"
+                  value={form.bankName}
+                  onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))}
+                  className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7c3aed] transition-colors"
+                />
+              </div>
+
+              {/* Hesap Sahibi */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-gray-400">Hesap Sahibi *</label>
+                <input
+                  type="text" required
+                  placeholder="Ad Soyad"
+                  value={form.accountHolder}
+                  onChange={e => setForm(f => ({ ...f, accountHolder: e.target.value }))}
+                  className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7c3aed] transition-colors"
+                />
+              </div>
+
+              {/* Şube */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-gray-400">Şube (isteğe bağlı)</label>
+                <input
+                  type="text"
+                  placeholder="İstanbul Şubesi"
+                  value={form.branch}
+                  onChange={e => setForm(f => ({ ...f, branch: e.target.value }))}
+                  className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7c3aed] transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* IBAN — tam genişlik */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-gray-400">IBAN *</label>
+              <input
+                type="text" required
+                placeholder="TR00 0000 0000 0000 0000 0000 00"
+                value={form.iban}
+                onChange={handleIBANChange}
+                className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 font-mono text-sm outline-none focus:border-[#7c3aed] transition-colors tracking-widest"
+              />
+              <p className="mt-1 text-[11px] text-gray-500">
+                Otomatik formatlanır. TR ile başlamalı, 26 karakter olmalı.
+              </p>
+            </div>
+
+            {/* Ödeme notu */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-gray-400">Ödeme Notu</label>
+              <textarea
+                rows={3}
+                placeholder="Ödeme yaparken dikkat edilecek hususlar..."
+                value={form.note}
+                onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
+                className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7c3aed] transition-colors resize-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                  Kaydediliyor...
+                </>
+              ) : (
+                <>{info ? '💾 Güncelle' : '➕ Ekle'}</>
+              )}
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Ana Component ────────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const [secret,      setSecret]      = useState('');
-  const [authed,      setAuthed]      = useState(false);
-  const [loading,     setLoading]     = useState(false);
-  const [data,        setData]        = useState<ApiResponse | null>(null);
-  const [error,       setError]       = useState('');
-  const [deletingEmail, setDeleting]  = useState<string | null>(null);
-  const [search,      setSearch]      = useState('');
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [activeTab,   setActiveTab]   = useState<'trials' | 'spin'>('trials');
-  const [spinRecords, setSpinRecords] = useState<SpinRecord[]>([]);
-  const [spinSearch,  setSpinSearch]  = useState('');
+  const [secret,       setSecret]      = useState('');
+  const [authed,       setAuthed]      = useState(false);
+  const [loading,      setLoading]     = useState(false);
+  const [data,         setData]        = useState<ApiResponse | null>(null);
+  const [error,        setError]       = useState('');
+  const [deletingEmail,setDeleting]    = useState<string | null>(null);
+  const [search,       setSearch]      = useState('');
+  const [lastRefresh,  setLastRefresh] = useState<Date | null>(null);
+  const [activeTab,    setActiveTab]   = useState<'trials' | 'spin' | 'payment'>('trials');
+  const [spinRecords,  setSpinRecords] = useState<SpinRecord[]>([]);
+  const [spinSearch,   setSpinSearch]  = useState('');
 
   const fetchData = useCallback(async (adminSecret: string) => {
     setLoading(true); setError('');
@@ -145,8 +428,6 @@ export default function AdminPage() {
     e.preventDefault();
     setAuthed(true);
     await fetchData(secret);
-    // Spin kayıtlarını localStorage'dan yükle
-    // Backend entegrasyonu: fetch('/api/spin/records',{headers:{'x-admin-secret':secret}})
     setSpinRecords(loadSpinRecords());
   };
 
@@ -176,42 +457,41 @@ export default function AdminPage() {
       localStorage.setItem(LS_SPIN_KEY, JSON.stringify(map));
       setSpinRecords(loadSpinRecords());
     } catch { alert('Silme başarısız.'); }
-    // Backend entegrasyonu: fetch('/api/spin/records',{method:'DELETE',body:JSON.stringify({phone}),headers:{'x-admin-secret':secret}})
   };
 
-  // 30 saniyede bir otomatik yenile
   useEffect(() => {
     if (!authed || !secret) return;
     const id = setInterval(() => {
       fetchData(secret);
-      setSpinRecords(loadSpinRecords()); // spin de yenile
+      setSpinRecords(loadSpinRecords());
     }, 30000);
     return () => clearInterval(id);
   }, [authed, secret, fetchData]);
 
   const records    = data?.records ?? [];
   const filtered   = records.filter(r =>
-    search === '' || r.email.toLowerCase().includes(search.toLowerCase()) ||
-    r.ip.includes(search) || r.selectedPackage.toLowerCase().includes(search.toLowerCase())
+    search === '' ||
+    r.email.toLowerCase().includes(search.toLowerCase()) ||
+    r.ip.includes(search) ||
+    r.selectedPackage.toLowerCase().includes(search.toLowerCase())
   );
   const spinFiltered = spinRecords.filter(r =>
-    spinSearch === '' || r.phone.includes(spinSearch) || r.prizeLabel.toLowerCase().includes(spinSearch.toLowerCase())
+    spinSearch === '' ||
+    r.phone.includes(spinSearch) ||
+    r.prizeLabel.toLowerCase().includes(spinSearch.toLowerCase())
   );
 
-  const today24h   = records.filter(r => Date.now() - r.createdAt < 86400000).length;
+  const today24h     = records.filter(r => Date.now() - r.createdAt < 86400000).length;
   const packageStats = data?.packageStats ?? {};
-  const maxPkg     = Math.max(...Object.values(packageStats), 1);
-
-  // Spin istatistikleri
-  const spinToday  = spinRecords.filter(r => Date.now() - r.wonAt < 86400000).length;
-  const spinActive = spinRecords.filter(r => !r.expired).length;
-  const prizeCount = SPIN_PRIZES_LABELS.reduce((acc, label) => {
+  const maxPkg       = Math.max(...Object.values(packageStats), 1);
+  const spinToday    = spinRecords.filter(r => Date.now() - r.wonAt < 86400000).length;
+  const spinActive   = spinRecords.filter(r => !r.expired).length;
+  const prizeCount   = SPIN_PRIZES_LABELS.reduce((acc, label) => {
     acc[label] = spinRecords.filter(r => r.prizeLabel === label).length;
     return acc;
   }, {} as Record<string, number>);
 
-  // ─── Login ──────────────────────────────────────────────────────────────────
-
+  // ─── Login ────────────────────────────────────────────────────────────────
   if (!authed) {
     return (
       <div className="min-h-screen bg-[#0b0b0f] flex items-center justify-center p-4">
@@ -233,8 +513,7 @@ export default function AdminPage() {
     );
   }
 
-  // ─── Panel ──────────────────────────────────────────────────────────────────
-
+  // ─── Panel ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#0b0b0f] text-white p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -248,8 +527,7 @@ export default function AdminPage() {
             </p>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => { fetchData(secret); setSpinRecords(loadSpinRecords()); }}
-              disabled={loading}
+            <button onClick={() => { fetchData(secret); setSpinRecords(loadSpinRecords()); }} disabled={loading}
               className="bg-[#1f2937] hover:bg-[#374151] disabled:opacity-50 text-white px-4 py-2 rounded-xl text-sm border border-[#374151] transition-colors">
               {loading ? '⟳ Yükleniyor...' : '⟳ Yenile'}
             </button>
@@ -260,30 +538,31 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Sekme geçişi */}
-        <div className="flex gap-3">
+        {/* Sekmeler */}
+        <div className="flex flex-wrap gap-3">
           <Tab active={activeTab === 'trials'} onClick={() => setActiveTab('trials')}>
             🧪 Test Talepleri {data && `(${data.totalEmails})`}
           </Tab>
           <Tab active={activeTab === 'spin'} onClick={() => setActiveTab('spin')}>
             🎡 Çark Kayıtları {`(${spinRecords.length})`}
           </Tab>
+          <Tab active={activeTab === 'payment'} onClick={() => setActiveTab('payment')}>
+            💳 Ödeme / IBAN
+          </Tab>
         </div>
 
-        {/* ── TEST TALEPLERI SEKMESİ ─────────────────────────────────────────── */}
+        {/* ── TEST TALEPLERİ ─────────────────────────────────────────────── */}
         {activeTab === 'trials' && (
           <>
-            {/* Stat kartları */}
             {data && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard label="Toplam Açılan Test" value={data.totalEmails} icon="🧪" variant="purple"/>
                 <StatCard label="Son 24 Saat"        value={today24h}         icon="📅" variant="blue"/>
                 <StatCard label="Aktif Kayıt"        value={records.length}   icon="📊" variant="green"/>
-                <StatCard label="Redis Kayıt"        value={data.totalIPs + data.totalEmails} icon="🗄️" variant="orange"/>
+                <StatCard label="Redis Kayıt" value={data.totalIPs + data.totalEmails} icon="🗄️" variant="orange"/>
               </div>
             )}
 
-            {/* Paket ilgi grafiği */}
             {Object.keys(packageStats).length > 0 && (
               <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-6">
                 <h2 className="text-lg font-bold mb-5">📦 Paket İlgisi</h2>
@@ -303,14 +582,11 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* Arama */}
             <input type="text" placeholder="Email, IP veya paket adı ile ara..."
               value={search} onChange={e => setSearch(e.target.value)}
               className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-3 outline-none focus:border-[#7c3aed] transition-colors text-sm"/>
 
-            {error && (
-              <div className="bg-red-900/30 border border-red-800/50 text-red-400 rounded-xl px-4 py-3 text-sm">{error}</div>
-            )}
+            {error && <div className="bg-red-900/30 border border-red-800/50 text-red-400 rounded-xl px-4 py-3 text-sm">{error}</div>}
             {loading && !data && <div className="text-center py-20 text-gray-400">Yükleniyor...</div>}
             {!loading && data && filtered.length === 0 && (
               <div className="text-center py-20 text-gray-500">
@@ -318,7 +594,6 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* Tablo */}
             {filtered.length > 0 && (
               <div className="bg-[#111827] border border-[#1f2937] rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
@@ -367,7 +642,6 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* Ham Redis */}
             {data && (
               <details className="bg-[#111827] border border-[#1f2937] rounded-2xl p-4">
                 <summary className="cursor-pointer text-gray-400 text-sm hover:text-white transition-colors select-none">
@@ -381,18 +655,16 @@ export default function AdminPage() {
           </>
         )}
 
-        {/* ── ÇARK KAYITLARI SEKMESİ ───────────────────────────────────────── */}
+        {/* ── ÇARK KAYITLARI ─────────────────────────────────────────────── */}
         {activeTab === 'spin' && (
           <>
-            {/* Stat kartları */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <StatCard label="Toplam Katılım" value={spinRecords.length} icon="🎡" variant="purple"/>
               <StatCard label="Son 24 Saat"    value={spinToday}          icon="📅" variant="blue"/>
-              <StatCard label="Aktif Ödül"     value={spinActive}         icon="⏱" variant="green"/>
+              <StatCard label="Aktif Ödül"     value={spinActive}         icon="⏱"  variant="green"/>
               <StatCard label="Süresi Dolmuş"  value={spinRecords.length - spinActive} icon="⌛" variant="orange"/>
             </div>
 
-            {/* Ödül dağılımı grafiği */}
             {spinRecords.length > 0 && (
               <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-6">
                 <h2 className="text-lg font-bold mb-5">🏆 Ödül Dağılımı</h2>
@@ -412,14 +684,9 @@ export default function AdminPage() {
                       </div>
                     ))}
                 </div>
-                <p className="mt-3 text-xs text-gray-500">
-                  * Çark kayıtları şu an localStorage'dan okunuyor. Backend entegrasyonu için{' '}
-                  <code className="text-purple-400">GET /api/spin/records</code> endpoint'i ekleyin.
-                </p>
               </div>
             )}
 
-            {/* Arama */}
             <input type="text" placeholder="Telefon numarası veya ödül ile ara..."
               value={spinSearch} onChange={e => setSpinSearch(e.target.value)}
               className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-3 outline-none focus:border-[#7c3aed] transition-colors text-sm"/>
@@ -427,7 +694,6 @@ export default function AdminPage() {
             {spinRecords.length === 0 && (
               <div className="text-center py-20 text-gray-500">
                 Henüz çark kaydı yok.
-                <p className="text-xs mt-2 text-gray-600">Kayıtlar kullanıcının tarayıcı localStorage&apos;ından okunur.</p>
               </div>
             )}
 
@@ -448,17 +714,13 @@ export default function AdminPage() {
                       {spinFiltered.map((rec, i) => (
                         <tr key={rec.phone}
                           className={`border-b border-[#1f2937] last:border-0 hover:bg-[#1f2937]/60 transition-colors ${i%2===0?'':'bg-[#0f172a]/40'}`}>
-                          <td className="px-4 py-3">
-                            <span className="font-mono text-white">+90 {rec.phone}</span>
-                          </td>
+                          <td className="px-4 py-3"><span className="font-mono text-white">+90 {rec.phone}</span></td>
                           <td className="px-4 py-3">
                             <span className="text-xs bg-purple-900/40 text-purple-300 border border-purple-800/50 px-2 py-1 rounded-lg">
                               {rec.prizeLabel}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                            {rec.wonAtFormatted}
-                          </td>
+                          <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{rec.wonAtFormatted}</td>
                           <td className="px-4 py-3">
                             {rec.expired ? (
                               <span className="text-xs bg-gray-800/60 text-gray-500 border border-gray-700/50 px-2 py-1 rounded-lg">Süresi doldu</span>
@@ -484,6 +746,11 @@ export default function AdminPage() {
               </div>
             )}
           </>
+        )}
+
+        {/* ── ÖDEME / IBAN SEKMESİ ───────────────────────────────────────── */}
+        {activeTab === 'payment' && (
+          <PaymentInfoTab secret={secret} />
         )}
 
       </div>
