@@ -221,16 +221,44 @@ function ProfilInner() {
 
   return (
     <div className="min-h-screen bg-[#07111f] text-white">
-      {/* Header */}
-      <div className="border-b border-[#1e2d42] bg-[#07111f]/95 backdrop-blur-md px-4 py-3">
-        <div className="mx-auto flex max-w-lg items-center justify-between">
+      {/* Header — ana sayfayla aynı tasarım */}
+      <div className="sticky top-0 z-50 border-b border-[#1e2d42] bg-[#07111f]/95 backdrop-blur-md px-4 py-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
+          {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <LogoWithFallback />
           </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-xs text-[#6b7280] transition-colors hover:text-white">Ana Sayfa</Link>
-            <Link href="/abonelik" className="text-xs text-[#6b7280] transition-colors hover:text-white">Abonelik</Link>
-            <Link href="/kurulum-rehberi" className="text-xs text-[#6b7280] transition-colors hover:text-white">Kurulum</Link>
+
+          {/* Orta nav — pill */}
+          <div className="hidden items-center md:flex">
+            <div className="flex items-center gap-1 rounded-2xl border border-[#1e2d42] bg-[#0d1a2a] px-2 py-1.5">
+              {[
+                { href: '/#paketler',       label: 'Paketler' },
+                { href: '/#ozellikler',     label: 'Özellikler' },
+                { href: '/#sss',            label: 'SSS' },
+                { href: '/kurulum-rehberi', label: 'Kurulum Rehberi' },
+                { href: '/abonelik',        label: 'Abonelik' },
+              ].map(item => (
+                <Link key={item.href} href={item.href}
+                  className="rounded-xl px-4 py-1.5 text-sm font-medium text-[#8b9ab3] transition-colors hover:bg-[#162035] hover:text-white">
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Sağ: kullanıcı */}
+          <div className="flex items-center gap-3">
+            <Link href="/profil" className="flex items-center gap-2 text-sm font-medium text-[#8b9ab3] transition-colors hover:text-white">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1e3a5f] text-xs font-bold text-[#3b82f6]">
+                {name[0]?.toUpperCase() || 'U'}
+              </span>
+              <span className="hidden md:inline">Profilim</span>
+            </Link>
+            <Link href="/abonelik"
+              className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-amber-600">
+              👑 Premium
+            </Link>
           </div>
         </div>
       </div>
