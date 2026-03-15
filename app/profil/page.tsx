@@ -16,9 +16,11 @@ interface TrialCreds {
   startedAt: number;
 }
 
-function useTrialCreds(): TrialCreds | null {
+function useTrialCreds(email: string | null | undefined): TrialCreds | null {
   const [c, setC] = useState<TrialCreds | null>(null);
   useEffect(() => {
+    if (!email) return;
+    // Önce localStorage'a bak (hızlı)
     try {
       const raw = localStorage.getItem('galya_trial_creds');
       if (raw) {
@@ -26,7 +28,23 @@ function useTrialCreds(): TrialCreds | null {
         if (p.username) setC(p);
       }
     } catch { /* */ }
-  }, []);
+    // Redis'ten de kontrol et (cihazlar arası senkron)
+    fetch('/api/test-talep', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_trial', email }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.username) {
+          const cr = { username: data.username, password: data.password, startedAt: data.startedAt };
+          setC(cr);
+          // localStorage'ı da güncelle
+          try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
+        }
+      })
+      .catch(() => { /* network error — localStorage fallback zaten ayarlandı */ });
+  }, [email]);
   return c;
 }
 
@@ -94,18 +112,12 @@ function LogoWithFallback({ className = 'h-8 w-auto' }: { className?: string }) 
 function ProfilInner() {
   const { data: session, status } = useSession();
   const router  = useRouter();
-  const creds   = useTrialCreds();
+  const creds   = useTrialCreds(email);
   const { display: countdown, expired } = useCountdown(creds?.startedAt ?? null);
   const [signingOut, setSigningOut] = useState(false);
   const [trialModal, setTrialModal] = useState(false);
-  const [trialEmail, setTrialEmail] = useState('');
-  const [trialOtp, setTrialOtp] = useState('');
-  const [trialToken, setTrialToken] = useState('');
-  const [trialStep, setTrialStep] = useState<1|2|3>(1); // 1=email, 2=otp, 3=done
   const [trialLoading, setTrialLoading] = useState(false);
   const [trialMsg, setTrialMsg] = useState('');
-  const [trialCooldown, setTrialCooldown] = useState(0);
-  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -132,62 +144,36 @@ function ProfilInner() {
   const avatar= user.image;
 
   const openTrialModal = () => {
-    setTrialEmail(email);
-    setTrialStep(1);
-    setTrialOtp('');
-    setTrialToken('');
     setTrialMsg('');
-    setTrialCooldown(0);
     setTrialModal(true);
+    // Giriş yapılmış kullanıcı için direkt test oluştur
+    createDirectTrial();
   };
 
-  const handleSendOtp = async () => {
-    if (!trialEmail.includes('@')) { setTrialMsg('Geçerli bir e-posta girin.'); return; }
-    setTrialLoading(true); setTrialMsg('');
+  const createDirectTrial = async () => {
+    if (!email) return;
+    setTrialLoading(true);
+    setTrialMsg('Test hesabı oluşturuluyor...');
     try {
       const res = await fetch('/api/test-talep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send_otp', email: trialEmail, selectedPackage: 'Belirtilmedi' }),
-      });
-      const data = await res.json();
-      if (data.alreadyUsed) { setTrialMsg(data.error); return; }
-      if (data.cooldown) { setTrialCooldown(data.retryAfter || 60); setTrialMsg(data.error); return; }
-      if (data.success) {
-        setTrialToken(data.token);
-        setTrialStep(2);
-        setTrialCooldown(60);
-        setTrialMsg('Kod gönderildi! Spam klasörünü de kontrol edin.');
-        // countdown
-        if (cooldownRef.current) clearInterval(cooldownRef.current);
-        cooldownRef.current = setInterval(() => {
-          setTrialCooldown(c => { if (c <= 1) { clearInterval(cooldownRef.current!); return 0; } return c - 1; });
-        }, 1000);
-      } else { setTrialMsg(data.error || 'Kod gönderilemedi.'); }
-    } catch { setTrialMsg('Sunucuya bağlanılamadı.'); }
-    finally { setTrialLoading(false); }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (trialOtp.length < 6) { setTrialMsg('6 haneli kodu girin.'); return; }
-    setTrialLoading(true); setTrialMsg('Test hesabı oluşturuluyor...');
-    try {
-      const res = await fetch('/api/test-talep', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email: trialEmail, otp: trialOtp, token: trialToken }),
+        body: JSON.stringify({ action: 'create_direct', email }),
       });
       const data = await res.json();
       if (data.success) {
-        const cr = { username: data.username, password: data.password, startedAt: Date.now() };
+        const cr = { username: data.username, password: data.password, startedAt: data.startedAt || Date.now() };
         try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
-        setTrialStep(3);
-        setTrialMsg('');
-        // Refresh creds on page
+        setTrialModal(false);
         window.location.reload();
-      } else { setTrialMsg(data.error || 'Kod hatalı.'); }
-    } catch { setTrialMsg('Bir hata oluştu.'); }
-    finally { setTrialLoading(false); }
+      } else {
+        setTrialMsg(data.error || 'Test oluşturulamadı.');
+      }
+    } catch {
+      setTrialMsg('Sunucuya bağlanılamadı.');
+    } finally {
+      setTrialLoading(false);
+    }
   };
 
   const handleSignOut = async () => {
@@ -355,60 +341,24 @@ function ProfilInner() {
 
       {/* ── Test Oluşturma Modal ──────────────────────────────────────────── */}
       {trialModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-          onClick={(e) => { if (e.target === e.currentTarget) setTrialModal(false); }}>
-          <div className="relative w-full max-w-sm rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-6 shadow-2xl">
-            <button onClick={() => setTrialModal(false)}
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-[#6b7280] hover:bg-[#1e2d42] hover:text-white">✕</button>
-
-            <div className="mb-5 text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#1e3a5f] text-2xl">⚡</div>
-              <h3 className="text-xl font-bold text-white">Ücretsiz Test Al</h3>
-              <p className="mt-1 text-sm text-[#6b7280]">3 saatlik ücretsiz test hesabı oluştur</p>
-            </div>
-
-            {trialStep === 1 && (
-              <div className="space-y-4">
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-[#8b9ab3]">E-posta Adresi</label>
-                  <input type="email" value={trialEmail} onChange={e => setTrialEmail(e.target.value)}
-                    placeholder="ornek@email.com"
-                    className="w-full rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-4 py-3 text-sm text-white placeholder:text-[#374151] outline-none focus:border-[#3b82f6]/50" />
-                </div>
-                {trialMsg && <p className="rounded-xl border border-red-500/20 bg-red-950/30 px-3 py-2 text-xs text-red-400">{trialMsg}</p>}
-                <button onClick={handleSendOtp} disabled={trialLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3b82f6] py-3 text-sm font-bold text-white transition-all hover:bg-[#2563eb] disabled:opacity-60">
-                  {trialLoading ? 'Gönderiliyor...' : 'Doğrulama Kodu Gönder →'}
-                </button>
-              </div>
-            )}
-
-            {trialStep === 2 && (
-              <div className="space-y-4">
-                <p className="text-center text-sm text-[#8b9ab3]">
-                  <span className="font-semibold text-white">{trialEmail}</span> adresine 6 haneli kod gönderildi.
-                </p>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-[#8b9ab3]">Doğrulama Kodu</label>
-                  <input type="text" inputMode="numeric" maxLength={6} value={trialOtp}
-                    onChange={e => setTrialOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="123456"
-                    className="w-full rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-4 py-3 text-center font-mono text-xl font-bold text-white placeholder:text-[#374151] outline-none focus:border-[#3b82f6]/50 tracking-widest" />
-                </div>
-                {trialMsg && <p className={`rounded-xl border px-3 py-2 text-xs ${trialMsg.includes('oluşturuluyor') ? 'border-blue-500/20 bg-blue-950/30 text-blue-400' : 'border-red-500/20 bg-red-950/30 text-red-400'}`}>{trialMsg}</p>}
-                <button onClick={handleVerifyOtp} disabled={trialLoading || trialOtp.length < 6}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white transition-all hover:bg-emerald-700 disabled:opacity-60">
-                  {trialLoading ? 'Oluşturuluyor...' : 'Testi Başlat ✓'}
-                </button>
-                <div className="flex justify-between text-xs">
-                  <button onClick={() => setTrialStep(1)} className="text-[#6b7280] hover:text-white">← Geri</button>
-                  <button onClick={handleSendOtp} disabled={trialLoading || trialCooldown > 0}
-                    className="text-[#3b82f6] hover:underline disabled:text-[#4b5563]">
-                    {trialCooldown > 0 ? `Tekrar gönder (${trialCooldown}s)` : 'Tekrar gönder'}
-                  </button>
-                </div>
-              </div>
-            )}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-8 shadow-2xl text-center">
+            {trialLoading ? (
+              <>
+                <svg className="mx-auto mb-4 h-10 w-10 animate-spin text-[#3b82f6]" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <p className="text-sm font-semibold text-white">Test hesabı oluşturuluyor...</p>
+                <p className="mt-1 text-xs text-[#6b7280]">Bu işlem 30–40 saniye sürebilir.</p>
+              </>
+            ) : trialMsg ? (
+              <>
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-950/50 text-2xl">⚠️</div>
+                <p className="text-sm text-red-400">{trialMsg}</p>
+                <button onClick={() => setTrialModal(false)} className="mt-4 text-xs text-[#6b7280] hover:text-white">Kapat</button>
+              </>
+            ) : null}
           </div>
         </div>
       )}
