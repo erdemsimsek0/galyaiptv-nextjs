@@ -223,7 +223,7 @@ function ProfilInner() {
     <div className="min-h-screen bg-[#07111f] text-white">
       {/* Header — ana sayfayla aynı tasarım */}
       <div className="sticky top-0 z-50 border-b border-[#1e2d42] bg-[#07111f]/95 backdrop-blur-md px-4 py-3">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <LogoWithFallback />
@@ -262,10 +262,10 @@ function ProfilInner() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-lg px-4 py-8 space-y-4">
+      <main className="mx-auto max-w-lg px-3 py-6 space-y-3 sm:px-4 sm:py-8 sm:space-y-4">
 
         {/* ── Kullanıcı kartı ──────────────────────────────────────────────── */}
-        <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-5">
+        <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-4 sm:p-5">
           <div className="flex items-center gap-4">
             <div className="relative">
               {avatar ? (
@@ -273,10 +273,10 @@ function ProfilInner() {
                 <img
                   src={avatar}
                   alt={name}
-                  className="h-14 w-14 rounded-full object-cover border-2 border-[#3b82f6]/40"
+                  className="h-12 w-12 rounded-full object-cover border-2 border-[#3b82f6]/40 sm:h-14 sm:w-14"
                 />
               ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1e3a5f] text-xl font-bold text-[#3b82f6] border-2 border-[#3b82f6]/40">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1e3a5f] text-lg font-bold text-[#3b82f6] border-2 border-[#3b82f6]/40 sm:h-14 sm:w-14 sm:text-xl">
                   {name[0].toUpperCase()}
                 </div>
               )}
@@ -304,7 +304,7 @@ function ProfilInner() {
               {!expired && (
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-[#6b7280]">Kalan süre</span>
-                  <span className="font-mono text-2xl font-black text-emerald-400 tracking-widest">{countdown}</span>
+                  <span className="font-mono text-xl font-black text-emerald-400 tracking-widest sm:text-2xl">{countdown}</span>
                 </div>
               )}
             </div>
@@ -418,7 +418,7 @@ function ProfilInner() {
 
       {/* ── Test Oluşturma Modal ──────────────────────────────────────────── */}
       {trialModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#07111f] p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#07111f] p-4 sm:p-6">
           <div className="w-full max-w-sm text-center">
             {trialMsg ? (
               <>
