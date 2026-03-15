@@ -1,9 +1,8 @@
 'use client';
 
-// ✅ FIX: Prerender sırasında useSession() patlamasını önler
 export const dynamic = 'force-dynamic';
 
-import { useSession, signOut } from 'next-auth/react';
+import { SessionProvider, useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -53,14 +52,14 @@ function CopyBtn({ value }: { value: string }) {
   );
 }
 
-export default function ProfilPage() {
+// ── İç bileşen: SessionProvider içinde çalışır ────────────────────────────
+function ProfilInner() {
   const { data: session, status } = useSession();
   const router  = useRouter();
   const creds   = useTrialCreds();
   const { display: countdown, expired } = useCountdown(creds?.startedAt ?? null);
   const [signingOut, setSigningOut] = useState(false);
 
-  // Giriş yapmamışsa yönlendir
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/giris');
   }, [status, router]);
@@ -111,7 +110,6 @@ export default function ProfilPage() {
         {/* ── Kullanıcı kartı ──────────────────────────────────────────────── */}
         <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-5">
           <div className="flex items-center gap-4">
-            {/* Avatar */}
             <div className="relative">
               {avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -123,14 +121,12 @@ export default function ProfilPage() {
               )}
               <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[8px] font-bold text-white">✓</span>
             </div>
-            {/* İsim */}
             <div className="flex-1 min-w-0">
               <p className="truncate font-bold text-white">{name}</p>
               <p className="truncate text-sm text-[#6b7280]">{email}</p>
             </div>
           </div>
 
-          {/* Test durumu rozeti */}
           {creds && (
             <div className={`mt-4 flex items-center justify-between rounded-xl border px-3 py-2 ${expired ? 'border-[#1e2d42] bg-[#060e1a]' : 'border-[#3b82f6]/30 bg-[#3b82f6]/5'}`}>
               <div className="flex items-center gap-2">
@@ -166,7 +162,7 @@ export default function ProfilPage() {
           ))}
         </div>
 
-        {/* ── Test Bilgileri (varsa) ────────────────────────────────────────── */}
+        {/* ── Test Bilgileri (varsa) ─────────────────────────────────────── */}
         {creds && !expired && (
           <div className="rounded-2xl border border-[#3b82f6]/20 bg-[#0a1525] overflow-hidden">
             <div className="border-b border-[#1e2d42] px-5 py-3 flex items-center justify-between">
@@ -218,5 +214,14 @@ export default function ProfilPage() {
 
       </main>
     </div>
+  );
+}
+
+// ── Dışa açılan bileşen: kendi SessionProvider'ını taşır ─────────────────
+export default function ProfilPage() {
+  return (
+    <SessionProvider>
+      <ProfilInner />
+    </SessionProvider>
   );
 }
