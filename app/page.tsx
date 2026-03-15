@@ -9,6 +9,20 @@ function SessionProviderWrapper({ children }: { children: React.ReactNode }) {
   return <SessionProvider>{children}</SessionProvider>;
 }
 
+// ─── Fiyatları API'den oku ────────────────────────────────────────────────────
+const DEFAULT_PRICES: Record<string, number> = { max: 229.90, sports: 159.90, cinema: 129.90 };
+
+function usePrices() {
+  const [prices, setPrices] = useState<Record<string, number>>(DEFAULT_PRICES);
+  useEffect(() => {
+    fetch('/api/prices')
+      .then(r => r.json())
+      .then(d => { if (d.success && d.prices) setPrices(d.prices); })
+      .catch(() => { /* varsayılan */ });
+  }, []);
+  return prices;
+}
+
 // ─── Metadata notu ────────────────────────────────────────────────────────────
 // Bu sayfa 'use client' olduğundan metadata'yı layout.tsx'e ekle:
 // export const metadata = {
@@ -496,6 +510,7 @@ function TrialBanner({ active, startedAt }: { active: boolean; startedAt: number
 
 function HomePageInner() {
   const { data: session, status } = useSession();
+  const prices = usePrices();
   const isLoggedIn = status === 'authenticated';
   const authLoading = status === 'loading';
   const [globalTrialCreds, setGlobalTrialCreds] = useState<{ username: string; password: string; startedAt: number } | null>(null);
@@ -965,9 +980,12 @@ function HomePageInner() {
             <div className="grid gap-5 md:grid-cols-3 items-start">
               {categoryPackages.map((pkg) => {
                 const dur         = DURATIONS.find(d => d.key === selectedDuration)!;
-                const totalPrice  = calcTotalPrice(pkg.basePrice, dur.months, dur.discount);
+                // prices key mapping: 'spor'→'sports', 'max'→'max', 'cinema'→'cinema'
+                const priceKey = pkg.id === 'spor' ? 'sports' : pkg.id;
+                const liveBasePrice = prices[priceKey] ?? pkg.basePrice;
+                const totalPrice  = calcTotalPrice(liveBasePrice, dur.months, dur.discount);
                 const monthlyPrice = totalPrice / dur.months;
-                const originalTotal = pkg.basePrice * dur.months;
+                const originalTotal = liveBasePrice * dur.months;
                 const waText = `${pkg.waMsg} (${dur.label} paket, ₺${formatTL(totalPrice)})`;
 
                 return (
