@@ -19,8 +19,7 @@ interface TrialCreds {
 function useTrialCreds(email: string | null | undefined): TrialCreds | null {
   const [c, setC] = useState<TrialCreds | null>(null);
   useEffect(() => {
-    const userEmailForTrial = session?.user?.email || userEmail;
-    if (!userEmailForTrial) return;
+    if (!email) return;
     // Önce localStorage'a bak (hızlı)
     try {
       const raw = localStorage.getItem('galya_trial_creds');
@@ -153,15 +152,15 @@ function ProfilInner() {
   };
 
   const createDirectTrial = async () => {
-    const userEmailForTrial = session?.user?.email || userEmail;
-    if (!userEmailForTrial) return;
+    const emailToUse = session?.user?.email || '';
+    if (!emailToUse) return;
     setTrialLoading(true);
     setTrialMsg('Test hesabı oluşturuluyor...');
     try {
       const res = await fetch('/api/test-talep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create_direct', email: userEmailForTrial }),
+        body: JSON.stringify({ action: 'get_trial', email }),
       });
       const data = await res.json();
       if (data.success) {
