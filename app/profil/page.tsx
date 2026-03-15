@@ -19,7 +19,8 @@ interface TrialCreds {
 function useTrialCreds(email: string | null | undefined): TrialCreds | null {
   const [c, setC] = useState<TrialCreds | null>(null);
   useEffect(() => {
-    if (!email) return;
+    const userEmailForTrial = session?.user?.email || userEmail;
+    if (!userEmailForTrial) return;
     // Önce localStorage'a bak (hızlı)
     try {
       const raw = localStorage.getItem('galya_trial_creds');
@@ -112,7 +113,8 @@ function LogoWithFallback({ className = 'h-8 w-auto' }: { className?: string }) 
 function ProfilInner() {
   const { data: session, status } = useSession();
   const router  = useRouter();
-  const creds   = useTrialCreds(email);
+  const userEmail = session?.user?.email ?? null;
+  const creds   = useTrialCreds(userEmail);
   const { display: countdown, expired } = useCountdown(creds?.startedAt ?? null);
   const [signingOut, setSigningOut] = useState(false);
   const [trialModal, setTrialModal] = useState(false);
@@ -151,14 +153,15 @@ function ProfilInner() {
   };
 
   const createDirectTrial = async () => {
-    if (!email) return;
+    const userEmailForTrial = session?.user?.email || userEmail;
+    if (!userEmailForTrial) return;
     setTrialLoading(true);
     setTrialMsg('Test hesabı oluşturuluyor...');
     try {
       const res = await fetch('/api/test-talep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create_direct', email }),
+        body: JSON.stringify({ action: 'create_direct', email: userEmailForTrial }),
       });
       const data = await res.json();
       if (data.success) {
