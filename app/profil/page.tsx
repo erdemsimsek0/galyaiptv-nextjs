@@ -173,8 +173,8 @@ function ProfilInner() {
           </div>
 
           {creds && (
-            <div className={`mt-4 flex items-center justify-between rounded-xl border px-3 py-2 ${expired ? 'border-[#1e2d42] bg-[#060e1a]' : 'border-[#3b82f6]/30 bg-[#3b82f6]/5'}`}>
-              <div className="flex items-center gap-2">
+            <div className={`mt-4 rounded-xl border px-4 py-3 ${expired ? 'border-[#1e2d42] bg-[#060e1a]' : 'border-emerald-500/30 bg-emerald-950/20'}`}>
+              <div className="flex items-center gap-2 mb-2">
                 {!expired && (
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"/>
@@ -185,9 +185,12 @@ function ProfilInner() {
                   {expired ? '⌛ Test Süresi Doldu' : '✅ Aktif Test Hesabı'}
                 </span>
               </div>
-              <span className={`font-mono text-sm font-bold ${expired ? 'text-[#4b5563]' : 'text-emerald-400'}`}>
-                {countdown}
-              </span>
+              {!expired && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-[#6b7280]">Kalan süre</span>
+                  <span className="font-mono text-2xl font-black text-emerald-400 tracking-widest">{countdown}</span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -200,7 +203,7 @@ function ProfilInner() {
           {[
             { icon: '📺', label: 'Uygulamada İzle',   sub: 'Kurulum rehberi',                              href: '/kurulum-rehberi' },
             { icon: '👑', label: 'Aboneliği Yönet',   sub: 'Paket yükselt veya değiştir',                  href: '/abonelik' },
-            { icon: '⚡', label: 'Ücretsiz Test Al',   sub: creds && !expired ? 'Aktif testiniz var' : '3 saatlik ücretsiz test', href: '/' },
+            { icon: '⚡', label: 'Ücretsiz Test Al',   sub: creds && !expired ? 'Aktif testiniz var' : '3 saatlik ücretsiz test', href: '/?test=1' },
           ].map((item) => (
             <Link
               key={item.label}
