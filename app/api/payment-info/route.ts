@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       accountHolder: body.accountHolder.trim(),
       iban:          body.iban.trim(),
       branch:        body.branch?.trim() ?? '',
-      note:          body.note?.trim() ?? 'Açıklama kısmını kesinlikle boş bırakın. Gönderilecek tutar birebir aynı olmalıdır.',
+      note:          body.note?.trim() ?? 'Gönderilecek tutar birebir aynı olmalıdır.',
       updatedAt:     Date.now(),
     };
 
