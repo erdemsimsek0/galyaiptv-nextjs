@@ -1,8 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession, SessionProvider } from 'next-auth/react';
+
+
+// ─── Fiyatları API'den oku ────────────────────────────────────────────────────
+const DEFAULT_PRICES: Record<string, number> = { max: 229.90, sports: 159.90, cinema: 129.90 };
+
+function usePrices() {
+  const [prices, setPrices] = useState<Record<string, number>>(DEFAULT_PRICES);
+  useEffect(() => {
+    fetch('/api/prices')
+      .then(r => r.json())
+      .then(d => { if (d.success && d.prices) setPrices(d.prices); })
+      .catch(() => { /* varsayılan fiyatlar kullan */ });
+  }, []);
+  return prices;
+}
 
 type DurKey = '1ay' | '6ay' | '12ay';
 interface Dur { key: DurKey; label: string; months: number; discount: number; badge?: string }
@@ -202,6 +217,7 @@ function PlanRow({ plan }: { plan: Plan }) {
 }
 
 function AbonelikInner() {
+  const prices = usePrices();
   return (
     <div className="min-h-screen bg-[#07111f] text-white">
       <AbonelikHeader />
@@ -231,7 +247,9 @@ function AbonelikInner() {
           </div>
         </div>
         <div className="space-y-3">
-          {PLANS.map(plan => <PlanRow key={plan.id} plan={plan} />)}
+          {PLANS.map(plan => (
+            <PlanRow key={plan.id} plan={{ ...plan, basePrice: prices[plan.id] ?? plan.basePrice }} />
+          ))}
         </div>
         <p className="mt-6 text-center text-xs text-[#374151]">
           Sorunuz mu var?{' '}
