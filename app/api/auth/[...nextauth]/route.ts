@@ -1,3 +1,7 @@
+// app/api/auth/[...nextauth]/route.ts
+// DÜZELTME: Bu dosyanın yolu kesinlikle app/api/auth/[...nextauth]/route.ts olmalıdır.
+// pages/ klasörü kullananlar için: pages/api/auth/[...nextauth].ts (farklı export)
+
 import NextAuth from 'next-auth';
 import type { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
@@ -10,19 +14,26 @@ const R_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN!;
 
 async function rGet<T>(key: string): Promise<T | null> {
   const res  = await fetch(`${R_URL}/get/${encodeURIComponent(key)}`, {
-    headers: { Authorization: `Bearer ${R_TOKEN}` }, cache: 'no-store',
+    headers: { Authorization: `Bearer ${R_TOKEN}` },
+    cache: 'no-store',
   });
   const json = await res.json();
   if (!json.result) return null;
-  try { return typeof json.result === 'string' ? JSON.parse(json.result) : json.result; }
-  catch { return json.result as T; }
+  try {
+    return typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
+  } catch {
+    return json.result as T;
+  }
 }
 
 async function rSet(key: string, value: unknown, ex?: number) {
   const url = ex
     ? `${R_URL}/set/${encodeURIComponent(key)}/${encodeURIComponent(JSON.stringify(value))}?EX=${ex}`
     : `${R_URL}/set/${encodeURIComponent(key)}/${encodeURIComponent(JSON.stringify(value))}`;
-  await fetch(url, { headers: { Authorization: `Bearer ${R_TOKEN}` }, cache: 'no-store' });
+  await fetch(url, {
+    headers: { Authorization: `Bearer ${R_TOKEN}` },
+    cache: 'no-store',
+  });
 }
 
 // ─── Minimal Redis adapter (NextAuth için) ────────────────────────────────────
@@ -32,24 +43,32 @@ function RedisAdapter() {
       const id = `user:${user.email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
       const existing = await rGet<{ email: string; id: string }>(id);
       if (existing) return { ...existing };
-      const newUser = { id, email: user.email, name: user.name ?? '', image: user.image ?? '', createdAt: Date.now() };
+      const newUser = {
+        id,
+        email: user.email,
+        name:  user.name  ?? '',
+        image: user.image ?? '',
+        createdAt: Date.now(),
+      };
       await rSet(id, newUser);
       return newUser;
     },
-    async getUser(id: string) { return await rGet(id); },
+    async getUser(id: string) {
+      return await rGet(id);
+    },
     async getUserByEmail(email: string) {
       const id = `user:${email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
       return await rGet(id);
     },
     async getUserByAccount({ providerAccountId }: { providerAccountId: string }) {
       const linkKey = `account:${providerAccountId}`;
-      const userId = await rGet<string>(linkKey);
+      const userId  = await rGet<string>(linkKey);
       if (!userId) return null;
       return await rGet(userId);
     },
     async updateUser(user: { id: string; [k: string]: unknown }) {
       const existing = await rGet<Record<string, unknown>>(user.id);
-      const updated = { ...(existing ?? {}), ...user };
+      const updated  = { ...(existing ?? {}), ...user };
       await rSet(user.id, updated);
       return updated;
     },
@@ -61,9 +80,7 @@ function RedisAdapter() {
       return session;
     },
     async getSessionAndUser(sessionToken: string) {
-      const session = await rGet<{ userId: string; expires: Date }>(
-        `session:${sessionToken}`
-      );
+      const session = await rGet<{ userId: string; expires: Date }>(`session:${sessionToken}`);
       if (!session) return null;
       const user = await rGet(session.userId);
       if (!user) return null;
@@ -71,7 +88,7 @@ function RedisAdapter() {
     },
     async updateSession(session: { sessionToken: string; [k: string]: unknown }) {
       const existing = await rGet<Record<string, unknown>>(`session:${session.sessionToken}`);
-      const updated = { ...(existing ?? {}), ...session };
+      const updated  = { ...(existing ?? {}), ...session };
       await rSet(`session:${session.sessionToken}`, updated, 30 * 24 * 3600);
       return updated;
     },
@@ -81,11 +98,11 @@ function RedisAdapter() {
       });
     },
     async createVerificationToken(token: { identifier: string; token: string; expires: Date }) {
-      await rSet(`vtoken:${token.identifier}:${token.token}`, token, 600); // 10 dk
+      await rSet(`vtoken:${token.identifier}:${token.token}`, token, 600); // 10 dakika
       return token;
     },
     async useVerificationToken({ identifier, token }: { identifier: string; token: string }) {
-      const key = `vtoken:${identifier}:${token}`;
+      const key    = `vtoken:${identifier}:${token}`;
       const stored = await rGet(key);
       if (!stored) return null;
       await fetch(`${R_URL}/del/${encodeURIComponent(key)}`, {
@@ -96,9 +113,15 @@ function RedisAdapter() {
   };
 }
 
-// ─── Özel email şablonu ───────────────────────────────────────────────────────
-async function sendVerificationRequest(params: any) {
+// ─── Özel e-posta şablonu ─────────────────────────────────────────────────────
+async function sendVerificationRequest(params: {
+  identifier: string;
+  url: string;
+  // diğer NextAuth parametreleri
+  [k: string]: unknown;
+}) {
   const { identifier: email, url } = params;
+
   const transport = createTransport({
     host:   process.env.EMAIL_SERVER_HOST,
     port:   Number(process.env.EMAIL_SERVER_PORT ?? 465),
@@ -109,7 +132,7 @@ async function sendVerificationRequest(params: any) {
     },
   });
 
-  await transport.sendMail({
+  const info = await transport.sendMail({
     to:      email,
     from:    `Galya IPTV <${process.env.EMAIL_FROM}>`,
     subject: 'Galya IPTV – Giriş Bağlantınız',
@@ -120,15 +143,26 @@ async function sendVerificationRequest(params: any) {
         <a href="${url}" style="display:inline-block;background:#3b82f6;color:#fff;font-weight:700;font-size:15px;padding:14px 28px;border-radius:12px;text-decoration:none">
           Giriş Yap →
         </a>
-        <p style="color:#374151;font-size:12px;margin:24px 0 0">Bu bağlantı 10 dakika geçerlidir. Siz talep etmediyseniz bu e-postayı yok sayabilirsiniz.</p>
+        <p style="color:#374151;font-size:12px;margin:24px 0 0">
+          Bu bağlantı 10 dakika geçerlidir. Siz talep etmediyseniz bu e-postayı yok sayabilirsiniz.
+        </p>
       </div>
     `,
   });
+
+  // Geliştirme ortamında e-posta önizleme URL'si logla
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[NextAuth] Verification email sent to:', email);
+    console.log('[NextAuth] Preview URL:', url);
+  }
+
+  return info;
 }
 
-// ─── NextAuth config ──────────────────────────────────────────────────────────
+// ─── NextAuth yapılandırması ──────────────────────────────────────────────────
 export const authOptions: NextAuthOptions = {
-  adapter: RedisAdapter() as any,
+  adapter: RedisAdapter() as ReturnType<typeof RedisAdapter> & { [k: string]: unknown },
+
   providers: [
     GoogleProvider({
       clientId:     process.env.GOOGLE_CLIENT_ID!,
@@ -138,33 +172,56 @@ export const authOptions: NextAuthOptions = {
       server: {
         host:   process.env.EMAIL_SERVER_HOST,
         port:   Number(process.env.EMAIL_SERVER_PORT ?? 465),
+        secure: true,
         auth: {
           user: process.env.EMAIL_SERVER_USER,
           pass: process.env.EMAIL_SERVER_PASSWORD,
         },
       },
-      from:                    process.env.EMAIL_FROM,
-      sendVerificationRequest: sendVerificationRequest as any,
+      from: process.env.EMAIL_FROM,
+      // Özel şablon
+      sendVerificationRequest: sendVerificationRequest as Parameters<typeof EmailProvider>[0]['sendVerificationRequest'],
     }),
   ],
+
   pages: {
     signIn:  '/giris',
-    newUser: '/profil',
+    newUser: '/profil',   // Yeni kullanıcılar buraya yönlendirilir
     error:   '/giris',
   },
+
+  // JWT strategy: veritabanı session yerine cookie imzalı JWT kullanır.
+  // Redis adapter ile de birlikte çalışır.
   session: { strategy: 'jwt' },
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) token.uid = user.id;
       return token;
     },
     async session({ session, token }) {
-      if (session.user) (session.user as { id?: string }).id = token.uid as string;
+      if (session.user) {
+        (session.user as { id?: string }).id = token.uid as string;
+      }
       return session;
     },
+    // DÜZELTME: redirect callback — callbackUrl'in aynı origin'den olduğundan emin ol.
+    async redirect({ url, baseUrl }) {
+      // Göreceli URL'lere izin ver
+      if (url.startsWith('/')) return `${baseUrl}${url}`;
+      // Aynı origin'deki mutlak URL'lere izin ver
+      if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
   },
+
   secret: process.env.NEXTAUTH_SECRET,
+
+  // Geliştirme ortamında detaylı hata mesajları
+  debug: process.env.NODE_ENV === 'development',
 };
 
 const handler = NextAuth(authOptions);
+
+// App Router için doğru export biçimi
 export { handler as GET, handler as POST };
