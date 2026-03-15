@@ -27,20 +27,6 @@ function CopyBtn({ value, label }: { value: string; label?: string }) {
   );
 }
 
-// Kullanıcı emailinden deterministik ödeme kodu üretir (8 haneli sayı)
-function genPaymentCode(email: string): string {
-  let hash = 0;
-  const str = email.toLowerCase().trim();
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // 32-bit integer
-  }
-  // 8 haneli pozitif sayı
-  const code = Math.abs(hash) % 100000000;
-  return String(code).padStart(8, '0');
-}
-
 function OdemeInner() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
@@ -201,10 +187,10 @@ function OdemeInner() {
               </div>
               <div className="flex items-center gap-3 rounded-xl bg-[#0d1a2a] border border-amber-500/20 px-4 py-3">
                 <span className="flex-1 font-mono text-xl font-black text-white tracking-widest">
-                  {userEmail ? genPaymentCode(userEmail) : '··········'}
+                  {userEmail ? '87964103873' : '··········'}
                 </span>
                 {userEmail && (
-                  <CopyBtn value={genPaymentCode(userEmail)} label="Kopyala" />
+                  <CopyBtn value={'87964103873'} label="Kopyala" />
                 )}
               </div>
               <p className="text-[10px] text-amber-300/50">
