@@ -6,7 +6,7 @@
 // Eğer bu sayfanın önbelleklenmemesi gerekiyorsa, bir üst layout/server wrapper'a taşıyın.
 
 import { SessionProvider, useSession, signOut } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -97,6 +97,15 @@ function ProfilInner() {
   const creds   = useTrialCreds();
   const { display: countdown, expired } = useCountdown(creds?.startedAt ?? null);
   const [signingOut, setSigningOut] = useState(false);
+  const [trialModal, setTrialModal] = useState(false);
+  const [trialEmail, setTrialEmail] = useState('');
+  const [trialOtp, setTrialOtp] = useState('');
+  const [trialToken, setTrialToken] = useState('');
+  const [trialStep, setTrialStep] = useState<1|2|3>(1); // 1=email, 2=otp, 3=done
+  const [trialLoading, setTrialLoading] = useState(false);
+  const [trialMsg, setTrialMsg] = useState('');
+  const [trialCooldown, setTrialCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -121,6 +130,65 @@ function ProfilInner() {
   const name  = user.name  || user.email?.split('@')[0] || 'Kullanıcı';
   const email = user.email || '';
   const avatar= user.image;
+
+  const openTrialModal = () => {
+    setTrialEmail(email);
+    setTrialStep(1);
+    setTrialOtp('');
+    setTrialToken('');
+    setTrialMsg('');
+    setTrialCooldown(0);
+    setTrialModal(true);
+  };
+
+  const handleSendOtp = async () => {
+    if (!trialEmail.includes('@')) { setTrialMsg('Geçerli bir e-posta girin.'); return; }
+    setTrialLoading(true); setTrialMsg('');
+    try {
+      const res = await fetch('/api/test-talep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send_otp', email: trialEmail, selectedPackage: 'Belirtilmedi' }),
+      });
+      const data = await res.json();
+      if (data.alreadyUsed) { setTrialMsg(data.error); return; }
+      if (data.cooldown) { setTrialCooldown(data.retryAfter || 60); setTrialMsg(data.error); return; }
+      if (data.success) {
+        setTrialToken(data.token);
+        setTrialStep(2);
+        setTrialCooldown(60);
+        setTrialMsg('Kod gönderildi! Spam klasörünü de kontrol edin.');
+        // countdown
+        if (cooldownRef.current) clearInterval(cooldownRef.current);
+        cooldownRef.current = setInterval(() => {
+          setTrialCooldown(c => { if (c <= 1) { clearInterval(cooldownRef.current!); return 0; } return c - 1; });
+        }, 1000);
+      } else { setTrialMsg(data.error || 'Kod gönderilemedi.'); }
+    } catch { setTrialMsg('Sunucuya bağlanılamadı.'); }
+    finally { setTrialLoading(false); }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (trialOtp.length < 6) { setTrialMsg('6 haneli kodu girin.'); return; }
+    setTrialLoading(true); setTrialMsg('Test hesabı oluşturuluyor...');
+    try {
+      const res = await fetch('/api/test-talep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', email: trialEmail, otp: trialOtp, token: trialToken }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const cr = { username: data.username, password: data.password, startedAt: Date.now() };
+        try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
+        setTrialStep(3);
+        setTrialMsg('');
+        // Refresh creds on page
+        window.location.reload();
+      } else { setTrialMsg(data.error || 'Kod hatalı.'); }
+    } catch { setTrialMsg('Bir hata oluştu.'); }
+    finally { setTrialLoading(false); }
+  };
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -200,28 +268,34 @@ function ProfilInner() {
           <div className="border-b border-[#1e2d42] px-5 py-3">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4b5563]">Hızlı İşlemler</p>
           </div>
-          {[
-            { icon: '📺', label: 'Uygulamada İzle',   sub: 'Kurulum rehberi',                              href: '/kurulum-rehberi' },
-            { icon: '👑', label: 'Aboneliği Yönet',   sub: 'Paket yükselt veya değiştir',                  href: '/abonelik' },
-            { icon: '⚡', label: 'Ücretsiz Test Al',   sub: creds && !expired ? 'Aktif testiniz var' : '3 saatlik ücretsiz test', href: '/?test=1' },
-          ].map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="flex items-center gap-4 border-b border-[#1e2d42] px-5 py-4 last:border-0 transition-colors hover:bg-[#0d1a2a]"
-            >
-              <span className="text-xl">{item.icon}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white">{item.label}</p>
-                <p className="text-xs text-[#6b7280]">{item.sub}</p>
-              </div>
-              <span className="text-[#4b5563]">›</span>
-            </Link>
-          ))}
+          <Link href="/kurulum-rehberi" className="flex items-center gap-4 border-b border-[#1e2d42] px-5 py-4 transition-colors hover:bg-[#0d1a2a]">
+            <span className="text-xl">📺</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white">Uygulamada İzle</p>
+              <p className="text-xs text-[#6b7280]">Kurulum rehberi</p>
+            </div>
+            <span className="text-[#4b5563]">›</span>
+          </Link>
+          <Link href="/abonelik" className="flex items-center gap-4 border-b border-[#1e2d42] px-5 py-4 transition-colors hover:bg-[#0d1a2a]">
+            <span className="text-xl">👑</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white">Aboneliği Yönet</p>
+              <p className="text-xs text-[#6b7280]">Paket yükselt veya değiştir</p>
+            </div>
+            <span className="text-[#4b5563]">›</span>
+          </Link>
+          <button onClick={openTrialModal} className="flex w-full items-center gap-4 px-5 py-4 transition-colors hover:bg-[#0d1a2a]">
+            <span className="text-xl">⚡</span>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm font-semibold text-white">Ücretsiz Test Al</p>
+              <p className="text-xs text-[#6b7280]">{creds && !expired ? 'Aktif testiniz var — yenile' : '3 saatlik ücretsiz test'}</p>
+            </div>
+            <span className="text-[#4b5563]">›</span>
+          </button>
         </div>
 
-        {/* ── Test Bilgileri (varsa) ─────────────────────────────────────── */}
-        {creds && !expired && (
+        {/* ── Test Bilgileri ─────────────────────────────────────────────── */}
+        {creds && (
           <div className="rounded-2xl border border-[#3b82f6]/20 bg-[#0a1525] overflow-hidden">
             <div className="border-b border-[#1e2d42] px-5 py-3 flex items-center justify-between">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4b5563]">Test Bilgileri</p>
@@ -278,6 +352,66 @@ function ProfilInner() {
         </div>
 
       </main>
+
+      {/* ── Test Oluşturma Modal ──────────────────────────────────────────── */}
+      {trialModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) setTrialModal(false); }}>
+          <div className="relative w-full max-w-sm rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-6 shadow-2xl">
+            <button onClick={() => setTrialModal(false)}
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-[#6b7280] hover:bg-[#1e2d42] hover:text-white">✕</button>
+
+            <div className="mb-5 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#1e3a5f] text-2xl">⚡</div>
+              <h3 className="text-xl font-bold text-white">Ücretsiz Test Al</h3>
+              <p className="mt-1 text-sm text-[#6b7280]">3 saatlik ücretsiz test hesabı oluştur</p>
+            </div>
+
+            {trialStep === 1 && (
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-[#8b9ab3]">E-posta Adresi</label>
+                  <input type="email" value={trialEmail} onChange={e => setTrialEmail(e.target.value)}
+                    placeholder="ornek@email.com"
+                    className="w-full rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-4 py-3 text-sm text-white placeholder:text-[#374151] outline-none focus:border-[#3b82f6]/50" />
+                </div>
+                {trialMsg && <p className="rounded-xl border border-red-500/20 bg-red-950/30 px-3 py-2 text-xs text-red-400">{trialMsg}</p>}
+                <button onClick={handleSendOtp} disabled={trialLoading}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3b82f6] py-3 text-sm font-bold text-white transition-all hover:bg-[#2563eb] disabled:opacity-60">
+                  {trialLoading ? 'Gönderiliyor...' : 'Doğrulama Kodu Gönder →'}
+                </button>
+              </div>
+            )}
+
+            {trialStep === 2 && (
+              <div className="space-y-4">
+                <p className="text-center text-sm text-[#8b9ab3]">
+                  <span className="font-semibold text-white">{trialEmail}</span> adresine 6 haneli kod gönderildi.
+                </p>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-[#8b9ab3]">Doğrulama Kodu</label>
+                  <input type="text" inputMode="numeric" maxLength={6} value={trialOtp}
+                    onChange={e => setTrialOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="123456"
+                    className="w-full rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-4 py-3 text-center font-mono text-xl font-bold text-white placeholder:text-[#374151] outline-none focus:border-[#3b82f6]/50 tracking-widest" />
+                </div>
+                {trialMsg && <p className={`rounded-xl border px-3 py-2 text-xs ${trialMsg.includes('oluşturuluyor') ? 'border-blue-500/20 bg-blue-950/30 text-blue-400' : 'border-red-500/20 bg-red-950/30 text-red-400'}`}>{trialMsg}</p>}
+                <button onClick={handleVerifyOtp} disabled={trialLoading || trialOtp.length < 6}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white transition-all hover:bg-emerald-700 disabled:opacity-60">
+                  {trialLoading ? 'Oluşturuluyor...' : 'Testi Başlat ✓'}
+                </button>
+                <div className="flex justify-between text-xs">
+                  <button onClick={() => setTrialStep(1)} className="text-[#6b7280] hover:text-white">← Geri</button>
+                  <button onClick={handleSendOtp} disabled={trialLoading || trialCooldown > 0}
+                    className="text-[#3b82f6] hover:underline disabled:text-[#4b5563]">
+                    {trialCooldown > 0 ? `Tekrar gönder (${trialCooldown}s)` : 'Tekrar gönder'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
