@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 interface TrialCreds {
+  email?:    string;
   username:  string;
   password:  string;
   startedAt: number;
@@ -20,15 +21,22 @@ function useTrialCreds(email: string | null | undefined): TrialCreds | null {
   const [c, setC] = useState<TrialCreds | null>(null);
   useEffect(() => {
     if (!email) return;
-    // Önce localStorage'a bak (hızlı)
+
+    // localStorage'ı kontrol et — ama email eşleşiyor mu doğrula
     try {
       const raw = localStorage.getItem('galya_trial_creds');
       if (raw) {
         const p = JSON.parse(raw);
-        if (p.username) setC(p);
+        if (p.username && p.email === email) {
+          setC(p); // Hızlı göster, sonra Redis'ten doğrula
+        } else {
+          // Farklı hesabın verisi — temizle
+          localStorage.removeItem('galya_trial_creds');
+        }
       }
     } catch { /* */ }
-    // Redis'ten de kontrol et (cihazlar arası senkron)
+
+    // Her zaman Redis'ten doğru veriyi çek
     fetch('/api/test-talep', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -37,13 +45,16 @@ function useTrialCreds(email: string | null | undefined): TrialCreds | null {
       .then(r => r.json())
       .then(data => {
         if (data.success && data.username) {
-          const cr = { username: data.username, password: data.password, startedAt: data.startedAt };
+          const cr = { email, username: data.username, password: data.password, startedAt: data.startedAt };
           setC(cr);
-          // localStorage'ı da güncelle
           try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
+        } else {
+          // Redis'te bu email için test yok — localStorage'ı da temizle
+          setC(null);
+          try { localStorage.removeItem('galya_trial_creds'); } catch { /* */ }
         }
       })
-      .catch(() => { /* network error — localStorage fallback zaten ayarlandı */ });
+      .catch(() => { /* network error */ });
   }, [email]);
   return c;
 }
