@@ -1,4 +1,4 @@
-// app/api/payment-info/rdoute.ts
+// app/api/payment-info/rdout2e.ts
 // IBAN/ödeme bilgilerini Redis'te saklar
 import { NextRequest, NextResponse } from 'next/server';
 
