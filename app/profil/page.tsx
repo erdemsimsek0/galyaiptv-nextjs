@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 
+// Buradan sonra metadata yorum satırları ve sayfa içeriği gelmeli...
 // ─── Metadata notu ────────────────────────────────────────────────────────────
 // export const metadata = {
 //   title: 'Galya IPTV | Donmayan Premium IPTV – 85.000+ Kanal, 4K Yayın',
