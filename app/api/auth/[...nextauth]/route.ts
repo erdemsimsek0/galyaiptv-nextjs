@@ -177,7 +177,8 @@ export const authOptions: NextAuthOptions = {
       },
       from: process.env.EMAIL_USER,
       // Özel şablon
-      sendVerificationRequest: sendVerificationRequest as Parameters<typeof EmailProvider>[0]['sendVerificationRequest'],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      sendVerificationRequest: sendVerificationRequest as any,
     }),
   ],
 
