@@ -130,6 +130,8 @@ function ProfilInner() {
   const [trialModal, setTrialModal] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
   const [trialMsg, setTrialMsg] = useState('');
+  const [trialProgress, setTrialProgress] = useState(0);
+  const trialProgressRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -157,8 +159,8 @@ function ProfilInner() {
 
   const openTrialModal = () => {
     setTrialMsg('');
+    setTrialProgress(0);
     setTrialModal(true);
-    // Giriş yapılmış kullanıcı için direkt test oluştur
     createDirectTrial();
   };
 
@@ -166,25 +168,43 @@ function ProfilInner() {
     const emailToUse = session?.user?.email || '';
     if (!emailToUse) return;
     setTrialLoading(true);
-    setTrialMsg('Test hesabı oluşturuluyor...');
+    setTrialMsg('');
+    setTrialProgress(0);
+
+    // Progress bar animasyonu
+    if (trialProgressRef.current) clearInterval(trialProgressRef.current);
+    trialProgressRef.current = setInterval(() => {
+      setTrialProgress(prev => {
+        if (prev >= 90) { clearInterval(trialProgressRef.current!); return 90; }
+        return prev + (90 / (35000 / 300));
+      });
+    }, 300);
+
     try {
       const res = await fetch('/api/test-talep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_trial', email }),
+        body: JSON.stringify({ action: 'create_direct', email: emailToUse }),
       });
       const data = await res.json();
+      if (trialProgressRef.current) clearInterval(trialProgressRef.current);
+
       if (data.success) {
-        const cr = { username: data.username, password: data.password, startedAt: data.startedAt || Date.now() };
+        setTrialProgress(100);
+        const cr = { email: emailToUse, username: data.username, password: data.password, startedAt: data.startedAt || Date.now() };
         try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
-        setTrialModal(false);
-        window.location.reload();
+        setTimeout(() => {
+          setTrialModal(false);
+          setTrialLoading(false);
+          window.location.reload();
+        }, 1200);
       } else {
         setTrialMsg(data.error || 'Test oluşturulamadı.');
+        setTrialLoading(false);
       }
     } catch {
+      if (trialProgressRef.current) clearInterval(trialProgressRef.current);
       setTrialMsg('Sunucuya bağlanılamadı.');
-    } finally {
       setTrialLoading(false);
     }
   };
@@ -354,24 +374,51 @@ function ProfilInner() {
 
       {/* ── Test Oluşturma Modal ──────────────────────────────────────────── */}
       {trialModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-8 shadow-2xl text-center">
-            {trialLoading ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#07111f] p-4">
+          <div className="w-full max-w-sm text-center">
+            {trialMsg ? (
               <>
-                <svg className="mx-auto mb-4 h-10 w-10 animate-spin text-[#3b82f6]" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                <p className="text-sm font-semibold text-white">Test hesabı oluşturuluyor...</p>
-                <p className="mt-1 text-xs text-[#6b7280]">Bu işlem 30–40 saniye sürebilir.</p>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-950/50 text-3xl">⚠️</div>
+                <h3 className="mb-2 text-lg font-bold text-white">Bir Sorun Oluştu</h3>
+                <p className="mb-6 text-sm text-red-400">{trialMsg}</p>
+                <button onClick={() => setTrialModal(false)}
+                  className="rounded-xl border border-[#1e2d42] px-6 py-2.5 text-sm text-[#6b7280] hover:text-white">
+                  Kapat
+                </button>
               </>
-            ) : trialMsg ? (
+            ) : (
               <>
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-950/50 text-2xl">⚠️</div>
-                <p className="text-sm text-red-400">{trialMsg}</p>
-                <button onClick={() => setTrialModal(false)} className="mt-4 text-xs text-[#6b7280] hover:text-white">Kapat</button>
+                <div className="mb-6">
+                  <p className="text-xl font-black text-white">Galya <span className="text-[#3b82f6]">IPTV</span></p>
+                </div>
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#1e3a5f] text-4xl">
+                  {trialProgress >= 100 ? '✅' : '⚡'}
+                </div>
+                <h2 className="mb-2 text-xl font-bold text-white">
+                  {trialProgress >= 100 ? 'Test Hesabınız Hazır!' : 'Test Hesabı Oluşturuluyor...'}
+                </h2>
+                <p className="mb-8 text-sm text-[#6b7280]">
+                  {trialProgress >= 100
+                    ? 'Sayfa yenileniyor...'
+                    : 'Lütfen bekleyin, bu işlem 30–40 saniye sürebilir.'}
+                </p>
+                <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-[#1e2d42]">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#6366f1] transition-all duration-300 ease-out"
+                    style={{ width: `${trialProgress}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-xs text-[#4b5563]">
+                  <span>
+                    {trialProgress < 30 ? 'Yayın bağlantısı kuruluyor...'
+                      : trialProgress < 60 ? 'Hesap oluşturuluyor...'
+                      : trialProgress < 90 ? 'Son kontroller yapılıyor...'
+                      : 'Tamamlandı!'}
+                  </span>
+                  <span className="font-mono">{Math.round(trialProgress)}%</span>
+                </div>
               </>
-            ) : null}
+            )}
           </div>
         </div>
       )}
