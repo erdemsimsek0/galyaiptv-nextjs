@@ -60,10 +60,8 @@ type TrialRecord = {
 function assertEnv() {
   // DÜZELTME: EMAIL_USER/EMAIL_PASS yerine NextAuth ile tutarlı isimler
   const missing = [
-    'EMAIL_SERVER_USER',
-    'EMAIL_SERVER_PASSWORD',
-    'EMAIL_SERVER_HOST',
-    'EMAIL_FROM',
+    'EMAIL_USER',
+    'EMAIL_PASS',
     'TRIAL_SERVICE_URL',
     'TRIAL_API_SECRET',
     'UPSTASH_REDIS_REST_URL',
@@ -222,14 +220,11 @@ async function deleteOtp(token: string) {
 // ─── Mailer ───────────────────────────────────────────────────────────────────
 
 function createMailer() {
-  // DÜZELTME: NextAuth ile aynı env değişken isimleri
   return nodemailer.createTransport({
-    host:   process.env.EMAIL_SERVER_HOST,
-    port:   Number(process.env.EMAIL_SERVER_PORT ?? 465),
-    secure: true,
+    service: 'gmail',
     auth: {
-      user: process.env.EMAIL_SERVER_USER,
-      pass: process.env.EMAIL_SERVER_PASSWORD,
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
     },
   });
 }
@@ -237,7 +232,7 @@ function createMailer() {
 async function sendOtpMail(email: string, otp: string) {
   const transporter = createMailer();
   await transporter.sendMail({
-    from:    `Galya IPTV <${process.env.EMAIL_FROM}>`,
+    from:    `Galya IPTV <${process.env.EMAIL_USER}>`,
     to:      email,
     subject: 'Galya IPTV – Doğrulama Kodunuz',
     html: `
@@ -265,7 +260,7 @@ async function sendTrialMail(
 
   const transporter = createMailer();
   await transporter.sendMail({
-    from:    `Galya IPTV <${process.env.EMAIL_FROM}>`,
+    from:    `Galya IPTV <${process.env.EMAIL_USER}>`,
     to:      email,
     subject: 'Galya IPTV – Test Hesabınız Hazır! ✅',
     html: `
