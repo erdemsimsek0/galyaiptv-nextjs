@@ -459,6 +459,41 @@ function VisitorCount() {
 }
 
 // ─── Ana bileşen ──────────────────────────────────────────────────────────────
+// ── Countdown banner bileşeni ─────────────────────────────────────────────
+function TrialBanner({ active, startedAt }: { active: boolean; startedAt: number }) {
+  const TOTAL = 3 * 60 * 60 * 1000;
+  const [rem, setRem] = useState(0);
+  useEffect(() => {
+    const calc = () => Math.max(0, TOTAL - (Date.now() - startedAt));
+    setRem(calc());
+    const id = setInterval(() => setRem(calc()), 1000);
+    return () => clearInterval(id);
+  }, [startedAt, TOTAL]);
+  const h = Math.floor(rem / 3600000);
+  const m = Math.floor((rem % 3600000) / 60000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  if (!active) {
+    return (
+      <div className="w-full bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 text-center">
+        <p className="text-sm font-semibold text-amber-400">
+          ⌛ Test süreniz sona erdi —{' '}
+          <a href="/abonelik" className="underline hover:text-amber-300">Şimdi Abone Olun →</a>
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="w-full bg-emerald-500/10 border-b border-emerald-500/20 px-4 py-2.5 text-center">
+      <p className="text-sm font-semibold text-emerald-400">
+        ✅ Test süreniz devam ediyor —{' '}
+        <span className="font-mono text-white">{pad(h)} saat {pad(m)} dakika</span> kaldı ·{' '}
+        <a href="/abonelik" className="underline hover:text-emerald-300">Şimdi Abone Olun →</a>
+      </p>
+    </div>
+  );
+}
+
 function HomePageInner() {
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
@@ -652,6 +687,13 @@ function HomePageInner() {
     <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] py-3 text-sm font-bold text-white transition-colors hover:bg-[#1ebe5d]">{label}</a>
   );
 
+  const smartAction = () => {
+    if (!isLoggedIn) { openAuth(); return; }
+    if (trialActive) { window.location.href = '/profil'; return; }
+    if (trialExpired) { window.location.href = '/abonelik'; return; }
+    // logged in but no trial yet (creating) — do nothing
+  };
+
   const openAuth = (mode: 'login' | 'register' = 'register') => {
     setAuthMode(mode);
     setShowAuthModal(true);
@@ -768,6 +810,12 @@ function HomePageInner() {
       </header>
 
       <main className="bg-[#07111f] text-white">
+
+        {/* ── Trial countdown banner ─────────────────────────────────────── */}
+        {isLoggedIn && (trialActive || trialExpired) && (
+          <TrialBanner active={trialActive} startedAt={globalTrialCreds?.startedAt ?? 0} />
+        )}
+
         <section className="relative overflow-hidden">
           {/* Arka plan glow */}
           <div className="pointer-events-none absolute inset-0">
@@ -1078,7 +1126,7 @@ function HomePageInner() {
             </div>
 
             <div className="mt-8 text-center">
-              <button onClick={() => openAuth()} className="rounded-xl bg-[#1e1b4b] border border-[#3730a3] px-8 py-3.5 font-semibold text-[#818cf8] transition-all hover:bg-[#312e81] hover:text-white">
+              <button onClick={() => smartAction()} className="rounded-xl bg-[#1e1b4b] border border-[#3730a3] px-8 py-3.5 font-semibold text-[#818cf8] transition-all hover:bg-[#312e81] hover:text-white">
                 ⚡ Ücretsiz Test İle Dene
               </button>
             </div>
@@ -1230,7 +1278,7 @@ function HomePageInner() {
 
             <div className="mt-10 text-center">
               <p className="mb-4 text-sm text-[#9ca3af]">Siz de denemek ister misiniz?</p>
-              <button onClick={() => openAuth()} className="rounded-xl bg-[#6366f1] px-8 py-3.5 font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
+              <button onClick={() => smartAction()} className="rounded-xl bg-[#6366f1] px-8 py-3.5 font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
                 Ücretsiz Test Al →
               </button>
             </div>
@@ -1285,7 +1333,7 @@ function HomePageInner() {
                 <div className="rounded-xl border border-[#1e3a5f] bg-[#111827] p-5 text-center">
                   <p className="mb-1 text-sm font-semibold text-white">10.200+ aktif kullanıcı Galya IPTV'yi tercih ediyor</p>
                   <p className="mb-4 text-xs text-[#6b7280]">Ücretsiz test ile başlayın, beğenirseniz satın alın</p>
-                  <button onClick={() => openAuth()} className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">
+                  <button onClick={() => smartAction()} className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">
                     ⚡ Ücretsiz Test Al
                   </button>
                   <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-[#1e3a5f] py-2.5 text-sm text-[#25d366] transition-colors hover:border-[#25d366]/40">
@@ -1315,7 +1363,7 @@ function HomePageInner() {
             </div>
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <button onClick={() => openAuth()} className="rounded-xl bg-[#6366f1] px-10 py-4 font-semibold text-white shadow-xl shadow-[#6366f1]/25 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
+              <button onClick={() => smartAction()} className="rounded-xl bg-[#6366f1] px-10 py-4 font-semibold text-white shadow-xl shadow-[#6366f1]/25 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
                 ⚡ Ücretsiz Test Al
               </button>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-[#25d366] px-8 py-4 font-semibold text-white transition-all hover:bg-[#1ebe5d]">
