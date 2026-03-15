@@ -465,21 +465,10 @@ export async function POST(req: NextRequest) {
 
     // ── create_direct: OTP'siz, session email ile direkt test oluştur ──────
     if (action === 'create_direct') {
-      if (isDisposableEmail(email)) {
-        return NextResponse.json(
-          { success: false, error: 'Geçici e-posta kabul edilmemektedir.' },
-          { status: 400 },
-        );
-      }
-
-      const ipCheck = await checkIpReputation(ip);
-      if (ipCheck.blocked) {
-        return NextResponse.json({ success: false, error: ipCheck.reason }, { status: 403 });
-      }
-
-      const existing = await findExistingTrial(email, ip);
-      if (existing) {
-        // Mevcut test bilgilerini döndür
+      // Sadece email bazlı kontrol — IP kontrolü yok (farklı hesaplar aynı IP'yi paylaşabilir)
+      const byEmail = await redisGet(`trial:email:${email}`);
+      if (byEmail) {
+        const existing: TrialRecord = JSON.parse(byEmail);
         return NextResponse.json({
           success: true,
           username: existing.username,
@@ -489,14 +478,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      const rateCheck = await checkRateLimit(ip);
-      if (rateCheck.blocked) {
-        return NextResponse.json(
-          { success: false, error: `Çok fazla istek. ${rateCheck.retryAfter} saniye bekleyin.` },
-          { status: 429 },
-        );
-      }
-
+      // Yeni test oluştur
       const creds = await createTrialUser();
       await recordTrial(email, ip, selectedPackage || 'Belirtilmedi', creds.username, creds.password);
       await sendTrialMail(email, creds.username, creds.password);
@@ -506,13 +488,15 @@ export async function POST(req: NextRequest) {
         username: creds.username,
         password: creds.password,
         startedAt: Date.now(),
+        alreadyExists: false,
       });
     }
 
-    // ── get_trial: Mevcut trial bilgilerini getir (Redis'ten) ─────────────
+    // ── get_trial: Mevcut trial bilgilerini getir (Redis'ten, sadece email) ─
     if (action === 'get_trial') {
-      const existing = await findExistingTrial(email, ip);
-      if (existing) {
+      const byEmail = await redisGet(`trial:email:${email}`);
+      if (byEmail) {
+        const existing: TrialRecord = JSON.parse(byEmail);
         return NextResponse.json({
           success: true,
           username: existing.username,
