@@ -936,13 +936,13 @@ function HomePageInner() {
                       </div>
                     )}
 
-                    {/* ── LOGO — görseldeki gibi büyük ── */}
-                    <div className="mb-4 flex items-center justify-center" style={{ height: '96px' }}>
+                    {/* ── LOGO ── */}
+                    <div className="mb-4 flex items-center justify-center" style={{ height: '200px' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={pkg.logo}
                         alt={pkg.logoAlt}
-                        style={{ width: '100%', maxWidth: '260px', height: '96px', objectFit: 'contain' }}
+                        style={{ width: '100%', maxWidth: '320px', height: '200px', objectFit: 'contain' }}
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).style.display = 'none';
                           const fb = e.currentTarget.nextElementSibling as HTMLElement;
@@ -950,8 +950,8 @@ function HomePageInner() {
                         }}
                       />
                       {/* Fallback: logo yokken */}
-                      <div className="hidden w-full h-24 items-center justify-center">
-                        <span className="text-2xl font-extrabold tracking-tight text-white">{pkg.name}</span>
+                      <div className="hidden w-full h-48 items-center justify-center">
+                        <span className="text-3xl font-extrabold tracking-tight text-white">{pkg.name}</span>
                       </div>
                     </div>
 
