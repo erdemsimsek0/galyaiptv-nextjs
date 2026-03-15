@@ -44,7 +44,7 @@ function AbonelikHeader() {
   const name = session?.user?.name || session?.user?.email?.split('@')[0] || 'U';
   return (
     <div className="sticky top-0 z-50 border-b border-[#1e2d42] bg-[#07111f]/95 backdrop-blur-md px-4 py-3">
-      <div className="mx-auto flex max-w-6xl items-center justify-between">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2">
         <Link href="/" className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Galya IPTV" className="h-8 w-auto" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
@@ -64,7 +64,7 @@ function AbonelikHeader() {
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1e3a5f] text-xs font-bold text-[#3b82f6]">{name[0]?.toUpperCase()||'U'}</span>
                 <span className="hidden md:inline">Profilim</span>
               </Link>
-              <Link href="/abonelik" className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600">Premium&apos;a Geç</Link>
+              <Link href="/abonelik" className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600"><span className="hidden sm:inline">Premium&apos;a </span>Geç</Link>
             </>
           ) : (
             <>
@@ -94,7 +94,7 @@ function PlanRow({ plan }: { plan: Plan }) {
     <div className="overflow-hidden rounded-2xl border transition-all duration-200"
       style={{ borderColor: open ? plan.accentColor+'60' : '#1e2d42', borderLeftWidth: open?3:1, borderLeftColor: open?plan.accentColor:'#1e2d42', backgroundColor: open?'#0a1020':'#08111e' }}>
       <button className="flex w-full items-center gap-4 px-5 py-4 text-left" onClick={() => setOpen(v=>!v)}>
-        <div className="flex h-12 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#0d1525] p-1">
+        <div className="flex h-10 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#0d1525] p-1 sm:h-12 sm:w-24">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={plan.logo} alt={plan.logoAlt} className="h-full w-full object-contain"
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; (e.currentTarget.nextElementSibling as HTMLElement).style.display='flex'; }} />
@@ -102,13 +102,13 @@ function PlanRow({ plan }: { plan: Plan }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-lg font-bold text-white">{plan.name}</p>
+            <p className="text-base font-bold text-white sm:text-lg">{plan.name}</p>
             {plan.popular && <span className="rounded-full bg-amber-500 px-2.5 py-0.5 text-[11px] font-bold text-white">★ POPÜLER</span>}
           </div>
           <p className="mt-0.5 truncate text-sm text-[#8b9ab3]">{plan.desc}</p>
         </div>
         <div className="shrink-0 text-right mr-2">
-          <p className="text-2xl font-extrabold text-white">₺{fmtTL(plan.basePrice)}</p>
+          <p className="text-xl font-extrabold text-white sm:text-2xl">₺{fmtTL(plan.basePrice)}</p>
           <p className="text-xs text-[#6b7280]">/ay</p>
         </div>
         <svg viewBox="0 0 20 20" fill="currentColor" className={`h-5 w-5 shrink-0 text-[#4b5563] transition-transform ${open?'rotate-180':''}`}>
@@ -135,7 +135,7 @@ function PlanRow({ plan }: { plan: Plan }) {
               </svg>
               <p className="text-sm font-semibold text-white">Abonelik Süresi</p>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {DURATIONS.map(d => {
                 const t = calcTotal(plan.basePrice, d.months, d.discount);
                 const mo = t / d.months;
@@ -163,7 +163,7 @@ function PlanRow({ plan }: { plan: Plan }) {
               </svg>
               <p className="text-sm font-semibold text-white">Eş Zamanlı İzleme</p>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {([
                 {n:2 as const,label:'2 Cihaz',sub:'Arkadaş',note:'Süre seçince fiyat belirlenir',recommended:true},
                 {n:1 as const,label:'1 Cihaz',sub:'Bireysel',note:'Ek ücret yok',recommended:false},
@@ -186,7 +186,7 @@ function PlanRow({ plan }: { plan: Plan }) {
               <p className="text-sm text-[#8b9ab3]">{plan.name} · {dur.label} · {selDevices} Cihaz</p>
               <div className="text-right">
                 {dur.discount > 0 && <p className="text-[11px] line-through text-[#4b5563]">₺{fmtTL(origTotal)}</p>}
-                <p className="text-2xl font-extrabold text-white">₺{fmtTL(grandTotal)}</p>
+                <p className="text-xl font-extrabold text-white sm:text-2xl">₺{fmtTL(grandTotal)}</p>
               </div>
             </div>
             <a href={`https://wa.me/447441921660?text=${encodeURIComponent(waText)}`} target="_blank" rel="noopener noreferrer"
@@ -206,13 +206,13 @@ function AbonelikInner() {
     <div className="min-h-screen bg-[#07111f] text-white">
       <AbonelikHeader />
       <div className="border-b border-amber-500/20 bg-amber-500/10 px-4 py-2.5 text-center">
-        <p className="text-sm font-semibold text-amber-400">
+        <p className="text-xs font-semibold text-amber-400 sm:text-sm">
           👑 Deneme süreniz sınırlı — şimdi premium&apos;a geçerek tüm içeriklere sınırsız erişim kazanın!
         </p>
       </div>
-      <main className="mx-auto max-w-3xl px-4 py-10">
+      <main className="mx-auto max-w-3xl px-3 py-6 sm:px-4 sm:py-10">
         <div className="mb-10 text-center">
-          <h1 className="mb-2 text-4xl font-black tracking-tight">Premium&apos;a Yükselt</h1>
+          <h1 className="mb-2 text-3xl font-black tracking-tight sm:text-4xl">Premium&apos;a Yükselt</h1>
           <p className="text-sm text-[#6b7280]">Binlerce film, dizi ve canlı yayın seni bekliyor</p>
           <div className="mt-6 flex items-center justify-center gap-4">
             <div className="flex items-center gap-2">
