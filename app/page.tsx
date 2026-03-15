@@ -2,8 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+import { useSession, SessionProvider } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
+
+function SessionProviderWrapper({ children }: { children: React.ReactNode }) {
+  return <SessionProvider>{children}</SessionProvider>;
+}
 
 // ─── Metadata notu ────────────────────────────────────────────────────────────
 // Bu sayfa 'use client' olduğundan metadata'yı layout.tsx'e ekle:
@@ -455,7 +459,7 @@ function VisitorCount() {
 }
 
 // ─── Ana bileşen ──────────────────────────────────────────────────────────────
-export default function HomePage() {
+function HomePageInner() {
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
   const searchParams = useSearchParams();
@@ -1554,5 +1558,14 @@ export default function HomePage() {
         </div>
       )}
     </>
+  );
+}
+
+// SessionProvider sarmalı — useSession'ın çalışması için gerekli
+export default function HomePage() {
+  return (
+    <SessionProviderWrapper>
+      <HomePageInner />
+    </SessionProviderWrapper>
   );
 }
