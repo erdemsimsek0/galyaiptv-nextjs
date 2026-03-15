@@ -937,20 +937,21 @@ function HomePageInner() {
                     )}
 
                     {/* ── LOGO ── */}
-                    <div className="mb-4 flex items-center justify-center" style={{ height: '200px' }}>
+                    <div className="mb-4 flex items-center justify-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={pkg.logo}
                         alt={pkg.logoAlt}
-                        style={{ width: '100%', maxWidth: '320px', height: '200px', objectFit: 'contain' }}
+                        className="w-full"
+                        style={{ maxWidth: '280px', height: 'auto', display: 'block' }}
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).style.display = 'none';
                           const fb = e.currentTarget.nextElementSibling as HTMLElement;
                           if (fb) fb.style.display = 'flex';
                         }}
                       />
-                      {/* Fallback: logo yokken */}
-                      <div className="hidden w-full h-48 items-center justify-center">
+                      {/* Fallback */}
+                      <div className="hidden w-full items-center justify-center py-6">
                         <span className="text-3xl font-extrabold tracking-tight text-white">{pkg.name}</span>
                       </div>
                     </div>
