@@ -500,19 +500,38 @@ function HomePageInner() {
     if (!isLoggedIn || !session?.user?.email) return;
     const userEmail = session.user.email;
 
-    // Önce localStorage'a bak — varsa hemen göster, kart açma
+    // localStorage'daki veriyi kontrol et — ama önce email eşleşiyor mu doğrula
     try {
       const raw = localStorage.getItem('galya_trial_creds');
       if (raw) {
         const p = JSON.parse(raw);
-        if (p.username) {
+        // Email eşleşiyorsa kullan, eşleşmiyorsa temizle
+        if (p.username && p.email === userEmail) {
           setGlobalTrialCreds(p);
-          return; // localStorage'da varsa Redis'e gitme
+          // Yine de Redis'ten doğrula (arka planda)
+          fetch('/api/test-talep', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'get_trial', email: userEmail }),
+          })
+            .then(r => r.json())
+            .then(data => {
+              if (data.success) {
+                const cr = { email: userEmail, username: data.username, password: data.password, startedAt: data.startedAt };
+                setGlobalTrialCreds(cr);
+                try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
+              }
+            })
+            .catch(() => { /* */ });
+          return;
+        } else {
+          // Farklı hesabın verisi — temizle
+          localStorage.removeItem('galya_trial_creds');
         }
       }
     } catch { /* */ }
 
-    // localStorage'da yoksa → yeni test oluştur, progress göster
+    // localStorage'da bu hesaba ait veri yoksa → yeni test oluştur, progress göster
     setTrialCreating(true);
     setTrialCreatingProgress(0);
 
@@ -535,7 +554,7 @@ function HomePageInner() {
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         if (data.success) {
           setTrialCreatingProgress(100);
-          const cr = { username: data.username, password: data.password, startedAt: data.startedAt || Date.now() };
+          const cr = { email: userEmail, username: data.username, password: data.password, startedAt: data.startedAt || Date.now() };
           setGlobalTrialCreds(cr);
           try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
           // Kısa bekle sonra profil sayfasına yönlendir
