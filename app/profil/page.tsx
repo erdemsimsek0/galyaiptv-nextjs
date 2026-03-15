@@ -6,7 +6,6 @@ import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 
 // ─── Metadata notu ────────────────────────────────────────────────────────────
-// Bu sayfa 'use client' olduğundan metadata'yı layout.tsx'e ekle:
 // export const metadata = {
 //   title: 'Galya IPTV | Donmayan Premium IPTV – 85.000+ Kanal, 4K Yayın',
 //   description: 'Donmayan premium IPTV hizmeti. 85.000+ kanal, 4K yayın kalitesi, Avrupa sunucuları. 3 saatlik ücretsiz test. Tüm cihazlarda çalışır.',
