@@ -159,7 +159,8 @@ async function sendVerificationRequest(params: {
 
 // ─── NextAuth yapılandırması ──────────────────────────────────────────────────
 export const authOptions: NextAuthOptions = {
-  adapter: RedisAdapter() as ReturnType<typeof RedisAdapter> & { [k: string]: unknown },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adapter: RedisAdapter() as any,
 
   providers: [
     GoogleProvider({
