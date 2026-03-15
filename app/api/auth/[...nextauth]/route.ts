@@ -123,18 +123,16 @@ async function sendVerificationRequest(params: {
   const { identifier: email, url } = params;
 
   const transport = createTransport({
-    host:   process.env.EMAIL_SERVER_HOST,
-    port:   Number(process.env.EMAIL_SERVER_PORT ?? 465),
-    secure: true,
+    service: 'gmail',
     auth: {
-      user: process.env.EMAIL_SERVER_USER,
-      pass: process.env.EMAIL_SERVER_PASSWORD,
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
     },
   });
 
   const info = await transport.sendMail({
     to:      email,
-    from:    `Galya IPTV <${process.env.EMAIL_FROM}>`,
+    from:    `Galya IPTV <${process.env.EMAIL_USER}>`,
     subject: 'Galya IPTV – Giriş Bağlantınız',
     html: `
       <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#07111f;padding:32px;border-radius:16px">
@@ -170,15 +168,13 @@ export const authOptions: NextAuthOptions = {
     }),
     EmailProvider({
       server: {
-        host:   process.env.EMAIL_SERVER_HOST,
-        port:   Number(process.env.EMAIL_SERVER_PORT ?? 465),
-        secure: true,
+        service: 'gmail',
         auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD,
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
         },
       },
-      from: process.env.EMAIL_FROM,
+      from: process.env.EMAIL_USER,
       // Özel şablon
       sendVerificationRequest: sendVerificationRequest as Parameters<typeof EmailProvider>[0]['sendVerificationRequest'],
     }),
