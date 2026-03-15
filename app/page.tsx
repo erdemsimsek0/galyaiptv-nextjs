@@ -1,9 +1,22 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSession, SessionProvider } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
+
+
+// useSearchParams Suspense sarmalı gerektirir — ayrı bileşen olarak tanımlandı
+function SearchParamsHandler({ onTestParam }: { onTestParam: () => void }) {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get('test') === '1') {
+      onTestParam();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+  return null;
+}
 
 function SessionProviderWrapper({ children }: { children: React.ReactNode }) {
   return <SessionProvider>{children}</SessionProvider>;
@@ -462,15 +475,7 @@ function VisitorCount() {
 function HomePageInner() {
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
-  const searchParams = useSearchParams();
 
-  // ?test=1 parametresiyle gelince modal'ı aç
-  useEffect(() => {
-    if (searchParams.get('test') === '1' && isLoggedIn) {
-      handleOpenModal();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, isLoggedIn]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
@@ -591,6 +596,9 @@ function HomePageInner() {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <SearchParamsHandler onTestParam={() => { if (isLoggedIn) handleOpenModal(); }} />
+      </Suspense>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
