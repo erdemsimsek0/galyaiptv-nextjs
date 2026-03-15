@@ -41,7 +41,7 @@ export default function KayitPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07111f] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#07111f] flex items-center justify-center p-3 sm:p-4">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-1/3 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1e3a5f]/20 blur-3xl" />
       </div>
@@ -53,7 +53,7 @@ export default function KayitPage() {
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525]/80 p-8 shadow-2xl backdrop-blur-sm">
+        <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525]/80 p-5 shadow-2xl backdrop-blur-sm sm:p-8">
           {sent ? (
             <div className="text-center space-y-4">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-950/50 text-3xl">✉️</div>
@@ -76,7 +76,7 @@ export default function KayitPage() {
           ) : (
             <>
               <div className="mb-7 text-center">
-                <h1 className="text-2xl font-black text-white">Hesap Oluştur</h1>
+                <h1 className="text-xl font-black text-white sm:text-2xl">Hesap Oluştur</h1>
                 <p className="mt-1.5 text-sm text-[#6b7280]">Yeni bir Galya IPTV hesabı oluşturun</p>
               </div>
 
