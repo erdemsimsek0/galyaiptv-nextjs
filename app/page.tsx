@@ -322,7 +322,7 @@ interface ToastMsg { id: number; message: string; type: ToastType }
 
 function ToastContainer({ toasts, onRemove }: { toasts: ToastMsg[]; onRemove: (id: number) => void }) {
   return (
-    <div className="pointer-events-none fixed bottom-24 left-1/2 z-[60] flex -translate-x-1/2 flex-col-reverse gap-2 md:bottom-8">
+    <div className="pointer-events-none fixed bottom-4 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 flex-col-reverse gap-2">
       {toasts.map((t) => (
         <div key={t.id} onClick={() => onRemove(t.id)}
           className={`pointer-events-auto flex cursor-pointer items-center gap-2.5 rounded-xl border px-4 py-3 text-sm shadow-xl backdrop-blur-md transition-all ${t.type === 'success' ? 'border-emerald-500/40 bg-emerald-950/80 text-emerald-300' : t.type === 'error' ? 'border-red-500/40 bg-red-950/80 text-red-300' : t.type === 'warning' ? 'border-amber-500/40 bg-amber-950/80 text-amber-300' : 'border-[#1e3a5f] bg-[#111827]/95 text-[#818cf8]'}`}>
@@ -475,8 +475,8 @@ function TrialBanner({ active, startedAt }: { active: boolean; startedAt: number
 
   if (!active) {
     return (
-      <div className="w-full bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 text-center">
-        <p className="text-sm font-semibold text-amber-400">
+      <div className="w-full bg-amber-500/10 border-b border-amber-500/20 px-3 py-2 text-center sm:px-4 sm:py-2.5">
+        <p className="text-xs font-semibold text-amber-400 sm:text-sm">
           ⌛ Test süreniz sona erdi —{' '}
           <a href="/abonelik" className="underline hover:text-amber-300">Şimdi Abone Olun →</a>
         </p>
@@ -484,8 +484,8 @@ function TrialBanner({ active, startedAt }: { active: boolean; startedAt: number
     );
   }
   return (
-    <div className="w-full bg-emerald-500/10 border-b border-emerald-500/20 px-4 py-2.5 text-center">
-      <p className="text-sm font-semibold text-emerald-400">
+    <div className="w-full bg-emerald-500/10 border-b border-emerald-500/20 px-3 py-2 text-center sm:px-4 sm:py-2.5">
+      <p className="text-xs font-semibold text-emerald-400 sm:text-sm">
         ✅ Test süreniz devam ediyor —{' '}
         <span className="font-mono text-white">{pad(h)} saat {pad(m)} dakika</span> kaldı ·{' '}
         <a href="/abonelik" className="underline hover:text-emerald-300">Şimdi Abone Olun →</a>
@@ -710,7 +710,7 @@ function HomePageInner() {
 
       {/* ─── Header ─────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-[#07111f]/90 backdrop-blur-md">
-        <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+        <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           {/* Logo — görseldeki gibi solda */}
           <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -798,7 +798,7 @@ function HomePageInner() {
         </nav>
 
         {mobileMenuOpen && (
-          <div className="border-t border-[#1e3a5f] bg-[#0d1117] px-6 pb-4 md:hidden">
+          <div className="border-t border-[#1e3a5f] bg-[#0d1117] px-4 pb-4 md:hidden">
             <div className="flex flex-col gap-1 pt-3 text-sm">
               {[{ href: '/#paketler', label: 'Paketler' }, { href: '/#ozellikler', label: 'Özellikler' }, { href: '/#platformlar', label: 'Platformlar' }, { href: '/#yorumlar', label: 'Yorumlar' }, { href: '/#sss', label: 'S.S.S' }, { href: '/kurulum-rehberi', label: 'Kurulum Rehberi' }].map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-[#9ca3af] transition-colors hover:bg-[#1e3a5f]/30 hover:text-white">{item.label}</Link>
@@ -822,12 +822,12 @@ function HomePageInner() {
             <div className="absolute left-0 top-0 h-[700px] w-[600px] rounded-full bg-[#1e3a5f]/20 blur-3xl" />
           </div>
 
-          <div className="relative mx-auto flex max-w-6xl flex-col items-start gap-10 px-6 pb-16 pt-14 lg:flex-row lg:items-center lg:gap-0">
+          <div className="relative mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 pb-10 pt-8 sm:px-6 sm:pb-16 sm:pt-14 lg:flex-row lg:items-center lg:gap-0">
 
             {/* Sol: metin içeriği */}
-            <div className="lg:w-1/2 lg:pr-10">
+            <div className="w-full lg:w-1/2 lg:pr-10">
               {/* Ziyaretçi sayacı badge */}
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#1e2d42] bg-[#0d1a2a] px-4 py-2 text-sm text-[#9ca3af]">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#1e2d42] bg-[#0d1a2a] px-3 py-1.5 text-xs text-[#9ca3af] sm:px-4 sm:py-2 sm:text-sm">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
@@ -836,7 +836,7 @@ function HomePageInner() {
               </div>
 
               {/* Ana başlık */}
-              <h1 className="mb-5 text-5xl font-black leading-[1.05] tracking-tight md:text-6xl">
+              <h1 className="mb-5 text-3xl font-black leading-[1.05] tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
                 65.000+ İçerikli<br />
                 <span className="text-[#3b82f6]">Premium IPTV</span>
               </h1>
@@ -849,7 +849,7 @@ function HomePageInner() {
               </p>
 
               {/* Özellik rozetleri — görseldeki mavi bordered pill'ler */}
-              <div className="mb-8 flex flex-wrap gap-2">
+              <div className="mb-6 flex flex-wrap gap-2">
                 {['Kesintisiz Yayın', '4K HDR', 'VPN Gerekmez', 'Smart TV Direkt Çalışır'].map((b) => (
                   <span key={b} className="flex items-center gap-1.5 rounded-full border border-[#1e3a5f] bg-[#0d1a2a] px-3.5 py-1.5 text-sm font-medium text-[#9ca3af]">
                     <span className="text-[#3b82f6] font-bold">✓</span> {b}
@@ -858,7 +858,7 @@ function HomePageInner() {
               </div>
 
               {/* CTA butonları — session durumuna göre değişir */}
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-col gap-3 xs:flex-row sm:flex-row">
                 {!authLoading && isLoggedIn && trialActive ? (
                   // Test aktif
                   <Link href="/profil"
@@ -916,7 +916,7 @@ function HomePageInner() {
 
         {/* ─── Güven rozetleri şeridi ──────────────────────────────────────────── */}
         <div className="border-y border-[#1e2d42] bg-[#0a1525] px-6 py-4">
-          <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-6 md:gap-10">
+          <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-10">
             {[{ icon: '🔒', label: 'SSL Güvenli' }, { icon: '💬', label: 'WhatsApp Destek' }, { icon: '🆓', label: '3 Saat Ücretsiz Test' }, { icon: '⚡', label: 'Anında Kurulum' }, { icon: '🌍', label: '40+ Ülke Kanalı' }, { icon: '🎬', label: '4K HDR Yayın' }].map((b) => (
               <div key={b.label} className="flex items-center gap-2 text-xs text-[#4b5a6e]">
                 <span className="text-base">{b.icon}</span><span>{b.label}</span>
@@ -926,8 +926,8 @@ function HomePageInner() {
         </div>
 
         {/* ─── PAKETLER ────────────────────────────────────────────────────────── */}
-        <section id="paketler" className="px-6 py-20">
-          <div className="mx-auto max-w-5xl">
+        <section id="paketler" className="px-4 py-12 sm:px-6 sm:py-20">
+          <div className="mx-auto max-w-5xl px-0">
             <div className="mb-8 text-center">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Abonelik Paketleri</p>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Sizin İçin Doğru Paket</h2>
@@ -1081,7 +1081,7 @@ function HomePageInner() {
 
         {/* ─── İÇERİK KAPSAMı ──────────────────────────────────────────────────── */}
         <section id="ozellikler" className="border-t border-[#1e3a5f] px-6 py-20">
-          <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-5xl px-0">
             <div className="mb-12 text-center">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Neden Galya IPTV?</p>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Her Şey Tek Pakette</h2>
@@ -1287,7 +1287,7 @@ function HomePageInner() {
 
         {/* ─── SSS + GARANTİ ───────────────────────────────────────────────────── */}
         <section id="sss" className="border-t border-[#1e3a5f] bg-[#0d1117] px-6 py-20">
-          <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-5xl px-0">
             <div className="mb-10 text-center">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Sıkça Sorulan Sorular</p>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Aklınızdaki Sorular</h2>
@@ -1376,8 +1376,8 @@ function HomePageInner() {
       </main>
 
       {/* ─── Footer ──────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-[#1e3a5f] bg-[#0d1117] px-6 py-12">
-        <div className="mx-auto max-w-5xl">
+      <footer className="border-t border-[#1e3a5f] bg-[#0d1117] px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-5xl px-0">
           <div className="flex flex-col items-center gap-3 md:flex-row md:justify-between">
             <div>
               <p className="text-lg font-bold text-white">Galya <span className="text-[#818cf8]">IPTV</span></p>
@@ -1420,7 +1420,7 @@ function HomePageInner() {
       </div>
 
       {/* ─── Desktop Sticky CTA ─────────────────────────────────────────────── */}
-      <div className="fixed bottom-6 right-6 z-40 hidden md:flex flex-col gap-2 items-end">
+      <div className="fixed bottom-6 right-6 z-40 hidden lg:flex flex-col gap-2 items-end">
         <div className="rounded-xl border border-[#1e3a5f] bg-[#111827]/95 p-3 shadow-2xl backdrop-blur-md w-52">
           <p className="mb-2 text-[11px] text-[#818cf8] text-center">⭐ 10.200+ aktif kullanıcı</p>
           {isLoggedIn && trialActive ? (
@@ -1439,7 +1439,7 @@ function HomePageInner() {
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#030712]/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setShowAuthModal(false); }}>
-          <div className="relative w-full max-w-sm overflow-y-auto rounded-t-2xl border border-[#1e2d42] bg-[#0a1525] p-6 shadow-2xl sm:rounded-2xl" style={{ maxHeight: '92vh' }}>
+          <div className="relative w-full max-w-sm overflow-y-auto rounded-t-2xl border border-[#1e2d42] bg-[#0a1525] p-5 shadow-2xl sm:rounded-2xl sm:p-6" style={{ maxHeight: '92vh' }}>
             <button onClick={() => setShowAuthModal(false)}
               className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#1e3a5f] hover:text-white">✕</button>
 
