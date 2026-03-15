@@ -451,6 +451,202 @@ function IpTab({ data, secret, onRefresh }: { data: ApiResponse; secret: string;
   );
 }
 
+
+// ─── Fiyat Yönetimi Sekmesi ───────────────────────────────────────────────────
+const PLAN_LABELS: Record<string, { name: string; color: string; emoji: string }> = {
+  max:    { name: 'Montana Max',    color: '#ef4444', emoji: '👑' },
+  sports: { name: 'Montana Sports', color: '#22c55e', emoji: '⚽' },
+  cinema: { name: 'Montana Cinema', color: '#f59e0b', emoji: '🎬' },
+};
+const DEFAULT_PRICES_ADMIN: Record<string, number> = { max: 229.90, sports: 159.90, cinema: 129.90 };
+
+function PricesTab({ secret }: { secret: string }) {
+  const [prices,  setPrices]  = useState<Record<string, number>>(DEFAULT_PRICES_ADMIN);
+  const [form,    setForm]    = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving,  setSaving]  = useState(false);
+  const [msg,     setMsg]     = useState('');
+  const [msgType, setMsgType] = useState<'ok'|'err'>('ok');
+  const [isDefault, setIsDefault] = useState(true);
+
+  const showMsg = (text: string, type: 'ok'|'err' = 'ok') => {
+    setMsg(text); setMsgType(type); setTimeout(() => setMsg(''), 5000);
+  };
+
+  useEffect(() => {
+    fetch('/api/prices')
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          setPrices(d.prices);
+          setIsDefault(d.isDefault ?? false);
+          const f: Record<string, string> = {};
+          Object.entries(d.prices).forEach(([k, v]) => { f[k] = String(v); });
+          setForm(f);
+        }
+      })
+      .catch(() => showMsg('Fiyatlar yüklenemedi.', 'err'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    // Validasyon
+    const parsed: Record<string, number> = {};
+    for (const [key, val] of Object.entries(form)) {
+      const num = parseFloat(val.replace(',', '.'));
+      if (isNaN(num) || num <= 0) {
+        showMsg(`Geçersiz fiyat: ${PLAN_LABELS[key]?.name || key}`, 'err'); return;
+      }
+      parsed[key] = num;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/prices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ prices: parsed }),
+      });
+      const d = await res.json();
+      if (d.success) {
+        setPrices(d.prices); setIsDefault(false);
+        showMsg('✓ Fiyatlar güncellendi. Tüm sayfalara yansıdı.');
+      } else showMsg(d.error || 'Hata.', 'err');
+    } catch { showMsg('Bağlantı hatası.', 'err'); }
+    finally { setSaving(false); }
+  };
+
+  const handleReset = async () => {
+    if (!confirm('Fiyatları varsayılan değerlere sıfırlamak istediğinize emin misiniz?')) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/prices', { method: 'DELETE', headers: { 'x-admin-secret': secret } });
+      const d = await res.json();
+      if (d.success) {
+        setPrices(d.prices); setIsDefault(true);
+        const f: Record<string, string> = {};
+        Object.entries(d.prices).forEach(([k, v]) => { f[k] = String(v); });
+        setForm(f);
+        showMsg('Varsayılan fiyatlara döndürüldü.');
+      } else showMsg(d.error || 'Hata.', 'err');
+    } catch { showMsg('Bağlantı hatası.', 'err'); }
+    finally { setSaving(false); }
+  };
+
+  if (loading) return <div className="text-center py-20 text-gray-400">Fiyatlar yükleniyor...</div>;
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-white">💰 Paket Fiyat Yönetimi</h2>
+          <p className="text-xs text-gray-500 mt-1">
+            {isDefault ? '⚠️ Şu an varsayılan fiyatlar kullanılıyor.' : '✓ Özel fiyatlar aktif.'}
+          </p>
+        </div>
+        {!isDefault && (
+          <button onClick={handleReset} disabled={saving}
+            className="text-xs bg-gray-800 border border-gray-700 text-gray-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
+            Varsayılana Sıfırla
+          </button>
+        )}
+      </div>
+
+      {msg && (
+        <div className={`rounded-xl px-4 py-3 text-sm border ${msgType === 'ok' ? 'bg-green-900/30 text-green-400 border-green-800/50' : 'bg-red-900/30 text-red-400 border-red-800/50'}`}>
+          {msg}
+        </div>
+      )}
+
+      {/* Fiyat kartları */}
+      <div className="grid gap-4">
+        {Object.entries(PLAN_LABELS).map(([id, meta]) => (
+          <div key={id} className="bg-[#111827] border border-[#1f2937] rounded-2xl p-5"
+            style={{ borderLeftColor: meta.color, borderLeftWidth: 3 }}>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-2xl">{meta.emoji}</span>
+              <div>
+                <p className="font-bold text-white">{meta.name}</p>
+                <p className="text-xs text-gray-500">Aylık baz fiyat (TL)</p>
+              </div>
+              <div className="ml-auto text-right">
+                <p className="text-xs text-gray-500">Mevcut</p>
+                <p className="font-mono font-bold" style={{ color: meta.color }}>
+                  ₺{(prices[id] ?? DEFAULT_PRICES_ADMIN[id]).toFixed(2).replace('.', ',')}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <label className="mb-1.5 block text-xs text-gray-400">Yeni Fiyat (₺)</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 text-sm">₺</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    max="99999"
+                    value={form[id] ?? ''}
+                    onChange={e => setForm(p => ({ ...p, [id]: e.target.value }))}
+                    className="flex-1 bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 outline-none focus:border-[#7c3aed] transition-colors text-sm font-mono"
+                    placeholder={String(DEFAULT_PRICES_ADMIN[id])}
+                  />
+                </div>
+              </div>
+              {/* Hızlı değişim butonları */}
+              <div className="flex flex-col gap-1.5 pt-5">
+                {[-10, -5, +5, +10].map(delta => (
+                  <button key={delta}
+                    onClick={() => {
+                      const current = parseFloat((form[id] || String(prices[id])).replace(',', '.')) || 0;
+                      const newVal  = Math.max(1, Math.round((current + delta) * 100) / 100);
+                      setForm(p => ({ ...p, [id]: String(newVal) }));
+                    }}
+                    className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${delta > 0 ? 'border-green-800/50 bg-green-900/20 text-green-400 hover:bg-green-900/40' : 'border-red-800/50 bg-red-900/20 text-red-400 hover:bg-red-900/40'}`}>
+                    {delta > 0 ? `+${delta}` : delta}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* İndirim hesaplayıcı */}
+            {form[id] && (
+              <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                {[{ label: '1 Ay', m: 1, d: 0 }, { label: '6 Ay (%5)', m: 6, d: 5 }, { label: '12 Ay (%20)', m: 12, d: 20 }].map(({ label, m, d }) => {
+                  const base  = parseFloat(form[id].replace(',', '.')) || 0;
+                  const total = Math.round(base * (1 - d/100) * m * 100) / 100;
+                  return (
+                    <div key={label} className="rounded-lg bg-[#1f2937] p-2 text-center">
+                      <p className="text-gray-500">{label}</p>
+                      <p className="font-mono font-semibold text-white">₺{total.toFixed(2).replace('.', ',')}</p>
+                      <p className="text-gray-600">/{m === 1 ? 'ay' : `${m} ay`}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-3">
+        <button onClick={handleSave} disabled={saving}
+          className="flex-1 bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors">
+          {saving ? 'Kaydediliyor...' : '💾 Fiyatları Kaydet & Yayınla'}
+        </button>
+      </div>
+
+      <div className="rounded-xl border border-[#1f2937] bg-[#0f172a] p-4 text-xs text-gray-500 space-y-1">
+        <p className="font-semibold text-gray-400">ℹ️ Nasıl Çalışır?</p>
+        <p>• Fiyatlar Redis&apos;te saklanır, tüm sayfalar her yüklemede API&apos;den çeker.</p>
+        <p>• Ana sayfa paket kartları, abonelik sayfası ve ödeme özeti anlık güncellenir.</p>
+        <p>• Varsayılan fiyatlar: Max ₺229,90 · Sports ₺159,90 · Cinema ₺129,90</p>
+        <p>• İndirimler otomatik hesaplanır (6 ay %5, 12 ay %20).</p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Ana Admin Bileşeni ───────────────────────────────────────────────────────
 export default function AdminPage() {
   const [secret,    setSecret]    = useState('');
@@ -459,7 +655,7 @@ export default function AdminPage() {
   const [data,      setData]      = useState<ApiResponse | null>(null);
   const [error,     setError]     = useState('');
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState<'trials'|'ips'|'payment'>('trials');
+  const [activeTab, setActiveTab] = useState<'trials'|'ips'|'payment'|'prices'>('trials');
 
   const fetchData = useCallback(async (s: string) => {
     setLoading(true); setError('');
@@ -545,6 +741,9 @@ export default function AdminPage() {
           <Tab active={activeTab === 'payment'} onClick={() => setActiveTab('payment')}>
             💳 IBAN Yönetimi
           </Tab>
+          <Tab active={activeTab === 'prices'} onClick={() => setActiveTab('prices')}>
+            💰 Fiyat Yönetimi
+          </Tab>
         </div>
 
         {error && (
@@ -565,6 +764,10 @@ export default function AdminPage() {
 
         {activeTab === 'payment' && (
           <PaymentTab secret={secret} />
+        )}
+
+        {activeTab === 'prices' && (
+          <PricesTab secret={secret} />
         )}
       </div>
     </div>
