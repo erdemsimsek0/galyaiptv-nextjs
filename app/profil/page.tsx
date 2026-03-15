@@ -227,9 +227,11 @@ function ProfilInner() {
           <Link href="/" className="flex items-center gap-2">
             <LogoWithFallback />
           </Link>
-          <Link href="/" className="text-xs text-[#6b7280] transition-colors hover:text-white">
-            Ana Sayfa
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-xs text-[#6b7280] transition-colors hover:text-white">Ana Sayfa</Link>
+            <Link href="/abonelik" className="text-xs text-[#6b7280] transition-colors hover:text-white">Abonelik</Link>
+            <Link href="/kurulum-rehberi" className="text-xs text-[#6b7280] transition-colors hover:text-white">Kurulum</Link>
+          </div>
         </div>
       </div>
 
