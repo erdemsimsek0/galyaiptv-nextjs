@@ -2,6 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 
 // ─── Metadata notu ────────────────────────────────────────────────────────────
 // Bu sayfa 'use client' olduğundan metadata'yı layout.tsx'e ekle:
@@ -454,6 +458,17 @@ function VisitorCount() {
 
 // ─── Ana bileşen ──────────────────────────────────────────────────────────────
 export default function HomePage() {
+  const { data: session, status } = useSession();
+  const isLoggedIn = status === 'authenticated';
+  const searchParams = useSearchParams();
+
+  // ?test=1 parametresiyle gelince modal'ı aç
+  useEffect(() => {
+    if (searchParams.get('test') === '1' && isLoggedIn) {
+      handleOpenModal();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isLoggedIn]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
@@ -477,6 +492,19 @@ export default function HomePage() {
   const [exitPopupShown, setExitPopupShown] = useState(false);
   const [recommendedPkg, setRecommendedPkg] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  // Giriş yapan kullanıcı için otomatik test oluştur (henüz test yoksa modal'ı aç)
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    try {
+      const existing = localStorage.getItem('galya_trial_creds');
+      if (!existing) {
+        // Kısa gecikme ile modal aç — sayfa yüklenmesini bekle
+        const t = setTimeout(() => handleOpenModal(), 800);
+        return () => clearTimeout(t);
+      }
+    } catch { /* */ }
+  }, [isLoggedIn]);
+
   const [selectedDuration, setSelectedDuration] = useState<DurationKey>('6ay');
   const toastIdRef = useRef(0);
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -623,20 +651,33 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Sağ: Giriş Yap + Kayıt Ol */}
+          {/* Sağ: Session durumuna göre değişir */}
           <div className="hidden items-center gap-3 md:flex">
-            <Link
-              href="/giris"
-              className="text-sm font-medium text-[#8b9ab3] transition-colors hover:text-white"
-            >
-              Giriş Yap
-            </Link>
-            <Link
-              href="/kayit"
-              className="rounded-xl bg-[#3b82f6] px-5 py-2 text-sm font-bold text-white shadow-lg shadow-[#3b82f6]/30 transition-all hover:bg-[#2563eb]"
-            >
-              Kayıt Ol
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link href="/profil" className="flex items-center gap-2 text-sm font-medium text-[#8b9ab3] transition-colors hover:text-white">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1e3a5f] text-xs font-bold text-[#3b82f6]">
+                    {session?.user?.name?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || 'U'}
+                  </span>
+                  Profilim
+                </Link>
+                <button
+                  onClick={() => handleOpenModal()}
+                  className="rounded-xl bg-[#3b82f6] px-5 py-2 text-sm font-bold text-white shadow-lg shadow-[#3b82f6]/30 transition-all hover:bg-[#2563eb]"
+                >
+                  ⚡ Testi Başlat
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/giris" className="text-sm font-medium text-[#8b9ab3] transition-colors hover:text-white">
+                  Giriş Yap
+                </Link>
+                <Link href="/kayit" className="rounded-xl bg-[#3b82f6] px-5 py-2 text-sm font-bold text-white shadow-lg shadow-[#3b82f6]/30 transition-all hover:bg-[#2563eb]">
+                  Kayıt Ol
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobil hamburger */}
