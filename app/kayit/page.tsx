@@ -13,12 +13,26 @@ export default function KayitPage() {
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.includes('@')) { setError('Geçerli bir e-posta girin.'); return; }
-    setLoading(true); setError('');
-    // NextAuth email provider: yeni kullanıcı ise otomatik oluşturur
-    const res = await signIn('email', { email, redirect: false, callbackUrl: '/profil' });
-    setLoading(false);
-    if (res?.error) { setError('E-posta gönderilemedi. Lütfen tekrar deneyin.'); }
-    else { setSent(true); }
+    setLoading(true);
+    setError('');
+    try {
+      // redirect: false ile magic link gönderilir;
+      // kullanıcı linke tıklayınca NextAuth otomatik /profil'e yönlendirir (callbackUrl).
+      const res = await signIn('email', {
+        email,
+        redirect: false,
+        callbackUrl: '/profil',
+      });
+      if (res?.error) {
+        setError('E-posta gönderilemedi. Lütfen tekrar deneyin.');
+      } else {
+        setSent(true);
+      }
+    } catch {
+      setError('Bağlantı hatası. İnternet bağlantınızı kontrol edin.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogle = () => {
@@ -35,9 +49,7 @@ export default function KayitPage() {
       <div className="relative w-full max-w-sm">
         <div className="mb-8 flex justify-center">
           <Link href="/">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Galya IPTV" className="h-10 w-auto"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <LogoWithFallback />
           </Link>
         </div>
 
@@ -47,14 +59,17 @@ export default function KayitPage() {
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-950/50 text-3xl">✉️</div>
               <h2 className="text-xl font-bold text-white">E-postanızı Kontrol Edin</h2>
               <p className="text-sm text-[#8b9ab3]">
-                <span className="font-semibold text-white">{email}</span> adresine doğrulama bağlantısı gönderdik.
-                Bağlantıya tıklayarak hesabınızı oluşturabilirsiniz.
+                <span className="font-semibold text-white">{email}</span> adresine giriş bağlantısı gönderdik.
+                Bağlantıya tıklayarak hesabınıza erişebilirsiniz.
               </p>
               <div className="rounded-xl border border-[#3b82f6]/20 bg-[#3b82f6]/5 p-3 text-xs text-[#8b9ab3]">
-                Hesabınız bağlantıya tıkladıktan sonra otomatik oluşturulur.
+                Bağlantı 10 dakika geçerlidir. Tıkladıktan sonra otomatik olarak yönlendirilirsiniz.
               </div>
               <p className="text-xs text-[#4b5563]">Spam klasörünü de kontrol edin.</p>
-              <button onClick={() => setSent(false)} className="text-xs text-[#3b82f6] hover:underline">
+              <button
+                onClick={() => { setSent(false); setError(''); }}
+                className="text-xs text-[#3b82f6] hover:underline"
+              >
                 Farklı e-posta dene
               </button>
             </div>
@@ -66,9 +81,12 @@ export default function KayitPage() {
               </div>
 
               {/* Google */}
-              <button onClick={handleGoogle} disabled={loading}
-                className="mb-5 flex w-full items-center justify-center gap-3 rounded-xl border border-[#1e2d42] bg-white px-4 py-3 text-sm font-semibold text-[#111] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-60">
-                <svg viewBox="0 0 24 24" className="h-4 w-4">
+              <button
+                onClick={handleGoogle}
+                disabled={loading}
+                className="mb-5 flex w-full items-center justify-center gap-3 rounded-xl border border-[#1e2d42] bg-white px-4 py-3 text-sm font-semibold text-[#111] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-60"
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -86,27 +104,45 @@ export default function KayitPage() {
               <form onSubmit={handleEmail} className="space-y-4">
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-[#8b9ab3]">E-posta Adresi</label>
-                  <input type="email" placeholder="ornek@email.com" value={email}
-                    onChange={e => setEmail(e.target.value)} autoComplete="email"
-                    className="w-full rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-4 py-3 text-sm text-white placeholder:text-[#374151] outline-none transition-all focus:border-[#3b82f6]/50" />
-                  <p className="mt-1 text-[11px] text-[#4b5563]">Doğrulama bağlantısı bu adrese gönderilecek.</p>
+                  <input
+                    type="email"
+                    placeholder="ornek@email.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    autoComplete="email"
+                    className="w-full rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-4 py-3 text-sm text-white placeholder:text-[#374151] outline-none transition-all focus:border-[#3b82f6]/50"
+                  />
+                  <p className="mt-1 text-[11px] text-[#4b5563]">Giriş bağlantısı bu adrese gönderilecek.</p>
                 </div>
 
                 {email.includes('@') && email.includes('.') && (
                   <div className="flex items-center gap-2 text-xs text-emerald-400">
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd"/>
                     </svg>
-                    Doğrulandı
+                    Geçerli e-posta
                   </div>
                 )}
 
-                {error && <p className="rounded-xl border border-red-500/20 bg-red-950/30 px-3 py-2 text-xs text-red-400">{error}</p>}
+                {error && (
+                  <p className="rounded-xl border border-red-500/20 bg-red-950/30 px-3 py-2 text-xs text-red-400">
+                    {error}
+                  </p>
+                )}
 
-                <button type="submit" disabled={loading || !email.includes('@')}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3.5 text-sm font-bold text-[#111] transition-all hover:bg-gray-100 disabled:opacity-60">
+                <button
+                  type="submit"
+                  disabled={loading || !email.includes('@')}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3.5 text-sm font-bold text-[#111] transition-all hover:bg-gray-100 disabled:opacity-60"
+                >
                   {loading ? (
-                    <><svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Gönderiliyor...</>
+                    <>
+                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      Gönderiliyor...
+                    </>
                   ) : 'Doğrulama Bağlantısı Gönder →'}
                 </button>
               </form>
@@ -117,8 +153,10 @@ export default function KayitPage() {
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-[#374151]">Zaten hesabınız var mı?</span>
                   <div className="flex-1 h-px bg-[#1e2d42]" />
                 </div>
-                <Link href="/giris"
-                  className="flex w-full items-center justify-center rounded-xl border border-[#1e2d42] bg-[#0d1a2a] py-3 text-sm font-semibold text-white transition-all hover:border-[#3b82f6]/30 hover:bg-[#162035]">
+                <Link
+                  href="/giris"
+                  className="flex w-full items-center justify-center rounded-xl border border-[#1e2d42] bg-[#0d1a2a] py-3 text-sm font-semibold text-white transition-all hover:border-[#3b82f6]/30 hover:bg-[#162035]"
+                >
                   Giriş Yap
                 </Link>
               </div>
@@ -131,5 +169,26 @@ export default function KayitPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// ── Logo: resim yüklenebilirse göster, aksi hâlde metin fallback ──
+function LogoWithFallback() {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <span className="text-xl font-black text-white">
+        Galya <span className="text-[#3b82f6]">IPTV</span>
+      </span>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/logo.png"
+      alt="Galya IPTV"
+      className="h-10 w-auto"
+      onError={() => setFailed(true)}
+    />
   );
 }
