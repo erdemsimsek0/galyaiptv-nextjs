@@ -464,6 +464,8 @@ function HomePageInner() {
   const isLoggedIn = status === 'authenticated';
   const authLoading = status === 'loading';
   const [globalTrialCreds, setGlobalTrialCreds] = useState<{ username: string; password: string; startedAt: number } | null>(null);
+  const [trialCreating, setTrialCreating] = useState(false);
+  const [trialCreatingProgress, setTrialCreatingProgress] = useState(0);
   const TRIAL_TOTAL = 3 * 60 * 60 * 1000;
   const trialActive = globalTrialCreds !== null && (Date.now() - globalTrialCreds.startedAt) < TRIAL_TOTAL;
   const trialExpired = globalTrialCreds !== null && (Date.now() - globalTrialCreds.startedAt) >= TRIAL_TOTAL;
@@ -490,19 +492,39 @@ function HomePageInner() {
 
   const [recommendedPkg, setRecommendedPkg] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  // Progress bar için interval ref
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Giriş yapan kullanıcı için test bilgilerini yükle / oluştur
   useEffect(() => {
     if (!isLoggedIn || !session?.user?.email) return;
     const userEmail = session.user.email;
-    // Önce localStorage'a bak
+
+    // Önce localStorage'a bak — varsa hemen göster, kart açma
     try {
       const raw = localStorage.getItem('galya_trial_creds');
       if (raw) {
         const p = JSON.parse(raw);
-        if (p.username) setGlobalTrialCreds(p);
+        if (p.username) {
+          setGlobalTrialCreds(p);
+          return; // localStorage'da varsa Redis'e gitme
+        }
       }
     } catch { /* */ }
-    // Redis'ten kontrol et / oluştur
+
+    // localStorage'da yoksa → yeni test oluştur, progress göster
+    setTrialCreating(true);
+    setTrialCreatingProgress(0);
+
+    // Progress bar animasyonu (35 saniyede %90'a kadar)
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    progressIntervalRef.current = setInterval(() => {
+      setTrialCreatingProgress(prev => {
+        if (prev >= 90) { clearInterval(progressIntervalRef.current!); return 90; }
+        return prev + (90 / (35000 / 300));
+      });
+    }, 300);
+
     fetch('/api/test-talep', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -510,13 +532,31 @@ function HomePageInner() {
     })
       .then(r => r.json())
       .then(data => {
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         if (data.success) {
+          setTrialCreatingProgress(100);
           const cr = { username: data.username, password: data.password, startedAt: data.startedAt || Date.now() };
           setGlobalTrialCreds(cr);
           try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
+          // Kısa bekle sonra profil sayfasına yönlendir
+          setTimeout(() => {
+            setTrialCreating(false);
+            window.location.href = '/profil';
+          }, 1200);
+        } else {
+          setTrialCreating(false);
+          setTrialCreatingProgress(0);
         }
       })
-      .catch(() => { /* hata sessizce geç */ });
+      .catch(() => {
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        setTrialCreating(false);
+        setTrialCreatingProgress(0);
+      });
+
+    return () => {
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn, session?.user?.email]);
 
