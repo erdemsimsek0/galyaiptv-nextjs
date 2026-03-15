@@ -475,6 +475,7 @@ function VisitorCount() {
 function HomePageInner() {
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
+  const authLoading = status === 'loading';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -498,18 +499,26 @@ function HomePageInner() {
 
   const [recommendedPkg, setRecommendedPkg] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  // Giriş yapan kullanıcı için otomatik test oluştur (henüz test yoksa modal'ı aç)
+  // Giriş yapan kullanıcı için otomatik test oluştur
   useEffect(() => {
-    if (!isLoggedIn) return;
-    try {
-      const existing = localStorage.getItem('galya_trial_creds');
-      if (!existing) {
-        // Kısa gecikme ile modal aç — sayfa yüklenmesini bekle
-        const t = setTimeout(() => handleOpenModal(), 800);
-        return () => clearTimeout(t);
-      }
-    } catch { /* */ }
-  }, [isLoggedIn]);
+    if (!isLoggedIn || !session?.user?.email) return;
+    const userEmail = session.user.email;
+    // Redis'ten kontrol et, yoksa direkt oluştur
+    fetch('/api/test-talep', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create_direct', email: userEmail }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          const cr = { username: data.username, password: data.password, startedAt: data.startedAt || Date.now() };
+          try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
+        }
+      })
+      .catch(() => { /* hata sessizce geç */ });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, session?.user?.email]);
 
   const [selectedDuration, setSelectedDuration] = useState<DurationKey>('6ay');
   const toastIdRef = useRef(0);
@@ -645,7 +654,9 @@ function HomePageInner() {
 
           {/* Sağ: Session durumuna göre değişir */}
           <div className="hidden items-center gap-3 md:flex">
-            {isLoggedIn ? (
+            {authLoading ? (
+              <div className="h-8 w-32 animate-pulse rounded-xl bg-[#1e2d42]" />
+            ) : isLoggedIn ? (
               <>
                 <Link href="/profil" className="flex items-center gap-2 text-sm font-medium text-[#8b9ab3] transition-colors hover:text-white">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1e3a5f] text-xs font-bold text-[#3b82f6]">
