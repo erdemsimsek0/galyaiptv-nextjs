@@ -937,21 +937,21 @@ function HomePageInner() {
                     )}
 
                     {/* ── LOGO ── */}
-                    <div className="mb-2 flex items-center justify-center overflow-hidden">
+                    <div className="mb-4 flex items-center justify-center" style={{ height: '96px' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={pkg.logo}
                         alt={pkg.logoAlt}
-                        style={{ width: '140%', maxWidth: '140%', height: 'auto', display: 'block', transform: 'scale(1.4)', transformOrigin: 'center' }}
+                        style={{ width: '100%', maxWidth: '260px', height: '96px', objectFit: 'contain' }}
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).style.display = 'none';
                           const fb = e.currentTarget.nextElementSibling as HTMLElement;
                           if (fb) fb.style.display = 'flex';
                         }}
                       />
-                      {/* Fallback */}
-                      <div className="hidden w-full items-center justify-center py-4">
-                        <span className="text-3xl font-extrabold tracking-tight text-white">{pkg.name}</span>
+                      {/* Fallback: logo yokken */}
+                      <div className="hidden w-full h-24 items-center justify-center">
+                        <span className="text-2xl font-extrabold tracking-tight text-white">{pkg.name}</span>
                       </div>
                     </div>
 
