@@ -4,414 +4,467 @@ import { useState, useEffect, useCallback } from 'react';
 
 // ─── Tipler ───────────────────────────────────────────────────────────────────
 type TrialRecord = {
-  key: string;
-  email: string;
-  ip: string;
-  selectedPackage: string;
-  createdAt: number;
-  createdAtFormatted: string;
-  ttlSeconds: number;
-  daysLeft: number;
+  key:               string;
+  email:             string;
+  ip:                string;
+  selectedPackage:   string;
+  username:          string;
+  password:          string;
+  createdAt:         number;
+  createdAtFormatted:string;
+  ttlSeconds:        number;
+  daysLeft:          number;
+  trialExpired:      boolean;
+  trialHoursLeft:    string;
+  trialStatus:       'active' | 'expired';
 };
 
+type IpRecord = { ip: string; email: string; daysLeft: number };
+
 type ApiResponse = {
-  success: boolean;
-  totalEmails: number;
-  totalIPs: number;
+  success:      boolean;
+  totalEmails:  number;
+  totalIPs:     number;
   packageStats: Record<string, number>;
-  records: TrialRecord[];
-  error?: string;
+  records:      TrialRecord[];
+  ipRecords:    IpRecord[];
+  error?:       string;
 };
 
 interface PaymentInfo {
-  bankName:      string;
-  accountHolder: string;
-  iban:          string;
-  branch:        string;
-  note:          string;
-  updatedAt:     number;
+  bankName: string; accountHolder: string; iban: string; branch: string; note: string; updatedAt: number;
 }
 
-type SpinRecord = {
-  phone:          string;
-  prizeIndex:     number;
-  prizeLabel:     string;
-  wonAt:          number;
-  wonAtFormatted: string;
-  expired:        boolean;
-};
-
-const SPIN_PRIZES_LABELS = [
-  '%5 İndirim', '%10 İndirim', '+7 Gün Ücretsiz',
-  '+15 Gün Hediye', '%20 İndirim', '%8 İndirim',
-];
-const PRIZE_VALID_MS = 15 * 60 * 1000;
-const LS_SPIN_KEY    = 'galya_spin_entries';
-
-function loadSpinRecords(): SpinRecord[] {
-  try {
-    const raw = localStorage.getItem(LS_SPIN_KEY);
-    if (!raw) return [];
-    const map = JSON.parse(raw) as Record<string, { prizeIndex: number; wonAt: number }>;
-    return Object.entries(map).map(([phone, v]) => ({
-      phone,
-      prizeIndex:     v.prizeIndex,
-      prizeLabel:     SPIN_PRIZES_LABELS[v.prizeIndex] ?? '?',
-      wonAt:          v.wonAt,
-      wonAtFormatted: new Date(v.wonAt).toLocaleString('tr-TR'),
-      expired:        Date.now() - v.wonAt > PRIZE_VALID_MS,
-    })).sort((a, b) => b.wonAt - a.wonAt);
-  } catch { return []; }
-}
-
-// ─── StatCard ─────────────────────────────────────────────────────────────────
-function StatCard({ label, value, icon, variant }: {
-  label: string; value: number | string; icon: string;
-  variant: 'purple' | 'blue' | 'green' | 'orange' | 'pink';
-}) {
-  const styles = {
-    purple: { border: 'border-purple-800/50', bg: 'bg-purple-900/10', text: 'text-purple-400' },
-    blue:   { border: 'border-blue-800/50',   bg: 'bg-blue-900/10',   text: 'text-blue-400'   },
-    green:  { border: 'border-green-800/50',  bg: 'bg-green-900/10',  text: 'text-green-400'  },
-    orange: { border: 'border-orange-800/50', bg: 'bg-orange-900/10', text: 'text-orange-400' },
-    pink:   { border: 'border-pink-800/50',   bg: 'bg-pink-900/10',   text: 'text-pink-400'   },
-  }[variant];
+// ─── Yardımcı bileşenler ──────────────────────────────────────────────────────
+function StatCard({ label, value, icon, color }: { label: string; value: number | string; icon: string; color: string }) {
+  const colors: Record<string, string> = {
+    purple: 'border-purple-800/50 bg-purple-900/10 text-purple-400',
+    blue:   'border-blue-800/50   bg-blue-900/10   text-blue-400',
+    green:  'border-green-800/50  bg-green-900/10  text-green-400',
+    orange: 'border-orange-800/50 bg-orange-900/10 text-orange-400',
+    red:    'border-red-800/50    bg-red-900/10    text-red-400',
+    pink:   'border-pink-800/50   bg-pink-900/10   text-pink-400',
+  };
   return (
-    <div className={`rounded-xl border p-4 ${styles.border} ${styles.bg}`}>
+    <div className={`rounded-xl border p-4 ${colors[color] || colors.purple}`}>
       <div className="text-2xl mb-1">{icon}</div>
-      <div className={`text-2xl font-bold ${styles.text}`}>{value}</div>
+      <div className={`text-2xl font-bold ${colors[color]?.split(' ')[2]}`}>{value}</div>
       <div className="text-gray-400 text-xs mt-1">{label}</div>
     </div>
   );
 }
 
-// ─── DaysLeftBadge ────────────────────────────────────────────────────────────
-function DaysLeftBadge({ days }: { days: number }) {
-  const cls = days <= 1
-    ? 'bg-red-900/40 text-red-400 border-red-800/50'
-    : days <= 3
-    ? 'bg-yellow-900/40 text-yellow-400 border-yellow-800/50'
-    : 'bg-green-900/40 text-green-400 border-green-800/50';
-  return (
-    <span className={`text-xs px-2 py-1 rounded-lg border font-medium ${cls}`}>
-      {days} gün
-    </span>
-  );
+function Badge({ children, variant }: { children: React.ReactNode; variant: 'green' | 'red' | 'yellow' | 'gray' | 'purple' }) {
+  const v = {
+    green:  'bg-green-900/40  text-green-400  border-green-800/50',
+    red:    'bg-red-900/40    text-red-400    border-red-800/50',
+    yellow: 'bg-yellow-900/40 text-yellow-400 border-yellow-800/50',
+    gray:   'bg-gray-800/60   text-gray-500   border-gray-700/50',
+    purple: 'bg-purple-900/40 text-purple-300 border-purple-800/50',
+  }[variant];
+  return <span className={`text-xs px-2 py-1 rounded-lg border font-medium ${v}`}>{children}</span>;
 }
 
-// ─── Sekme bileşeni ───────────────────────────────────────────────────────────
-function Tab({ active, onClick, children }: {
-  active: boolean; onClick: () => void; children: React.ReactNode
-}) {
+function Tab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button onClick={onClick}
-      className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-        active
-          ? 'bg-[#7c3aed] text-white'
-          : 'bg-[#1f2937] text-gray-400 hover:text-white border border-[#374151]'
-      }`}>
+      className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${active ? 'bg-[#7c3aed] text-white' : 'bg-[#1f2937] text-gray-400 hover:text-white border border-[#374151]'}`}>
       {children}
     </button>
   );
 }
 
-// ─── IBAN Yönetim Sekmesi ──────────────────────────────────────────────────────
-function PaymentInfoTab({ secret }: { secret: string }) {
-  const [info,    setInfo]    = useState<PaymentInfo | null>(null);
+// ─── IBAN Yönetim Sekmesi ─────────────────────────────────────────────────────
+function PaymentTab({ secret }: { secret: string }) {
+  const [info, setInfo]       = useState<PaymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving,  setSaving]  = useState(false);
-  const [deleting,setDeleting]= useState(false);
-  const [msg,     setMsg]     = useState('');
-  const [msgType, setMsgType] = useState<'ok' | 'err'>('ok');
-  const [form,    setForm]    = useState({
-    bankName: '', accountHolder: '', iban: '', branch: '', note: '',
-  });
+  const [saving, setSaving]   = useState(false);
+  const [msg, setMsg]         = useState('');
+  const [msgType, setMsgType] = useState<'ok'|'err'>('ok');
   const [editing, setEditing] = useState(false);
+  const [form, setForm]       = useState({ bankName: '', accountHolder: '', iban: '', branch: '', note: '' });
 
-  const showMsg = (text: string, type: 'ok' | 'err' = 'ok') => {
-    setMsg(text); setMsgType(type);
-    setTimeout(() => setMsg(''), 4000);
+  const showMsg = (text: string, type: 'ok'|'err' = 'ok') => {
+    setMsg(text); setMsgType(type); setTimeout(() => setMsg(''), 4000);
   };
 
-  const fetchInfo = useCallback(async () => {
+  useEffect(() => {
     setLoading(true);
-    try {
-      const res  = await fetch('/api/payment-info');
-      const json = await res.json();
-      if (json.success) {
-        setInfo(json.data);
-        setForm({
-          bankName:      json.data.bankName,
-          accountHolder: json.data.accountHolder,
-          iban:          json.data.iban,
-          branch:        json.data.branch || '',
-          note:          json.data.note   || '',
-        });
-      } else {
-        // Henüz bilgi yok — form boş başlasın
-        setInfo(null);
-        setEditing(true);
-      }
-    } catch { showMsg('Sunucuya bağlanılamadı.', 'err'); }
-    finally { setLoading(false); }
+    fetch('/api/payment-info')
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) { setInfo(d.data); setForm({ bankName: d.data.bankName, accountHolder: d.data.accountHolder, iban: d.data.iban, branch: d.data.branch || '', note: d.data.note || '' }); }
+        else setEditing(true);
+      })
+      .catch(() => showMsg('Yüklenemedi.', 'err'))
+      .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { fetchInfo(); }, [fetchInfo]);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async () => {
     setSaving(true);
     try {
-      const res  = await fetch('/api/payment-info', {
-        method:  'POST',
+      const res = await fetch('/api/payment-info', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
-        body:    JSON.stringify(form),
+        body: JSON.stringify(form),
       });
-      const json = await res.json();
-      if (json.success) {
-        setInfo(json.data); setEditing(false);
-        showMsg('✓ Ödeme bilgileri güncellendi.', 'ok');
-      } else {
-        showMsg(json.error || 'Kayıt başarısız.', 'err');
-      }
-    } catch { showMsg('Sunucuya bağlanılamadı.', 'err'); }
+      const d = await res.json();
+      if (d.success) { setInfo(d.data); setEditing(false); showMsg('Kaydedildi ✓'); }
+      else showMsg(d.error || 'Hata.', 'err');
+    } catch { showMsg('Bağlantı hatası.', 'err'); }
     finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Ödeme bilgilerini silmek istediğinize emin misiniz?')) return;
-    setDeleting(true);
+    if (!confirm('IBAN bilgisini silmek istediğinize emin misiniz?')) return;
     try {
-      const res = await fetch('/api/payment-info', {
-        method: 'DELETE', headers: { 'x-admin-secret': secret },
-      });
-      const json = await res.json();
-      if (json.success) { setInfo(null); setEditing(true); showMsg('Silindi.', 'ok'); }
-      else { showMsg(json.error || 'Silinemedi.', 'err'); }
-    } catch { showMsg('Sunucu hatası.', 'err'); }
-    finally { setDeleting(false); }
+      const res = await fetch('/api/payment-info', { method: 'DELETE', headers: { 'x-admin-secret': secret } });
+      const d = await res.json();
+      if (d.success) { setInfo(null); setEditing(true); setForm({ bankName: '', accountHolder: '', iban: '', branch: '', note: '' }); showMsg('Silindi.'); }
+      else showMsg(d.error || 'Hata.', 'err');
+    } catch { showMsg('Bağlantı hatası.', 'err'); }
   };
 
-  const formatIBAN = (v: string) => {
-    const d = v.replace(/\s/g, '').toUpperCase();
-    return d.replace(/(.{4})/g, '$1 ').trim();
-  };
-
-  const handleIBANChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\s/g, '').toUpperCase().slice(0, 26);
-    setForm(f => ({ ...f, iban: formatIBAN(raw) }));
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center gap-3 py-20 text-gray-400">
-        <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-        </svg>
-        Yükleniyor...
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center py-20 text-gray-400">Yükleniyor...</div>;
 
   return (
-    <div className="space-y-5">
-      {/* Mesaj */}
-      {msg && (
-        <div className={`rounded-xl border px-4 py-3 text-sm ${
-          msgType === 'ok'
-            ? 'border-green-800/50 bg-green-900/20 text-green-400'
-            : 'border-red-800/50 bg-red-900/20 text-red-400'
-        }`}>
-          {msg}
+    <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-6 max-w-xl">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold">💳 IBAN / Ödeme Bilgileri</h2>
+        {info && !editing && (
+          <div className="flex gap-2">
+            <button onClick={() => setEditing(true)} className="text-xs bg-[#1f2937] border border-[#374151] text-gray-300 px-3 py-1.5 rounded-lg hover:text-white">Düzenle</button>
+            <button onClick={handleDelete} className="text-xs bg-red-900/40 border border-red-800/50 text-red-400 px-3 py-1.5 rounded-lg">Sil</button>
+          </div>
+        )}
+      </div>
+
+      {msg && <div className={`mb-4 rounded-xl px-4 py-2.5 text-sm ${msgType === 'ok' ? 'bg-green-900/30 text-green-400 border border-green-800/50' : 'bg-red-900/30 text-red-400 border border-red-800/50'}`}>{msg}</div>}
+
+      {!editing && info ? (
+        <div className="space-y-3">
+          {[['Banka', info.bankName], ['Hesap Sahibi', info.accountHolder], ['IBAN', info.iban], ['Şube', info.branch || '—'], ['Not', info.note || '—']].map(([label, val]) => (
+            <div key={label} className="flex gap-3">
+              <span className="w-28 shrink-0 text-xs text-gray-500 uppercase tracking-wider pt-0.5">{label}</span>
+              <span className="font-mono text-sm text-white break-all">{val}</span>
+            </div>
+          ))}
+          <p className="text-xs text-gray-600 mt-4">Son güncelleme: {new Date(info.updatedAt).toLocaleString('tr-TR')}</p>
         </div>
-      )}
-
-      {/* Mevcut bilgi gösterimi */}
-      {info && !editing && (
-        <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-6">
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white">Mevcut Ödeme Bilgileri</h2>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setEditing(true)}
-                className="rounded-xl bg-[#1f2937] hover:bg-[#374151] border border-[#374151] text-white px-4 py-1.5 text-sm transition-colors"
-              >
-                ✏️ Düzenle
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="rounded-xl bg-red-900/40 hover:bg-red-900/70 border border-red-800/50 text-red-400 px-4 py-1.5 text-sm transition-colors disabled:opacity-40"
-              >
-                {deleting ? '...' : '🗑 Sil'}
-              </button>
+      ) : (
+        <div className="space-y-4">
+          {[
+            { field: 'bankName', label: 'Banka Adı *', placeholder: 'Garanti BBVA' },
+            { field: 'accountHolder', label: 'Hesap Sahibi *', placeholder: 'Ad Soyad' },
+            { field: 'iban', label: 'IBAN *', placeholder: 'TR00 0000 0000 0000 0000 0000 00' },
+            { field: 'branch', label: 'Şube (opsiyonel)', placeholder: 'Merkez' },
+            { field: 'note', label: 'Not (opsiyonel)', placeholder: 'EFT açıklamasına e-postanızı yazınız' },
+          ].map(({ field, label, placeholder }) => (
+            <div key={field}>
+              <label className="mb-1.5 block text-xs font-semibold text-gray-400">{label}</label>
+              <input type="text" value={form[field as keyof typeof form]} placeholder={placeholder}
+                onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
+                className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 outline-none focus:border-[#7c3aed] transition-colors text-sm" />
             </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              { label: 'Banka Adı',      value: info.bankName },
-              { label: 'Hesap Sahibi',   value: info.accountHolder },
-              { label: 'Şube',           value: info.branch || '—' },
-              { label: 'Son Güncelleme', value: new Date(info.updatedAt).toLocaleString('tr-TR') },
-            ].map(row => (
-              <div key={row.label} className="rounded-xl border border-[#1f2937] bg-[#0f172a] p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">{row.label}</p>
-                <p className="mt-1 text-sm font-medium text-white">{row.value}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* IBAN — tam satır */}
-          <div className="mt-3 rounded-xl border border-[#7c3aed]/40 bg-[#1e1b4b]/30 p-4">
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">IBAN</p>
-            <p className="font-mono text-lg font-bold tracking-widest text-[#a5b4fc]">
-              {info.iban.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim()}
-            </p>
-          </div>
-
-          {/* Not */}
-          {info.note && (
-            <div className="mt-3 rounded-xl border border-amber-800/30 bg-amber-950/20 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 mb-1">Ödeme Notu</p>
-              <p className="text-xs text-amber-300">{info.note}</p>
-            </div>
-          )}
-
-          {/* Ödeme sayfası linki */}
-          <div className="mt-4 rounded-xl border border-[#1f2937] bg-[#0f172a] px-4 py-3 flex items-center justify-between">
-            <span className="text-xs text-gray-400">Ödeme sayfasına git</span>
-            <a href="/odeme?paket=Max&sure=1+Ay&toplam=229.90" target="_blank" rel="noopener noreferrer"
-              className="rounded-lg bg-[#7c3aed] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#6d28d9]">
-              Önizle →
-            </a>
-          </div>
-        </div>
-      )}
-
-      {/* Form */}
-      {editing && (
-        <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-6">
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white">
-              {info ? 'Ödeme Bilgilerini Düzenle' : 'Ödeme Bilgisi Ekle'}
-            </h2>
-            {info && (
-              <button onClick={() => setEditing(false)} className="text-xs text-gray-500 hover:text-white transition-colors">
-                İptal
-              </button>
-            )}
-          </div>
-
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Banka Adı */}
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-400">Banka Adı *</label>
-                <input
-                  type="text" required
-                  placeholder="Ziraat Bankası"
-                  value={form.bankName}
-                  onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))}
-                  className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7c3aed] transition-colors"
-                />
-              </div>
-
-              {/* Hesap Sahibi */}
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-400">Hesap Sahibi *</label>
-                <input
-                  type="text" required
-                  placeholder="Ad Soyad"
-                  value={form.accountHolder}
-                  onChange={e => setForm(f => ({ ...f, accountHolder: e.target.value }))}
-                  className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7c3aed] transition-colors"
-                />
-              </div>
-
-              {/* Şube */}
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-400">Şube (isteğe bağlı)</label>
-                <input
-                  type="text"
-                  placeholder="İstanbul Şubesi"
-                  value={form.branch}
-                  onChange={e => setForm(f => ({ ...f, branch: e.target.value }))}
-                  className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7c3aed] transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* IBAN — tam genişlik */}
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-gray-400">IBAN *</label>
-              <input
-                type="text" required
-                placeholder="TR00 0000 0000 0000 0000 0000 00"
-                value={form.iban}
-                onChange={handleIBANChange}
-                className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 font-mono text-sm outline-none focus:border-[#7c3aed] transition-colors tracking-widest"
-              />
-              <p className="mt-1 text-[11px] text-gray-500">
-                Otomatik formatlanır. TR ile başlamalı, 26 karakter olmalı.
-              </p>
-            </div>
-
-            {/* Ödeme notu */}
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-gray-400">Ödeme Notu</label>
-              <textarea
-                rows={3}
-                placeholder="Ödeme yaparken dikkat edilecek hususlar..."
-                value={form.note}
-                onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
-                className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7c3aed] transition-colors resize-none"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-            >
-              {saving ? (
-                <>
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                  </svg>
-                  Kaydediliyor...
-                </>
-              ) : (
-                <>{info ? '💾 Güncelle' : '➕ Ekle'}</>
-              )}
+          ))}
+          <div className="flex gap-3">
+            <button onClick={handleSave} disabled={saving || !form.bankName || !form.accountHolder || !form.iban}
+              className="flex-1 bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-50 text-white font-bold py-2.5 rounded-xl transition-colors text-sm">
+              {saving ? 'Kaydediliyor...' : 'Kaydet'}
             </button>
-          </form>
+            {info && <button onClick={() => setEditing(false)} className="px-4 py-2.5 rounded-xl bg-[#1f2937] border border-[#374151] text-gray-400 text-sm hover:text-white">İptal</button>}
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-// ─── Ana Component ────────────────────────────────────────────────────────────
-export default function AdminPage() {
-  const [secret,       setSecret]      = useState('');
-  const [authed,       setAuthed]      = useState(false);
-  const [loading,      setLoading]     = useState(false);
-  const [data,         setData]        = useState<ApiResponse | null>(null);
-  const [error,        setError]       = useState('');
-  const [deletingEmail,setDeleting]    = useState<string | null>(null);
-  const [search,       setSearch]      = useState('');
-  const [lastRefresh,  setLastRefresh] = useState<Date | null>(null);
-  const [activeTab,    setActiveTab]   = useState<'trials' | 'spin' | 'payment'>('trials');
-  const [spinRecords,  setSpinRecords] = useState<SpinRecord[]>([]);
-  const [spinSearch,   setSpinSearch]  = useState('');
+// ─── Test Kayıtları Sekmesi ───────────────────────────────────────────────────
+function TrialsTab({ data, secret, onRefresh }: { data: ApiResponse; secret: string; onRefresh: () => void }) {
+  const [search, setSearch]         = useState('');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<'all'|'active'|'expired'>('all');
+  const [actionMsg, setActionMsg]   = useState('');
 
-  const fetchData = useCallback(async (adminSecret: string) => {
+  const showMsg = (msg: string) => { setActionMsg(msg); setTimeout(() => setActionMsg(''), 4000); };
+
+  const doAction = async (action: string, email: string, ipAddr?: string) => {
+    const labels: Record<string, string> = {
+      reset_email: `${email} için 7 günlük limiti sıfırla?`,
+      terminate_trial: `${email} test hesabını sonlandır?`,
+      reset_full: `${email} için TÜM kayıtları sil (IP dahil)?`,
+      reset_ip: `${ipAddr} IP limitini sıfırla?`,
+    };
+    if (!confirm(labels[action])) return;
+    setActionLoading(email + action);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'DELETE',
+        headers: { 'x-admin-secret': secret, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, email, ip: ipAddr }),
+      });
+      const d = await res.json();
+      if (d.success) { showMsg(d.message); onRefresh(); }
+      else showMsg(d.error || 'Hata oluştu.');
+    } catch { showMsg('Bağlantı hatası.'); }
+    finally { setActionLoading(null); }
+  };
+
+  const records = data.records ?? [];
+  const filtered = records.filter(r => {
+    const matchSearch = search === '' || r.email.toLowerCase().includes(search.toLowerCase()) || r.ip.includes(search) || r.username.includes(search);
+    const matchStatus = filterStatus === 'all' || r.trialStatus === filterStatus;
+    return matchSearch && matchStatus;
+  });
+
+  const activeCount  = records.filter(r => !r.trialExpired).length;
+  const expiredCount = records.filter(r =>  r.trialExpired).length;
+  const today24h     = records.filter(r => Date.now() - r.createdAt < 86400000).length;
+  const packageStats = data.packageStats ?? {};
+  const maxPkg       = Math.max(...Object.values(packageStats), 1);
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="Toplam Test"  value={data.totalEmails} icon="🧪" color="purple" />
+        <StatCard label="Son 24 Saat"  value={today24h}         icon="📅" color="blue" />
+        <StatCard label="Test Aktif"   value={activeCount}      icon="✅" color="green" />
+        <StatCard label="Test Bitmiş"  value={expiredCount}     icon="⌛" color="orange" />
+      </div>
+
+      {/* Paket dağılımı */}
+      {Object.keys(packageStats).length > 0 && (
+        <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-5">
+          <h3 className="text-sm font-bold mb-4">📦 Paket İlgisi</h3>
+          <div className="space-y-2.5">
+            {Object.entries(packageStats).sort((a,b)=>b[1]-a[1]).map(([pkg, count]) => (
+              <div key={pkg} className="flex items-center gap-3">
+                <div className="w-32 shrink-0 text-xs text-gray-300 truncate">{pkg}</div>
+                <div className="flex-1 bg-[#1f2937] rounded-full h-6 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#7c3aed] to-[#a855f7] rounded-full flex items-center justify-end pr-2 transition-all"
+                    style={{ width: `${Math.max((count/maxPkg)*100, 8)}%` }}>
+                    <span className="text-[10px] font-bold text-white">{count}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Filtreler */}
+      <div className="flex flex-wrap gap-3">
+        <input type="text" placeholder="Email, IP veya kullanıcı adı ara..." value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="flex-1 min-w-48 bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 outline-none focus:border-[#7c3aed] text-sm" />
+        <div className="flex gap-2">
+          {(['all','active','expired'] as const).map(s => (
+            <button key={s} onClick={() => setFilterStatus(s)}
+              className={`px-3 py-2 rounded-xl text-xs font-medium transition-colors ${filterStatus===s ? 'bg-[#7c3aed] text-white' : 'bg-[#1f2937] text-gray-400 border border-[#374151] hover:text-white'}`}>
+              {s === 'all' ? 'Tümü' : s === 'active' ? '✅ Aktif' : '⌛ Bitmiş'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {actionMsg && (
+        <div className="bg-blue-900/20 border border-blue-800/40 text-blue-300 rounded-xl px-4 py-2.5 text-sm">{actionMsg}</div>
+      )}
+
+      {/* Tablo */}
+      {filtered.length > 0 ? (
+        <div className="bg-[#111827] border border-[#1f2937] rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#1f2937] text-gray-400 text-xs uppercase tracking-wider bg-[#0f172a]">
+                  <th className="text-left px-4 py-3">Email</th>
+                  <th className="text-left px-4 py-3">Kullanıcı / Şifre</th>
+                  <th className="text-left px-4 py-3">IP</th>
+                  <th className="text-left px-4 py-3">Paket</th>
+                  <th className="text-left px-4 py-3">Tarih</th>
+                  <th className="text-left px-4 py-3">Test Durumu</th>
+                  <th className="text-left px-4 py-3">Redis TTL</th>
+                  <th className="text-left px-4 py-3">İşlemler</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((r, i) => (
+                  <tr key={r.key}
+                    className={`border-b border-[#1f2937] last:border-0 hover:bg-[#1f2937]/60 transition-colors ${i%2===0?'':'bg-[#0f172a]/40'}`}>
+                    <td className="px-4 py-3">
+                      <span className="text-white font-medium text-xs break-all">{r.email}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-mono text-xs text-gray-300">{r.username}</div>
+                      <div className="font-mono text-xs text-gray-500">{r.password}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-mono text-gray-400 text-xs bg-[#1f2937] px-2 py-1 rounded">{r.ip}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant="purple">{r.selectedPackage}</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{r.createdAtFormatted}</td>
+                    <td className="px-4 py-3">
+                      {r.trialExpired
+                        ? <Badge variant="gray">Bitti</Badge>
+                        : <Badge variant="green">Aktif · {r.trialHoursLeft}s</Badge>}
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.daysLeft <= 1
+                        ? <Badge variant="red">{r.daysLeft}g</Badge>
+                        : r.daysLeft <= 3
+                        ? <Badge variant="yellow">{r.daysLeft}g</Badge>
+                        : <Badge variant="green">{r.daysLeft}g</Badge>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1.5 min-w-[120px]">
+                        {/* Email limitini sıfırla */}
+                        <button
+                          onClick={() => doAction('reset_email', r.email)}
+                          disabled={actionLoading === r.email + 'reset_email'}
+                          className="text-[10px] bg-blue-900/30 hover:bg-blue-900/60 text-blue-400 px-2 py-1 rounded border border-blue-800/40 transition-colors disabled:opacity-40 text-left">
+                          📧 Email Sıfırla
+                        </button>
+                        {/* IP sıfırla */}
+                        {r.ip !== 'bilinmiyor' && (
+                          <button
+                            onClick={() => doAction('reset_ip', r.email, r.ip)}
+                            disabled={actionLoading === r.email + 'reset_ip'}
+                            className="text-[10px] bg-orange-900/30 hover:bg-orange-900/60 text-orange-400 px-2 py-1 rounded border border-orange-800/40 transition-colors disabled:opacity-40 text-left">
+                            🌐 IP Sıfırla
+                          </button>
+                        )}
+                        {/* Testi sonlandır */}
+                        {!r.trialExpired && (
+                          <button
+                            onClick={() => doAction('terminate_trial', r.email)}
+                            disabled={actionLoading === r.email + 'terminate_trial'}
+                            className="text-[10px] bg-yellow-900/30 hover:bg-yellow-900/60 text-yellow-400 px-2 py-1 rounded border border-yellow-800/40 transition-colors disabled:opacity-40 text-left">
+                            ⏹ Testi Sonlandır
+                          </button>
+                        )}
+                        {/* Tam sil */}
+                        <button
+                          onClick={() => doAction('reset_full', r.email)}
+                          disabled={actionLoading === r.email + 'reset_full'}
+                          className="text-[10px] bg-red-900/30 hover:bg-red-900/60 text-red-400 px-2 py-1 rounded border border-red-800/40 transition-colors disabled:opacity-40 text-left">
+                          🗑 Tümünü Sil
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-3 border-t border-[#1f2937] text-xs text-gray-500 flex flex-wrap gap-2 justify-between">
+            <span>{filtered.length} / {records.length} kayıt gösteriliyor</span>
+            <span>30s'de otomatik yenilenir</span>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-16 text-gray-500">{search ? 'Arama sonucu bulunamadı.' : 'Henüz test kaydı yok.'}</div>
+      )}
+    </div>
+  );
+}
+
+// ─── IP Kayıtları Sekmesi ─────────────────────────────────────────────────────
+function IpTab({ data, secret, onRefresh }: { data: ApiResponse; secret: string; onRefresh: () => void }) {
+  const [search, setSearch] = useState('');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [msg, setMsg] = useState('');
+
+  const showMsg = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 4000); };
+
+  const resetIp = async (ip: string) => {
+    if (!confirm(`${ip} IP limitini sıfırlamak istediğinize emin misiniz?`)) return;
+    setActionLoading(ip);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'DELETE',
+        headers: { 'x-admin-secret': secret, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset_ip', ip }),
+      });
+      const d = await res.json();
+      if (d.success) { showMsg(d.message); onRefresh(); }
+      else showMsg(d.error || 'Hata.');
+    } catch { showMsg('Bağlantı hatası.'); }
+    finally { setActionLoading(null); }
+  };
+
+  const ipRecords = data.ipRecords ?? [];
+  const filtered  = ipRecords.filter(r => search === '' || r.ip.includes(search) || r.email.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <StatCard label="Toplam IP Kaydı" value={ipRecords.length} icon="🌐" color="blue" />
+        <StatCard label="Benzersiz IP"     value={new Set(ipRecords.map(r=>r.ip)).size} icon="🔒" color="purple" />
+      </div>
+
+      <input type="text" placeholder="IP adresi veya email ara..." value={search}
+        onChange={e => setSearch(e.target.value)}
+        className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 outline-none focus:border-[#7c3aed] text-sm" />
+
+      {msg && <div className="bg-blue-900/20 border border-blue-800/40 text-blue-300 rounded-xl px-4 py-2.5 text-sm">{msg}</div>}
+
+      {filtered.length > 0 ? (
+        <div className="bg-[#111827] border border-[#1f2937] rounded-2xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#1f2937] text-gray-400 text-xs uppercase tracking-wider bg-[#0f172a]">
+                <th className="text-left px-4 py-3">IP Adresi</th>
+                <th className="text-left px-4 py-3">E-posta</th>
+                <th className="text-left px-4 py-3">TTL</th>
+                <th className="text-left px-4 py-3">İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((r, i) => (
+                <tr key={r.ip} className={`border-b border-[#1f2937] last:border-0 hover:bg-[#1f2937]/60 ${i%2===0?'':'bg-[#0f172a]/40'}`}>
+                  <td className="px-4 py-3"><span className="font-mono text-white text-xs">{r.ip}</span></td>
+                  <td className="px-4 py-3 text-gray-400 text-xs">{r.email}</td>
+                  <td className="px-4 py-3">
+                    <Badge variant={r.daysLeft <= 1 ? 'red' : r.daysLeft <= 3 ? 'yellow' : 'green'}>{r.daysLeft} gün</Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => resetIp(r.ip)} disabled={actionLoading === r.ip}
+                      className="text-xs bg-orange-900/30 hover:bg-orange-900/60 text-orange-400 px-3 py-1.5 rounded border border-orange-800/40 transition-colors disabled:opacity-40">
+                      {actionLoading === r.ip ? '...' : '🌐 IP Sıfırla'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="px-4 py-3 border-t border-[#1f2937] text-xs text-gray-500">{filtered.length} kayıt</div>
+        </div>
+      ) : (
+        <div className="text-center py-16 text-gray-500">IP kaydı bulunamadı.</div>
+      )}
+    </div>
+  );
+}
+
+// ─── Ana Admin Bileşeni ───────────────────────────────────────────────────────
+export default function AdminPage() {
+  const [secret,    setSecret]    = useState('');
+  const [authed,    setAuthed]    = useState(false);
+  const [loading,   setLoading]   = useState(false);
+  const [data,      setData]      = useState<ApiResponse | null>(null);
+  const [error,     setError]     = useState('');
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [activeTab, setActiveTab] = useState<'trials'|'ips'|'payment'>('trials');
+
+  const fetchData = useCallback(async (s: string) => {
     setLoading(true); setError('');
     try {
-      const res  = await fetch('/api/admin', { headers: { 'x-admin-secret': adminSecret } });
+      const res  = await fetch('/api/admin', { headers: { 'x-admin-secret': s } });
       const json = await res.json();
       if (!json.success) {
         setError(json.error || 'Hata oluştu.');
@@ -428,70 +481,14 @@ export default function AdminPage() {
     e.preventDefault();
     setAuthed(true);
     await fetchData(secret);
-    setSpinRecords(loadSpinRecords());
-  };
-
-  const handleDelete = async (email: string) => {
-    if (!confirm(`"${email}" için 7 günlük limiti sıfırlamak istediğinize emin misiniz?`)) return;
-    setDeleting(email);
-    try {
-      const res  = await fetch('/api/admin', {
-        method: 'DELETE',
-        headers: { 'x-admin-secret': secret, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const json = await res.json();
-      if (json.success) { await fetchData(secret); }
-      else { alert(json.error || 'Silme başarısız.'); }
-    } catch { alert('Sunucuya bağlanılamadı.'); }
-    finally { setDeleting(null); }
-  };
-
-  const handleDeleteSpin = (phone: string) => {
-    if (!confirm(`"${phone}" numarasının çark kaydını silmek istediğinize emin misiniz?`)) return;
-    try {
-      const raw = localStorage.getItem(LS_SPIN_KEY);
-      if (!raw) return;
-      const map = JSON.parse(raw);
-      delete map[phone];
-      localStorage.setItem(LS_SPIN_KEY, JSON.stringify(map));
-      setSpinRecords(loadSpinRecords());
-    } catch { alert('Silme başarısız.'); }
   };
 
   useEffect(() => {
     if (!authed || !secret) return;
-    const id = setInterval(() => {
-      fetchData(secret);
-      setSpinRecords(loadSpinRecords());
-    }, 30000);
+    const id = setInterval(() => fetchData(secret), 30000);
     return () => clearInterval(id);
   }, [authed, secret, fetchData]);
 
-  const records    = data?.records ?? [];
-  const filtered   = records.filter(r =>
-    search === '' ||
-    r.email.toLowerCase().includes(search.toLowerCase()) ||
-    r.ip.includes(search) ||
-    r.selectedPackage.toLowerCase().includes(search.toLowerCase())
-  );
-  const spinFiltered = spinRecords.filter(r =>
-    spinSearch === '' ||
-    r.phone.includes(spinSearch) ||
-    r.prizeLabel.toLowerCase().includes(spinSearch.toLowerCase())
-  );
-
-  const today24h     = records.filter(r => Date.now() - r.createdAt < 86400000).length;
-  const packageStats = data?.packageStats ?? {};
-  const maxPkg       = Math.max(...Object.values(packageStats), 1);
-  const spinToday    = spinRecords.filter(r => Date.now() - r.wonAt < 86400000).length;
-  const spinActive   = spinRecords.filter(r => !r.expired).length;
-  const prizeCount   = SPIN_PRIZES_LABELS.reduce((acc, label) => {
-    acc[label] = spinRecords.filter(r => r.prizeLabel === label).length;
-    return acc;
-  }, {} as Record<string, number>);
-
-  // ─── Login ────────────────────────────────────────────────────────────────
   if (!authed) {
     return (
       <div className="min-h-screen bg-[#0b0b0f] flex items-center justify-center p-4">
@@ -501,7 +498,7 @@ export default function AdminPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <input type="password" placeholder="Admin şifresi" value={secret}
               onChange={e => setSecret(e.target.value)}
-              className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-3 outline-none focus:border-[#7c3aed] transition-colors"/>
+              className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-3 outline-none focus:border-[#7c3aed] transition-colors" />
             {error && <p className="text-red-400 text-sm text-center">{error}</p>}
             <button type="submit" disabled={loading || !secret}
               className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors">
@@ -513,10 +510,9 @@ export default function AdminPage() {
     );
   }
 
-  // ─── Panel ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#0b0b0f] text-white p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
 
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -526,13 +522,13 @@ export default function AdminPage() {
               {lastRefresh ? `Son güncelleme: ${lastRefresh.toLocaleTimeString('tr-TR')}` : 'Yükleniyor...'}
             </p>
           </div>
-          <div className="flex gap-3">
-            <button onClick={() => { fetchData(secret); setSpinRecords(loadSpinRecords()); }} disabled={loading}
-              className="bg-[#1f2937] hover:bg-[#374151] disabled:opacity-50 text-white px-4 py-2 rounded-xl text-sm border border-[#374151] transition-colors">
+          <div className="flex gap-3 flex-wrap">
+            <button onClick={() => fetchData(secret)} disabled={loading}
+              className="bg-[#1f2937] hover:bg-[#374151] disabled:opacity-50 text-white px-4 py-2 rounded-xl text-sm border border-[#374151]">
               {loading ? '⟳ Yükleniyor...' : '⟳ Yenile'}
             </button>
             <button onClick={() => { setAuthed(false); setData(null); setSecret(''); }}
-              className="bg-red-900/40 hover:bg-red-900/60 text-red-400 px-4 py-2 rounded-xl text-sm border border-red-800/50 transition-colors">
+              className="bg-red-900/40 hover:bg-red-900/60 text-red-400 px-4 py-2 rounded-xl text-sm border border-red-800/50">
               Çıkış
             </button>
           </div>
@@ -541,218 +537,35 @@ export default function AdminPage() {
         {/* Sekmeler */}
         <div className="flex flex-wrap gap-3">
           <Tab active={activeTab === 'trials'} onClick={() => setActiveTab('trials')}>
-            🧪 Test Talepleri {data && `(${data.totalEmails})`}
+            🧪 Test Talepleri {data ? `(${data.totalEmails})` : ''}
           </Tab>
-          <Tab active={activeTab === 'spin'} onClick={() => setActiveTab('spin')}>
-            🎡 Çark Kayıtları {`(${spinRecords.length})`}
+          <Tab active={activeTab === 'ips'} onClick={() => setActiveTab('ips')}>
+            🌐 IP Kayıtları {data ? `(${data.totalIPs})` : ''}
           </Tab>
           <Tab active={activeTab === 'payment'} onClick={() => setActiveTab('payment')}>
-            💳 Ödeme / IBAN
+            💳 IBAN Yönetimi
           </Tab>
         </div>
 
-        {/* ── TEST TALEPLERİ ─────────────────────────────────────────────── */}
-        {activeTab === 'trials' && (
-          <>
-            {data && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard label="Toplam Açılan Test" value={data.totalEmails} icon="🧪" variant="purple"/>
-                <StatCard label="Son 24 Saat"        value={today24h}         icon="📅" variant="blue"/>
-                <StatCard label="Aktif Kayıt"        value={records.length}   icon="📊" variant="green"/>
-                <StatCard label="Redis Kayıt" value={data.totalIPs + data.totalEmails} icon="🗄️" variant="orange"/>
-              </div>
-            )}
-
-            {Object.keys(packageStats).length > 0 && (
-              <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-6">
-                <h2 className="text-lg font-bold mb-5">📦 Paket İlgisi</h2>
-                <div className="space-y-3">
-                  {Object.entries(packageStats).sort((a,b) => b[1]-a[1]).map(([pkg, count]) => (
-                    <div key={pkg} className="flex items-center gap-3">
-                      <div className="w-40 shrink-0 text-sm text-gray-300 truncate" title={pkg}>{pkg}</div>
-                      <div className="flex-1 bg-[#1f2937] rounded-full h-7 overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-[#7c3aed] to-[#a855f7] rounded-full flex items-center justify-end pr-3 transition-all duration-500"
-                          style={{ width:`${Math.max((count/maxPkg)*100,8)}%` }}>
-                          <span className="text-xs font-bold text-white">{count}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <input type="text" placeholder="Email, IP veya paket adı ile ara..."
-              value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-3 outline-none focus:border-[#7c3aed] transition-colors text-sm"/>
-
-            {error && <div className="bg-red-900/30 border border-red-800/50 text-red-400 rounded-xl px-4 py-3 text-sm">{error}</div>}
-            {loading && !data && <div className="text-center py-20 text-gray-400">Yükleniyor...</div>}
-            {!loading && data && filtered.length === 0 && (
-              <div className="text-center py-20 text-gray-500">
-                {search ? 'Arama sonucu bulunamadı.' : 'Henüz test kaydı yok.'}
-              </div>
-            )}
-
-            {filtered.length > 0 && (
-              <div className="bg-[#111827] border border-[#1f2937] rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-[#1f2937] text-gray-400 text-xs uppercase tracking-wider bg-[#0f172a]">
-                        <th className="text-left px-4 py-3">Email</th>
-                        <th className="text-left px-4 py-3">Seçilen Paket</th>
-                        <th className="text-left px-4 py-3">IP Adresi</th>
-                        <th className="text-left px-4 py-3">Tarih</th>
-                        <th className="text-left px-4 py-3">Kalan</th>
-                        <th className="text-left px-4 py-3">İşlem</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filtered.map((record, i) => (
-                        <tr key={record.key}
-                          className={`border-b border-[#1f2937] last:border-0 hover:bg-[#1f2937]/60 transition-colors ${i%2===0?'':'bg-[#0f172a]/40'}`}>
-                          <td className="px-4 py-3"><span className="text-white font-medium">{record.email}</span></td>
-                          <td className="px-4 py-3">
-                            <span className="text-xs bg-purple-900/40 text-purple-300 border border-purple-800/50 px-2 py-1 rounded-lg whitespace-nowrap">
-                              {record.selectedPackage}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="font-mono text-gray-400 text-xs bg-[#1f2937] px-2 py-1 rounded">{record.ip}</span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{record.createdAtFormatted}</td>
-                          <td className="px-4 py-3"><DaysLeftBadge days={record.daysLeft}/></td>
-                          <td className="px-4 py-3">
-                            <button onClick={() => handleDelete(record.email)}
-                              disabled={deletingEmail === record.email}
-                              className="bg-red-900/40 hover:bg-red-900/70 disabled:opacity-40 text-red-400 text-xs px-3 py-1.5 rounded-lg border border-red-800/50 transition-colors whitespace-nowrap">
-                              {deletingEmail === record.email ? '...' : 'Limiti Sıfırla'}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="px-4 py-3 border-t border-[#1f2937] text-xs text-gray-500 flex justify-between">
-                  <span>{filtered.length} kayıt</span>
-                  <span>Her 30 saniyede otomatik yenilenir</span>
-                </div>
-              </div>
-            )}
-
-            {data && (
-              <details className="bg-[#111827] border border-[#1f2937] rounded-2xl p-4">
-                <summary className="cursor-pointer text-gray-400 text-sm hover:text-white transition-colors select-none">
-                  🗄️ Ham Redis Verileri ({data.records.length} kayıt)
-                </summary>
-                <pre className="mt-4 text-xs text-green-400 font-mono overflow-auto max-h-96 bg-[#0b0b0f] p-4 rounded-xl leading-relaxed">
-                  {JSON.stringify(data.records, null, 2)}
-                </pre>
-              </details>
-            )}
-          </>
+        {error && (
+          <div className="bg-red-900/30 border border-red-800/50 text-red-400 rounded-xl px-4 py-3 text-sm">{error}</div>
         )}
 
-        {/* ── ÇARK KAYITLARI ─────────────────────────────────────────────── */}
-        {activeTab === 'spin' && (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Toplam Katılım" value={spinRecords.length} icon="🎡" variant="purple"/>
-              <StatCard label="Son 24 Saat"    value={spinToday}          icon="📅" variant="blue"/>
-              <StatCard label="Aktif Ödül"     value={spinActive}         icon="⏱"  variant="green"/>
-              <StatCard label="Süresi Dolmuş"  value={spinRecords.length - spinActive} icon="⌛" variant="orange"/>
-            </div>
-
-            {spinRecords.length > 0 && (
-              <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-6">
-                <h2 className="text-lg font-bold mb-5">🏆 Ödül Dağılımı</h2>
-                <div className="space-y-3">
-                  {Object.entries(prizeCount)
-                    .filter(([,c]) => c > 0)
-                    .sort((a,b) => b[1]-a[1])
-                    .map(([label, count]) => (
-                      <div key={label} className="flex items-center gap-3">
-                        <div className="w-40 shrink-0 text-sm text-gray-300">{label}</div>
-                        <div className="flex-1 bg-[#1f2937] rounded-full h-6 overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-[#7c3aed] to-[#c084fc] rounded-full flex items-center justify-end pr-3 transition-all duration-500"
-                            style={{ width:`${Math.max((count/Math.max(spinRecords.length,1))*100,6)}%` }}>
-                            <span className="text-xs font-bold text-white">{count}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            <input type="text" placeholder="Telefon numarası veya ödül ile ara..."
-              value={spinSearch} onChange={e => setSpinSearch(e.target.value)}
-              className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-3 outline-none focus:border-[#7c3aed] transition-colors text-sm"/>
-
-            {spinRecords.length === 0 && (
-              <div className="text-center py-20 text-gray-500">
-                Henüz çark kaydı yok.
-              </div>
-            )}
-
-            {spinFiltered.length > 0 && (
-              <div className="bg-[#111827] border border-[#1f2937] rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-[#1f2937] text-gray-400 text-xs uppercase tracking-wider bg-[#0f172a]">
-                        <th className="text-left px-4 py-3">Telefon</th>
-                        <th className="text-left px-4 py-3">Kazanılan Ödül</th>
-                        <th className="text-left px-4 py-3">Tarih / Saat</th>
-                        <th className="text-left px-4 py-3">Durum</th>
-                        <th className="text-left px-4 py-3">İşlem</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {spinFiltered.map((rec, i) => (
-                        <tr key={rec.phone}
-                          className={`border-b border-[#1f2937] last:border-0 hover:bg-[#1f2937]/60 transition-colors ${i%2===0?'':'bg-[#0f172a]/40'}`}>
-                          <td className="px-4 py-3"><span className="font-mono text-white">+90 {rec.phone}</span></td>
-                          <td className="px-4 py-3">
-                            <span className="text-xs bg-purple-900/40 text-purple-300 border border-purple-800/50 px-2 py-1 rounded-lg">
-                              {rec.prizeLabel}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{rec.wonAtFormatted}</td>
-                          <td className="px-4 py-3">
-                            {rec.expired ? (
-                              <span className="text-xs bg-gray-800/60 text-gray-500 border border-gray-700/50 px-2 py-1 rounded-lg">Süresi doldu</span>
-                            ) : (
-                              <span className="text-xs bg-green-900/40 text-green-400 border border-green-800/50 px-2 py-1 rounded-lg">Aktif</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <button onClick={() => handleDeleteSpin(rec.phone)}
-                              className="bg-red-900/40 hover:bg-red-900/70 text-red-400 text-xs px-3 py-1.5 rounded-lg border border-red-800/50 transition-colors whitespace-nowrap">
-                              Kaydı Sil
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="px-4 py-3 border-t border-[#1f2937] text-xs text-gray-500 flex justify-between">
-                  <span>{spinFiltered.length} kayıt</span>
-                  <span>Kayıt silince kullanıcı tekrar katılabilir</span>
-                </div>
-              </div>
-            )}
-          </>
+        {loading && !data && (
+          <div className="text-center py-20 text-gray-400">Veriler yükleniyor...</div>
         )}
 
-        {/* ── ÖDEME / IBAN SEKMESİ ───────────────────────────────────────── */}
+        {activeTab === 'trials' && data && (
+          <TrialsTab data={data} secret={secret} onRefresh={() => fetchData(secret)} />
+        )}
+
+        {activeTab === 'ips' && data && (
+          <IpTab data={data} secret={secret} onRefresh={() => fetchData(secret)} />
+        )}
+
         {activeTab === 'payment' && (
-          <PaymentInfoTab secret={secret} />
+          <PaymentTab secret={secret} />
         )}
-
       </div>
     </div>
   );
