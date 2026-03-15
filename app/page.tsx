@@ -495,8 +495,7 @@ function HomePageInner() {
   const [isCreating, setIsCreating] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMsg[]>([]);
-  const [showExitPopup, setShowExitPopup] = useState(false);
-  const [exitPopupShown, setExitPopupShown] = useState(false);
+
   const [recommendedPkg, setRecommendedPkg] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   // Giriş yapan kullanıcı için otomatik test oluştur (henüz test yoksa modal'ı aç)
@@ -526,11 +525,7 @@ function HomePageInner() {
   useEffect(() => { if (resendCooldown <= 0) return; const id = setInterval(() => setResendCooldown((c) => Math.max(c - 1, 0)), 1000); return () => clearInterval(id); }, [resendCooldown]);
   useEffect(() => { if (step === 2) setTimeout(() => emailInputRef.current?.focus(), 100); }, [step]);
   useEffect(() => { if (selectedDevice && selectedPurposes.length > 0) setRecommendedPkg(getRecommendedPackage(selectedDevice, selectedPurposes)); }, [selectedDevice, selectedPurposes]);
-  useEffect(() => {
-    const handleMouseLeave = (e: MouseEvent) => { if (e.clientY < 10 && !exitPopupShown && !isModalOpen) { setShowExitPopup(true); setExitPopupShown(true); } };
-    document.addEventListener('mouseleave', handleMouseLeave);
-    return () => document.removeEventListener('mouseleave', handleMouseLeave);
-  }, [exitPopupShown, isModalOpen]);
+
 
   const handleOpenModal = (pkg?: string) => {
     try {
@@ -604,19 +599,6 @@ function HomePageInner() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
-      {/* ─── Exit-intent popup ──────────────────────────────────────────────── */}
-      {showExitPopup && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#030712]/70 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-sm rounded-2xl border border-[#1e3a5f] bg-[#111827] p-6 text-center shadow-2xl">
-            <button onClick={() => setShowExitPopup(false)} className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#1e3a5f] hover:text-white">✕</button>
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#1e1b4b] text-2xl">🎁</div>
-            <h3 className="mb-1 text-lg font-bold text-white">Gitmeden önce bir dakika!</h3>
-            <p className="mb-4 text-sm text-[#9ca3af]">3 saatlik <strong className="text-white">ücretsiz test</strong> hesabı açılsın mı?</p>
-            <button onClick={() => { setShowExitPopup(false); openAuth(); }} className="mb-2 w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">⚡ Evet, Ücretsiz Test Al</button>
-            <button onClick={() => setShowExitPopup(false)} className="text-xs text-[#6b7280] transition-colors hover:text-[#9ca3af]">Hayır, teşekkürler</button>
-          </div>
-        </div>
-      )}
 
       {/* ─── Header ─────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-[#07111f]/90 backdrop-blur-md">
