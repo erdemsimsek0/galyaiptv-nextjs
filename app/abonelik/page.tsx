@@ -46,7 +46,7 @@ function AbonelikHeader() {
     <div className="sticky top-0 z-50 border-b border-[#1e2d42] bg-[#07111f]/95 backdrop-blur-md px-4 py-3">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2">
         <Link href="/" className="flex items-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {/* eslint-disable-next-line @next/next/no-img-helement */}
           <img src="/logo.png" alt="Galya IPTV" className="h-8 w-auto" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
           <span className="text-sm font-bold text-white">Galya <span className="text-[#3b82f6]">IPTV</span></span>
         </Link>
