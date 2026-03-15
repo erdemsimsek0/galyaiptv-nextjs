@@ -1,22 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSession, SessionProvider } from 'next-auth/react';
-import { useSearchParams } from 'next/navigation';
 
-
-// useSearchParams Suspense sarmalı gerektirir — ayrı bileşen olarak tanımlandı
-function SearchParamsHandler({ onTestParam }: { onTestParam: () => void }) {
-  const searchParams = useSearchParams();
-  useEffect(() => {
-    if (searchParams.get('test') === '1') {
-      onTestParam();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-  return null;
-}
 
 function SessionProviderWrapper({ children }: { children: React.ReactNode }) {
   return <SessionProvider>{children}</SessionProvider>;
@@ -476,6 +463,10 @@ function HomePageInner() {
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
   const authLoading = status === 'loading';
+  const [globalTrialCreds, setGlobalTrialCreds] = useState<{ username: string; password: string; startedAt: number } | null>(null);
+  const TRIAL_TOTAL = 3 * 60 * 60 * 1000;
+  const trialActive = globalTrialCreds !== null && (Date.now() - globalTrialCreds.startedAt) < TRIAL_TOTAL;
+  const trialExpired = globalTrialCreds !== null && (Date.now() - globalTrialCreds.startedAt) >= TRIAL_TOTAL;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -499,11 +490,19 @@ function HomePageInner() {
 
   const [recommendedPkg, setRecommendedPkg] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  // Giriş yapan kullanıcı için otomatik test oluştur
+  // Giriş yapan kullanıcı için test bilgilerini yükle / oluştur
   useEffect(() => {
     if (!isLoggedIn || !session?.user?.email) return;
     const userEmail = session.user.email;
-    // Redis'ten kontrol et, yoksa direkt oluştur
+    // Önce localStorage'a bak
+    try {
+      const raw = localStorage.getItem('galya_trial_creds');
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.username) setGlobalTrialCreds(p);
+      }
+    } catch { /* */ }
+    // Redis'ten kontrol et / oluştur
     fetch('/api/test-talep', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -513,6 +512,7 @@ function HomePageInner() {
       .then(data => {
         if (data.success) {
           const cr = { username: data.username, password: data.password, startedAt: data.startedAt || Date.now() };
+          setGlobalTrialCreds(cr);
           try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
         }
       })
@@ -600,9 +600,7 @@ function HomePageInner() {
 
   return (
     <>
-      <Suspense fallback={null}>
-        <SearchParamsHandler onTestParam={() => { if (isLoggedIn) handleOpenModal(); }} />
-      </Suspense>
+
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
@@ -664,12 +662,19 @@ function HomePageInner() {
                   </span>
                   Profilim
                 </Link>
-                <button
-                  onClick={() => handleOpenModal()}
-                  className="rounded-xl bg-[#3b82f6] px-5 py-2 text-sm font-bold text-white shadow-lg shadow-[#3b82f6]/30 transition-all hover:bg-[#2563eb]"
-                >
-                  ⚡ Testi Başlat
-                </button>
+                {trialActive ? (
+                  <Link href="/profil" className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-emerald-600/30 transition-all hover:bg-emerald-700">
+                    ✅ Test Aktif
+                  </Link>
+                ) : trialExpired ? (
+                  <Link href="/abonelik" className="rounded-xl bg-amber-500 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-amber-500/30 transition-all hover:bg-amber-600">
+                    👑 Premium&apos;a Geç
+                  </Link>
+                ) : (
+                  <Link href="/profil" className="rounded-xl bg-[#3b82f6] px-5 py-2 text-sm font-bold text-white shadow-lg shadow-[#3b82f6]/30 transition-all hover:bg-[#2563eb]">
+                    ⚡ Testi Başlat
+                  </Link>
+                )}
               </>
             ) : (
               <>
@@ -745,18 +750,32 @@ function HomePageInner() {
                 ))}
               </div>
 
-              {/* CTA butonları */}
+              {/* CTA butonları — session durumuna göre değişir */}
               <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  onClick={() => openAuth()}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-[#3b82f6] px-7 py-3.5 text-base font-bold text-white shadow-xl shadow-[#3b82f6]/30 transition-all hover:bg-[#2563eb] hover:scale-[1.02]"
-                >
-                  Ücretsiz Dene →
-                </button>
-                <Link
-                  href="/#paketler"
-                  className="flex items-center justify-center rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-7 py-3.5 text-base font-semibold text-white transition-all hover:border-[#3b82f6]/40 hover:bg-[#162035]"
-                >
+                {!authLoading && isLoggedIn && trialActive ? (
+                  // Test aktif
+                  <Link href="/profil"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-7 py-3.5 text-base font-bold text-white shadow-xl shadow-emerald-600/30 transition-all hover:bg-emerald-700 hover:scale-[1.02]">
+                    ✅ Testiniz Aktif — Profil →
+                  </Link>
+                ) : !authLoading && isLoggedIn && trialExpired ? (
+                  // Test bitti
+                  <Link href="/abonelik"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-7 py-3.5 text-base font-bold text-white shadow-xl shadow-amber-500/30 transition-all hover:bg-amber-600 hover:scale-[1.02]">
+                    👑 Premium&apos;a Geç →
+                  </Link>
+                ) : authLoading ? (
+                  // Yükleniyor
+                  <div className="h-14 w-48 animate-pulse rounded-xl bg-[#1e2d42]" />
+                ) : (
+                  // Giriş yok
+                  <button onClick={() => openAuth()}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-[#3b82f6] px-7 py-3.5 text-base font-bold text-white shadow-xl shadow-[#3b82f6]/30 transition-all hover:bg-[#2563eb] hover:scale-[1.02]">
+                    ⚡ Ücretsiz Dene →
+                  </button>
+                )}
+                <Link href="/#paketler"
+                  className="flex items-center justify-center rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-7 py-3.5 text-base font-semibold text-white transition-all hover:border-[#3b82f6]/40 hover:bg-[#162035]">
                   Paketleri Gör
                 </Link>
               </div>
@@ -1282,7 +1301,13 @@ function HomePageInner() {
       {/* ─── Mobil Sticky CTA ───────────────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#1e3a5f] bg-[#030712]/95 px-3 py-2 backdrop-blur-md md:hidden">
         <div className="flex gap-2">
-          <button onClick={() => openAuth()} className="flex-1 rounded-lg bg-[#6366f1] py-2 text-xs font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-colors hover:bg-[#4f46e5]">⚡ Ücretsiz Test Al</button>
+          {isLoggedIn && trialActive ? (
+            <Link href="/profil" className="flex flex-1 items-center justify-center rounded-lg bg-emerald-600 py-2 text-xs font-semibold text-white">✅ Testiniz Aktif</Link>
+          ) : isLoggedIn && trialExpired ? (
+            <Link href="/abonelik" className="flex flex-1 items-center justify-center rounded-lg bg-amber-500 py-2 text-xs font-semibold text-white">👑 Premium&apos;a Geç</Link>
+          ) : (
+            <button onClick={() => isLoggedIn ? null : openAuth()} className="flex-1 rounded-lg bg-[#6366f1] py-2 text-xs font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-colors hover:bg-[#4f46e5]">⚡ Ücretsiz Test Al</button>
+          )}
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex flex-1 items-center justify-center rounded-lg bg-[#25d366] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1ebe5d]">💬 WhatsApp</a>
         </div>
       </div>
@@ -1291,7 +1316,13 @@ function HomePageInner() {
       <div className="fixed bottom-6 right-6 z-40 hidden md:flex flex-col gap-2 items-end">
         <div className="rounded-xl border border-[#1e3a5f] bg-[#111827]/95 p-3 shadow-2xl backdrop-blur-md w-52">
           <p className="mb-2 text-[11px] text-[#818cf8] text-center">⭐ 10.200+ aktif kullanıcı</p>
-          <button onClick={() => openAuth()} className="mb-1.5 w-full rounded-lg bg-[#6366f1] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#4f46e5]">⚡ Ücretsiz Test Al</button>
+          {isLoggedIn && trialActive ? (
+            <Link href="/profil" className="mb-1.5 flex w-full items-center justify-center rounded-lg bg-emerald-600 py-2 text-xs font-semibold text-white">✅ Testiniz Aktif</Link>
+          ) : isLoggedIn && trialExpired ? (
+            <Link href="/abonelik" className="mb-1.5 flex w-full items-center justify-center rounded-lg bg-amber-500 py-2 text-xs font-semibold text-white">👑 Test Bitti — Premium Al</Link>
+          ) : (
+            <button onClick={() => openAuth()} className="mb-1.5 w-full rounded-lg bg-[#6366f1] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#4f46e5]">⚡ Ücretsiz Test Al</button>
+          )}
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center rounded-lg bg-[#25d366]/10 border border-[#25d366]/20 py-2 text-xs font-semibold text-[#25d366] transition-colors hover:bg-[#25d366]/20">💬 WhatsApp&apos;a Yaz</a>
         </div>
       </div>
