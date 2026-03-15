@@ -148,7 +148,7 @@ async function sendVerificationRequest({
 
 // ─── NextAuth config ──────────────────────────────────────────────────────────
 export const authOptions: NextAuthOptions = {
-  adapter: RedisAdapter() as NextAuthOptions['adapter'],
+  adapter: RedisAdapter() as any,
   providers: [
     GoogleProvider({
       clientId:     process.env.GOOGLE_CLIENT_ID!,
