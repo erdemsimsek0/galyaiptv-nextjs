@@ -4,19 +4,6 @@ import GoogleProvider from 'next-auth/providers/google';
 import EmailProvider from 'next-auth/providers/email';
 import { createTransport } from 'nodemailer';
 
-// ─── .env.local'e ekle ────────────────────────────────────────────────────────
-// NEXTAUTH_SECRET=random-32-char-string
-// NEXTAUTH_URL=https://galyaiptv.com.tr
-// GOOGLE_CLIENT_ID=...
-// GOOGLE_CLIENT_SECRET=...
-// EMAIL_SERVER_HOST=smtp.resend.com (veya smtp.gmail.com)
-// EMAIL_SERVER_PORT=465
-// EMAIL_SERVER_USER=resend
-// EMAIL_SERVER_PASSWORD=re_xxxx
-// EMAIL_FROM=noreply@galyaiptv.com.tr
-// UPSTASH_REDIS_REST_URL=...
-// UPSTASH_REDIS_REST_TOKEN=...
-
 // ─── Upstash Redis helpers (native fetch) ────────────────────────────────────
 const R_URL   = process.env.UPSTASH_REDIS_REST_URL!;
 const R_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN!;
@@ -39,7 +26,6 @@ async function rSet(key: string, value: unknown, ex?: number) {
 }
 
 // ─── Minimal Redis adapter (NextAuth için) ────────────────────────────────────
-// Tam bir adapter yerine en sade hali — sadece email/google oturumu yönetir
 function RedisAdapter() {
   return {
     async createUser(user: { email: string; name?: string; image?: string }) {
@@ -111,14 +97,8 @@ function RedisAdapter() {
 }
 
 // ─── Özel email şablonu ───────────────────────────────────────────────────────
-async function sendVerificationRequest({
-  identifier: email,
-  url,
-}: {
-  identifier: string;
-  url: string;
-  provider: { server: string; from: string };
-}) {
+async function sendVerificationRequest(params: any) {
+  const { identifier: email, url } = params;
   const transport = createTransport({
     host:   process.env.EMAIL_SERVER_HOST,
     port:   Number(process.env.EMAIL_SERVER_PORT ?? 465),
@@ -164,7 +144,7 @@ export const authOptions: NextAuthOptions = {
         },
       },
       from:                    process.env.EMAIL_FROM,
-      sendVerificationRequest,
+      sendVerificationRequest: sendVerificationRequest as any,
     }),
   ],
   pages: {
