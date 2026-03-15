@@ -405,7 +405,7 @@ function CredentialsPanel({ creds, loading, selectedApp }: {
 
   return (
     <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] overflow-hidden">
-      <div className="flex items-center justify-between border-b border-[#1e2d42] px-4 py-3">
+      <div className="flex items-center justify-between border-b border-[#1e2d42] px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"/>
@@ -423,7 +423,7 @@ function CredentialsPanel({ creds, loading, selectedApp }: {
           { label: 'KULLANICI ADI', value: creds.username },
           { label: 'ŞİFRE', value: creds.password },
         ].map(row => (
-          <div key={row.label} className="flex items-center justify-between gap-3 px-4 py-3">
+          <div key={row.label} className="flex items-center justify-between gap-2 px-3 py-2.5 sm:px-4 sm:py-3">
             <div className="min-w-0 flex-1">
               <p className="text-[9px] font-semibold uppercase tracking-widest text-[#4b5563]">{row.label}</p>
               <p className="mt-0.5 truncate font-mono text-sm text-white">{row.value}</p>
@@ -497,14 +497,14 @@ function AppDetail({ app, creds, credsLoading }: { app: AppInfo; creds: TrialCre
   return (
     <div className="space-y-6">
       {/* Uygulama başlığı + indirme butonu */}
-      <div className="flex items-center gap-4 rounded-2xl border border-[#1e2d42] bg-[#0a1525] px-5 py-4">
+      <div className="flex items-center gap-3 rounded-2xl border border-[#1e2d42] bg-[#0a1525] px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#1e2d42] bg-[#111827]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={`/app-icons/${app.logo}`} alt={app.name} className="h-full w-full object-cover"
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-white text-lg">{app.name}</p>
+          <p className="font-bold text-white text-base sm:text-lg">{app.name}</p>
           <p className="text-xs text-[#6b7280]">⏱ Kurulum süresi: {app.setupTime}</p>
         </div>
         <a href={app.downloadUrl} target="_blank" rel="noopener noreferrer"
@@ -513,7 +513,7 @@ function AppDetail({ app, creds, credsLoading }: { app: AppInfo; creds: TrialCre
         </a>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 sm:gap-6">
         {/* Sol: Kurulum adımları */}
         <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-5">
           <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-[#6b7280]">Kurulum Adımları</p>
@@ -555,7 +555,7 @@ function KurulumHeader() {
 
   return (
     <div className="border-b border-[#1e2d42] bg-[#07111f]/95 backdrop-blur-md px-4 py-3 sticky top-0 z-50">
-      <div className="mx-auto flex max-w-6xl items-center justify-between">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2">
         <Link href="/" className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Galya IPTV" className="h-8 w-auto"
@@ -629,18 +629,18 @@ function KurulumInner() {
     <div className="min-h-screen bg-[#07111f] text-white">
       <KurulumHeader />
 
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <main className="mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10 lg:px-6">
 
         {/* Başlık */}
         <div className="mb-10 text-center">
-          <h1 className="mb-3 text-4xl font-black tracking-tight md:text-5xl">
+          <h1 className="mb-3 text-3xl font-black tracking-tight sm:text-4xl md:text-5xl">
             {selectedApp ? selectedApp.name : 'Uygulamada İzle'}
           </h1>
           <p className="text-base text-[#8b9ab3]">Platformunu seç, uygulamayı indir ve izlemeye başla</p>
         </div>
 
         {/* Platform tab'ları */}
-        <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
+        <div className="mb-6 flex flex-wrap items-center justify-center gap-2 px-1">
           {PLATFORMS.map(p => (
             <button key={p.id} onClick={() => setActivePlatform(p.id)}
               className={`rounded-full border px-5 py-2 text-sm font-semibold transition-all ${activePlatform === p.id ? 'border-white bg-white text-[#07111f]' : 'border-[#1e2d42] text-[#8b9ab3] hover:border-[#3b82f6]/40 hover:text-white'}`}>
@@ -650,7 +650,7 @@ function KurulumInner() {
         </div>
 
         {/* Uygulama kartları */}
-        <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mb-6 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {platform.apps.map(app => (
             <AppCard key={app.id} app={app}
               selected={selectedApp?.id === app.id}
