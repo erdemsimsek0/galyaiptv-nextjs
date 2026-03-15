@@ -1,5 +1,8 @@
 'use client';
 
+// ✅ FIX: Prerender sırasında useSession() patlamasını önler
+export const dynamic = 'force-dynamic';
+
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
