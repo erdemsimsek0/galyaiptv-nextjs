@@ -568,10 +568,10 @@ function KurulumHeader() {
 
         <div className="hidden items-center gap-1 rounded-2xl border border-[#1e2d42] bg-[#0d1a2a] px-2 py-1.5 md:flex">
           {[
-            { href: '/#paketler', label: 'Paketler' },
+            { href: '/',            label: 'Ana Sayfa' },
+            { href: '/#paketler',   label: 'Paketler' },
             { href: '/#ozellikler', label: 'Özellikler' },
-            { href: '/#sss', label: 'SSS' },
-            { href: '/kurulum-rehberi', label: 'Kurulum Rehberi' },
+            { href: '/#sss',        label: 'SSS' },
           ].map(item => (
             <Link key={item.href} href={item.href}
               className="rounded-xl px-4 py-1.5 text-sm font-medium text-[#8b9ab3] transition-colors hover:bg-[#162035] hover:text-white">
