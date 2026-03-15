@@ -79,9 +79,9 @@ function PlanRow({ plan }: { plan: Plan }) {
   const total   = calcTotal(plan.basePrice, dur.months, dur.discount);
   const monthly = total / dur.months;
 
-  // Cihaz sayısı extra ücret
-  const deviceExtra = selDevices === 1 ? 0 : selDevices === 2 ? 0 : plan.basePrice * 0.5;
-  const grandTotal  = total + deviceExtra * dur.months;
+  // Cihaz sayısı extra ücret: 2 cihaz +%30, 3 cihaz +%60
+  const deviceMultiplier = selDevices === 1 ? 1 : selDevices === 2 ? 1.30 : 1.60;
+  const grandTotal = Math.round(total * deviceMultiplier * 100) / 100;
 
   const waText = `Merhaba, ${plan.name} ${dur.label} paket satın almak istiyorum.`;
   const odemeUrl = `/odeme?paket=${encodeURIComponent(plan.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${grandTotal.toFixed(2)}&orijinal=${(plan.basePrice * dur.months).toFixed(2)}&indirim=${dur.discount}`;
@@ -179,9 +179,9 @@ function PlanRow({ plan }: { plan: Plan }) {
             </div>
             <div className="grid grid-cols-3 gap-2">
               {([
-                { n: 1 as const, label: '1 Cihaz',  sub: 'Bireysel',  note: 'Ek ücret yok',   recommended: false },
-                { n: 2 as const, label: '2 Cihaz',  sub: 'Arkadaş',  note: 'Önerilen',        recommended: true  },
-                { n: 3 as const, label: '3 Cihaz',  sub: 'Aile',     note: 'Süreye göre fiyat', recommended: false },
+                { n: 1 as const, label: '1 Cihaz',  sub: 'Bireysel',  note: 'Standart fiyat',  recommended: false },
+                { n: 2 as const, label: '2 Cihaz',  sub: 'Arkadaş',  note: '+%30 ek ücret',   recommended: true  },
+                { n: 3 as const, label: '3 Cihaz',  sub: 'Aile',     note: '+%60 ek ücret',   recommended: false },
               ] as const).map(item => (
                 <button key={item.n} onClick={() => setSelDevices(item.n)}
                   className={`relative flex flex-col rounded-xl border p-3 text-left transition-all ${selDevices === item.n ? 'border-[#3b82f6]/60 bg-[#0d1a2a]' : 'border-[#1e2d42] bg-[#060e1a] hover:border-[#1e3a5f]'}`}>
