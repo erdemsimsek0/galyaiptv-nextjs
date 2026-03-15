@@ -88,7 +88,6 @@ function PlanRow({ plan }: { plan: Plan }) {
   const origTotal = plan.basePrice * dur.months;
   const deviceMultiplier = selDevices === 1 ? 1 : selDevices === 2 ? 1.30 : 1.60;
   const grandTotal = Math.round(total * deviceMultiplier * 100) / 100;
-  const waText = `Merhaba, ${plan.name} ${dur.label} paketi satın almak istiyorum.`;
 
   return (
     <div className="overflow-hidden rounded-2xl border transition-all duration-200"
@@ -189,11 +188,11 @@ function PlanRow({ plan }: { plan: Plan }) {
                 <p className="text-xl font-extrabold text-white sm:text-2xl">₺{fmtTL(grandTotal)}</p>
               </div>
             </div>
-            <a href={`https://wa.me/447441921660?text=${encodeURIComponent(waText)}`} target="_blank" rel="noopener noreferrer"
+            <Link href={odemeUrl}
               className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold text-white transition-all hover:opacity-90"
               style={{ backgroundColor: plan.accentColor }}>
-              💬 WhatsApp ile Satın Al →
-            </a>
+              Ödemeye Geç →
+            </Link>
           </div>
         </div>
       )}
