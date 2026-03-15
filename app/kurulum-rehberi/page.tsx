@@ -2,169 +2,349 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession, SessionProvider } from 'next-auth/react';
 
-// ─── Metadata notu ────────────────────────────────────────────────────────────
-// layout.tsx veya metadata.ts dosyasına ekle:
-// export const metadata = {
-//   title: 'Kurulum Rehberi | Galya IPTV',
-//   description: 'Galya IPTV kurulum adımları. Smart TV, Android, iPhone, Windows ve daha fazlası için adım adım kurulum rehberi.',
-// };
-
-// ─── Tip ve Veri ──────────────────────────────────────────────────────────────
+// ─── Tipler ───────────────────────────────────────────────────────────────────
 type PlatformId = 'android' | 'androidtv' | 'iphone' | 'smarttv' | 'windows' | 'mag';
 
-interface PlatformApp {
+interface AppInfo {
+  id: string;
   name: string;
-  icon: string; // emoji fallback
-  imgSrc?: string;
+  logo: string;        // /app-icons/[logo] olarak yüklenecek
+  downloadUrl: string;
+  setupTime: string;
+  recommended?: boolean;
+  videoSrc?: string;   // /kurulum-videos/[video] — opsiyonel
+  steps: { title: string; desc: string }[];
 }
 
 interface Platform {
   id: PlatformId;
   label: string;
-  sub: string;
   icon: string;
-  appCount: number;
-  setupTime: string;
-  apps: PlatformApp[];
-  steps: { title: string; desc: string }[];
-  note?: string;
+  apps: AppInfo[];
 }
 
 const SERVER_URL = 'http://pro4kiptv.xyz:2086';
 
+// ─── Logo dosya adları — /public/app-icons/ klasörüne yükleyin ───────────────
+// Her logo için beklenen dosya adı aşağıda belirtilmiştir.
 const PLATFORMS: Platform[] = [
   {
     id: 'android',
     label: 'Android Telefon/Tablet',
-    sub: 'Samsung, Xiaomi, Huawei...',
     icon: '📱',
-    appCount: 3,
-    setupTime: '3-4 dakika',
     apps: [
-      { name: 'IPTV Smarters Pro', icon: '1️⃣', imgSrc: '/app-icons/smarters.png' },
-      { name: 'TiviMate', icon: '2️⃣', imgSrc: '/app-icons/tivimate.png' },
-      { name: 'GSE Smart IPTV', icon: '3️⃣', imgSrc: '/app-icons/gse.png' },
+      {
+        id: 'onestream',
+        name: '1Stream Player',
+        logo: 'logo-1stream.png',          // /public/app-icons/logo-1stream.png
+        downloadUrl: 'https://play.google.com/store/apps/details?id=com.nst.iptvsmarterstvbox',
+        setupTime: '3 dakika',
+        recommended: false,
+        steps: [
+          { title: 'Play Store\'dan İndir', desc: 'Play Store\'dan "1Stream Player" uygulamasını indirin ve açın.' },
+          { title: 'Xtream Codes Seç', desc: '"Xtream Codes API" ile giriş seçeneğine tıklayın.' },
+          { title: 'Bilgileri Gir', desc: 'Sağ paneldeki Server URL, kullanıcı adı ve şifreyi girin.' },
+          { title: 'Kullanıcı Ekle', desc: '"Ekle" butonuna basın. Kanal listesi otomatik yüklenir.' },
+          { title: 'İzlemeye Başla', desc: 'Canlı TV, Film veya Dizi sekmesinden izlemeye başlayın.' },
+        ],
+      },
+      {
+        id: 'xpiptv',
+        name: 'XP IPTV',
+        logo: 'logo-xpiptv.png',           // /public/app-icons/logo-xpiptv.png
+        downloadUrl: 'https://play.google.com/store/apps/details?id=com.nst.iptvsmarters',
+        setupTime: '3 dakika',
+        recommended: true,
+        steps: [
+          { title: 'Play Store\'dan İndir', desc: 'Play Store\'dan "XP IPTV" uygulamasını indirin ve açın.' },
+          { title: 'Xtream Codes Seç', desc: '"Xtream Codes API" seçeneğine tıklayın.' },
+          { title: 'Bilgileri Gir', desc: 'Server URL, kullanıcı adı ve şifreyi sağ panelden kopyalayıp girin.' },
+          { title: 'Bağlan', desc: '"Bağlan" butonuna basın. İçerikler yüklenmeye başlar.' },
+          { title: 'İzlemeye Başla', desc: 'Kategorilerden istediğinizi seçin.' },
+        ],
+      },
+      {
+        id: '9xtream',
+        name: '9Xtream',
+        logo: 'logo-9xtream.png',           // /public/app-icons/logo-9xtream.png
+        downloadUrl: 'https://play.google.com/store/apps/details?id=com.nineiptv.player',
+        setupTime: '4 dakika',
+        recommended: false,
+        steps: [
+          { title: 'Play Store\'dan İndir', desc: 'Play Store\'dan "9Xtream" uygulamasını indirin.' },
+          { title: 'Yeni Hesap Ekle', desc: '"Add Xtream Codes API" seçeneğine tıklayın.' },
+          { title: 'Bilgileri Gir', desc: 'Server, kullanıcı adı ve şifreyi girin.' },
+          { title: 'Ekle', desc: '"Ekle" butonuna basın.' },
+          { title: 'İzlemeye Başla', desc: 'Live TV, VOD veya Series sekmesinden izleyin.' },
+        ],
+      },
     ],
-    steps: [
-      { title: 'Uygulamayı İndir', desc: 'Play Store\'dan "IPTV Smarters Pro" uygulamasını indirin ve açın.' },
-      { title: 'Xtream Codes Seç', desc: '"Xtream Codes API ile Giriş" seçeneğine tıklayın.' },
-      { title: 'Bilgileri Gir', desc: `Sunucu: ${SERVER_URL} — Kullanıcı adı ve şifrenizi girin.` },
-      { title: 'Kullanıcı Ekle', desc: '"Kullanıcı Ekle" butonuna basın. Kanal listesi otomatik yüklenir.' },
-      { title: 'İzlemeye Başla', desc: 'Canlı TV, Film veya Dizi bölümünden izlemek istediğinizi seçin.' },
-    ],
-    note: 'TiviMate uygulaması daha gelişmiş bir arayüz sunar. EPG (program rehberi) desteği mevcuttur.',
   },
   {
     id: 'androidtv',
     label: 'Android TV',
-    sub: 'Android TV Box, Fire TV Stick...',
     icon: '📺',
-    appCount: 3,
-    setupTime: '4-5 dakika',
     apps: [
-      { name: 'IPTV Smarters Pro', icon: '1️⃣', imgSrc: '/app-icons/smarters.png' },
-      { name: 'TiviMate', icon: '2️⃣', imgSrc: '/app-icons/tivimate.png' },
-      { name: 'Kodi', icon: '3️⃣', imgSrc: '/app-icons/kodi.png' },
+      {
+        id: 'tivimate',
+        name: 'TiviMate',
+        logo: 'logo-tivimate.png',          // /public/app-icons/logo-tivimate.png
+        downloadUrl: 'https://play.google.com/store/apps/details?id=ar.tvplayer.tv',
+        setupTime: '4 dakika',
+        recommended: true,
+        steps: [
+          { title: 'Play Store\'dan İndir', desc: 'Android TV\'de Play Store\'dan "TiviMate" indirin.' },
+          { title: 'M3U Playlist Ekle', desc: '"Add playlist" → "M3U playlist" seçin.' },
+          { title: 'M3U Linkini Gir', desc: 'Sağ paneldeki M3U URL\'sini kopyalayıp yapıştırın.' },
+          { title: 'EPG Ayarla (İsteğe Bağlı)', desc: 'Program rehberi için EPG URL\'si ekleyebilirsiniz.' },
+          { title: 'İzlemeye Başla', desc: 'Kurulum tamamlandı! Kategorileri keşfedin.' },
+        ],
+      },
+      {
+        id: 'smartersandroidtv',
+        name: 'IPTV Smarters Pro',
+        logo: 'logo-smarters.png',          // /public/app-icons/logo-smarters.png
+        downloadUrl: 'https://play.google.com/store/apps/details?id=com.nst.iptvsmarterstvbox',
+        setupTime: '4 dakika',
+        recommended: false,
+        steps: [
+          { title: 'Store\'dan İndir', desc: 'Android TV Play Store\'dan "IPTV Smarters Pro" indirin.' },
+          { title: 'Xtream Codes Seç', desc: '"Login with Xtream Codes API" seçin.' },
+          { title: 'Bilgileri Gir', desc: 'Server URL, kullanıcı adı ve şifreyi girin.' },
+          { title: 'Giriş Yap', desc: '"Add User" butonuna basın.' },
+          { title: 'İzlemeye Başla', desc: 'Live TV, Movies veya Series seçin.' },
+        ],
+      },
+      {
+        id: 'ottnavigator',
+        name: 'OTT Navigator',
+        logo: 'logo-ottnavigator.png',      // /public/app-icons/logo-ottnavigator.png
+        downloadUrl: 'https://play.google.com/store/apps/details?id=studio.blackhole.ottnavigator',
+        setupTime: '5 dakika',
+        recommended: false,
+        steps: [
+          { title: 'Play Store\'dan İndir', desc: 'OTT Navigator uygulamasını indirin.' },
+          { title: 'Playlist Ekle', desc: '"+" → "Xtream Codes" seçin.' },
+          { title: 'Bilgileri Gir', desc: 'Server, kullanıcı adı ve şifreyi girin.' },
+          { title: 'Kaydet', desc: '"Save" butonuna basın.' },
+          { title: 'İzlemeye Başla', desc: 'Kanalları ve içerikleri keşfedin.' },
+        ],
+      },
     ],
-    steps: [
-      { title: 'Play Store\'dan İndir', desc: 'Android TV veya Fire TV\'de Play Store / Amazon Store\'dan "TiviMate" indirin.' },
-      { title: 'Uygulamayı Aç', desc: 'TiviMate uygulamasını başlatın ve "M3U ile Ekle" seçeneğini seçin.' },
-      { title: 'M3U Linkini Yapıştır', desc: 'Bilgilerinizdeki M3U linkini kopyalayıp yapıştırın, "Sonraki" deyin.' },
-      { title: 'EPG Ayarla', desc: 'Program rehberi için EPG URL\'nizi isteğe bağlı olarak ekleyebilirsiniz.' },
-      { title: 'Kanalları Keşfet', desc: 'Kurulum tamamlandı! Kategori ve kanallar otomatik yüklenir.' },
-    ],
-    note: 'Fire TV Stick için önce "Bilinmeyen kaynaklara izin ver" ayarını etkinleştirmeniz gerekebilir.',
   },
   {
     id: 'iphone',
     label: 'iPhone/iPad',
-    sub: 'iOS 14 ve üzeri',
     icon: '🍎',
-    appCount: 3,
-    setupTime: '2-3 dakika',
     apps: [
-      { name: 'GSE Smart IPTV', icon: '1️⃣', imgSrc: '/app-icons/gse.png' },
-      { name: 'IPTV Smarters Pro', icon: '2️⃣', imgSrc: '/app-icons/smarters.png' },
-      { name: 'Flex IPTV', icon: '3️⃣', imgSrc: '/app-icons/flex.png' },
+      {
+        id: 'gse',
+        name: 'GSE Smart IPTV',
+        logo: 'logo-gse.png',               // /public/app-icons/logo-gse.png
+        downloadUrl: 'https://apps.apple.com/app/gse-smart-iptv-live-player/id1379998724',
+        setupTime: '3 dakika',
+        recommended: true,
+        steps: [
+          { title: 'App Store\'dan İndir', desc: 'App Store\'dan "GSE Smart IPTV" indirin.' },
+          { title: 'Remote Codes Ekle', desc: '"Remote Codes" → "Xtream API" seçin.' },
+          { title: 'Bilgileri Gir', desc: 'Server URL, kullanıcı adı ve şifreyi girin.' },
+          { title: 'Kaydet', desc: '"Save" butonuna basın.' },
+          { title: 'İzlemeye Başla', desc: 'IPTV, Films veya Series seçin.' },
+        ],
+      },
+      {
+        id: 'smarters-ios',
+        name: 'IPTV Smarters Pro',
+        logo: 'logo-smarters.png',          // /public/app-icons/logo-smarters.png
+        downloadUrl: 'https://apps.apple.com/app/iptv-smarters-player-lite/id1628995509',
+        setupTime: '3 dakika',
+        recommended: false,
+        steps: [
+          { title: 'App Store\'dan İndir', desc: 'App Store\'dan "IPTV Smarters Player" indirin.' },
+          { title: 'Xtream Codes Seç', desc: '"Xtream Codes API" ile giriş seçin.' },
+          { title: 'Bilgileri Gir', desc: 'Server URL, kullanıcı adı ve şifreyi girin.' },
+          { title: 'Add User', desc: '"Add User" butonuna basın.' },
+          { title: 'İzlemeye Başla', desc: 'İçerikleri keşfedin.' },
+        ],
+      },
+      {
+        id: 'flex',
+        name: 'Flex IPTV',
+        logo: 'logo-flex.png',              // /public/app-icons/logo-flex.png
+        downloadUrl: 'https://apps.apple.com/app/flex-iptv/id1182930255',
+        setupTime: '3 dakika',
+        recommended: false,
+        steps: [
+          { title: 'App Store\'dan İndir', desc: 'App Store\'dan "Flex IPTV" indirin.' },
+          { title: 'Kaynak Ekle', desc: '"+" → "Xtream" seçin.' },
+          { title: 'Bilgileri Gir', desc: 'Server, kullanıcı adı ve şifreyi girin.' },
+          { title: 'Kaydet', desc: '"Done" butonuna basın.' },
+          { title: 'İzlemeye Başla', desc: 'Kanalları ve içerikleri izleyin.' },
+        ],
+      },
     ],
-    steps: [
-      { title: 'App Store\'dan İndir', desc: 'App Store\'dan "GSE Smart IPTV" uygulamasını indirin.' },
-      { title: 'Remote Codes Ekle', desc: 'Uygulamada "Remote Codes" → "Xtream API" seçeneğine gidin.' },
-      { title: 'Bilgileri Gir', desc: `Sunucu: ${SERVER_URL} — Kullanıcı adı ve şifrenizi girin.` },
-      { title: 'Kaydet', desc: '"Ekle" veya "Save" butonuna basın. İçerikler yüklenmeye başlar.' },
-      { title: 'İzlemeye Başla', desc: 'IPTV, Filmler veya Diziler bölümünden seçim yapın.' },
-    ],
-    note: 'AirPlay özelliği ile iPhone ekranını Apple TV veya Smart TV\'ye yansıtabilirsiniz.',
   },
   {
     id: 'smarttv',
     label: 'Samsung Tizen',
-    sub: 'Samsung Smart TV (Tizen OS)',
     icon: '🖥️',
-    appCount: 1,
-    setupTime: '5-6 dakika',
     apps: [
-      { name: 'Hot IPTV Player', icon: '1️⃣', imgSrc: '/app-icons/hotiptv.png' },
+      {
+        id: 'hotiptv',
+        name: 'Hot IPTV Player',
+        logo: 'logo-hotiptv.png',           // /public/app-icons/logo-hotiptv.png
+        downloadUrl: 'https://hot-iptv.net',
+        setupTime: '5 dakika',
+        recommended: true,
+        steps: [
+          { title: 'Samsung Apps\'i Aç', desc: 'TV\'de Samsung Apps → "Hot IPTV Player" arayın ve indirin.' },
+          { title: 'Kodu Not Al', desc: 'Uygulama bir aktivasyon kodu gösterecek. Not alın.' },
+          { title: 'Web Aktivasyonu', desc: 'Telefon/bilgisayardan hot-iptv.net adresini açın, kodu girin.' },
+          { title: 'Bilgileri Gir', desc: 'Server URL, kullanıcı adı ve şifreyi girerek kaydedin.' },
+          { title: 'TV\'yi Yenile', desc: 'Uygulamayı yenileyin. Kanallar otomatik yüklenir.' },
+        ],
+      },
     ],
-    steps: [
-      { title: 'Samsung Apps\'i Aç', desc: 'TV\'nizde Samsung Apps mağazasını açın ve "Hot IPTV Player" arayın.' },
-      { title: 'Uygulamayı Kur', desc: 'Hot IPTV Player\'ı indirin. Uygulama bir aktivasyon kodu gösterecek.' },
-      { title: 'Web Aktivasyonu', desc: 'Telefon veya bilgisayardan hot-iptv.net adresini açın, kodu girin.' },
-      { title: 'Sunucu Bilgilerini Gir', desc: 'Aynı sayfada kullanıcı adı ve şifrenizi girerek kaydedin.' },
-      { title: 'TV\'yi Yenile', desc: 'TV\'deki uygulamayı yenileyin. Kanallar otomatik yüklenecektir.' },
-    ],
-    note: 'Samsung TV\'nizde otomatik güncelleme açıksa kapatmanız önerilir. Tizen OS 4.0+ gereklidir.',
   },
   {
     id: 'windows',
     label: 'Windows / macOS',
-    sub: 'Bilgisayar ve dizüstü',
     icon: '💻',
-    appCount: 2,
-    setupTime: '4-5 dakika',
     apps: [
-      { name: 'Smarters Player Pro', icon: '1️⃣', imgSrc: '/app-icons/smarters.png' },
-      { name: 'VLC Media Player', icon: '2️⃣', imgSrc: '/app-icons/vlc.png' },
+      {
+        id: 'smarters-pc',
+        name: 'Smarters Player Pro',
+        logo: 'logo-smarters.png',          // /public/app-icons/logo-smarters.png
+        downloadUrl: 'https://www.smarters.live',
+        setupTime: '4 dakika',
+        recommended: true,
+        steps: [
+          { title: 'smarters.live\'dan İndir', desc: 'smarters.live adresinden Windows/Mac sürümünü indirin ve kurun.' },
+          { title: 'Xtream Codes Seç', desc: '"Login with Xtream Codes API" seçin.' },
+          { title: 'Bilgileri Gir', desc: 'Host, kullanıcı adı ve şifreyi girin.' },
+          { title: 'Add User', desc: '"Add User" butonuna tıklayın.' },
+          { title: 'İzlemeye Başla', desc: 'Live TV, Movies ve Series bölümlerini keşfedin.' },
+        ],
+      },
+      {
+        id: 'vlc',
+        name: 'VLC Media Player',
+        logo: 'logo-vlc.png',               // /public/app-icons/logo-vlc.png
+        downloadUrl: 'https://www.videolan.org/vlc/',
+        setupTime: '2 dakika',
+        recommended: false,
+        steps: [
+          { title: 'VLC\'yi İndir', desc: 'videolan.org adresinden VLC indirin ve kurun.' },
+          { title: 'Ağ Akışı Aç', desc: 'Medya → Ağ Akışı Aç (Ctrl+N) menüsüne gidin.' },
+          { title: 'M3U Linkini Yapıştır', desc: 'Sağ paneldeki M3U URL\'sini kopyalayıp yapıştırın.' },
+          { title: 'Oynat', desc: '"Oynat" butonuna basın. Kanal listesi yüklenir.' },
+          { title: 'Kanal Seç', desc: 'Oynatma listesinden istediğiniz kanalı seçin.' },
+        ],
+      },
     ],
-    steps: [
-      { title: 'Smarters\'ı İndir', desc: 'smarters.live adresinden "Smarters Player Pro" yazılımını indirin ve kurun.' },
-      { title: 'Xtream Codes ile Giriş', desc: '"Login with Xtream Codes API" seçeneğini seçin.' },
-      { title: 'Bilgileri Gir', desc: `Host: ${SERVER_URL} — Kullanıcı adı ve şifrenizi girin.` },
-      { title: 'Add User', desc: '"Add User" butonuna tıklayın. İçerikler yüklenecektir.' },
-      { title: 'İzlemeye Başla', desc: 'Live TV, Filmler ve Diziler bölümlerinden içerik seçin.' },
-    ],
-    note: 'VLC alternatifi için: Ortam → Ağ Akışı Aç → M3U linkini yapıştırın ve "Oynat" deyin.',
   },
   {
     id: 'mag',
     label: 'MAG Cihazlar',
-    sub: 'MAG 256, 322, 352 ve üzeri',
     icon: '📦',
-    appCount: 1,
-    setupTime: '5-8 dakika',
     apps: [
-      { name: 'Dahili Portal', icon: '1️⃣' },
+      {
+        id: 'mag-portal',
+        name: 'Dahili Portal',
+        logo: 'logo-mag.png',               // /public/app-icons/logo-mag.png
+        downloadUrl: 'https://wa.me/447441921660?text=MAG%20cihaz%20aktivasyonu%20istiyorum',
+        setupTime: '5 dakika',
+        recommended: true,
+        steps: [
+          { title: 'Ayarlara Git', desc: 'MAG cihazında: Sistem → Sunucular → Portal 1 menüsüne gidin.' },
+          { title: 'Portal URL Gir', desc: `Portal URL: ${SERVER_URL}/c/ adresini girin.` },
+          { title: 'Kaydet ve Yeniden Başlat', desc: 'Kaydet\'e basın. Cihazı yeniden başlatın.' },
+          { title: 'MAC Adresini Bildirin', desc: 'Cihazınızın MAC adresini WhatsApp\'tan bize gönderin.' },
+          { title: 'Aktivasyon Bekleyin', desc: 'Aktivasyon onaylandıktan sonra içerikler yüklenir.' },
+        ],
+      },
     ],
-    steps: [
-      { title: 'Ayarlara Git', desc: 'MAG cihazınızda: Sistem → Sunucular → Portal 1 menüsüne gidin.' },
-      { title: 'Portal URL Gir', desc: `Portal URL alanına ${SERVER_URL}/c/ adresini girin.` },
-      { title: 'Kaydet ve Yeniden Başlat', desc: 'Kaydet\'e basın. Cihazı yeniden başlatın.' },
-      { title: 'MAC Adresi Bildirin', desc: 'Cihazınızın MAC adresini WhatsApp üzerinden bize gönderin.' },
-      { title: 'Aktivasyon Bekleyin', desc: 'Aktivasyon onaylandıktan sonra içerikler yüklenecektir.' },
-    ],
-    note: 'MAG cihazları için MAC adres aktivasyonu gereklidir. WhatsApp\'tan destek alabilirsiniz.',
   },
 ];
 
+// ─── Trial creds hook (Redis + localStorage) ──────────────────────────────────
+interface TrialCreds {
+  email?: string;
+  username: string;
+  password: string;
+  startedAt: number;
+}
+
+function useTrialCreds(email: string | null | undefined): { creds: TrialCreds | null; loading: boolean } {
+  const [creds, setCreds] = useState<TrialCreds | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // LocalStorage'dan hızlı oku
+    try {
+      const raw = localStorage.getItem('galya_trial_creds');
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.username && (!p.email || p.email === email)) {
+          setCreds(p);
+          setLoading(false);
+        }
+      }
+    } catch { /* */ }
+
+    if (!email) { setLoading(false); return; }
+
+    // Redis'ten doğrula
+    fetch('/api/test-talep', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_trial', email }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.username) {
+          const cr = { email: email ?? undefined, username: data.username, password: data.password, startedAt: data.startedAt };
+          setCreds(cr);
+          try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
+        } else {
+          setCreds(null);
+        }
+      })
+      .catch(() => { /* keep localStorage value */ })
+      .finally(() => setLoading(false));
+  }, [email]);
+
+  return { creds, loading };
+}
+
+// ─── Countdown hook ───────────────────────────────────────────────────────────
+function useCountdown(startedAt: number | null) {
+  const TOTAL = 3 * 60 * 60 * 1000;
+  const [rem, setRem] = useState(0);
+  useEffect(() => {
+    if (!startedAt) return;
+    const calc = () => Math.max(0, TOTAL - (Date.now() - startedAt));
+    setRem(calc());
+    const id = setInterval(() => setRem(calc()), 1000);
+    return () => clearInterval(id);
+  }, [startedAt, TOTAL]);
+  const expired = !startedAt || rem <= 0;
+  const h = Math.floor(rem / 3600000);
+  const m = Math.floor((rem % 3600000) / 60000);
+  const s = Math.floor((rem % 60000) / 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return { display: `${pad(h)}:${pad(m)}:${pad(s)}`, expired };
+}
+
+// ─── Copy button ──────────────────────────────────────────────────────────────
 function CopyBtn({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
+  const [ok, setOk] = useState(false);
   return (
-    <button
-      onClick={() => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs transition-all ${copied ? 'border-emerald-500/60 bg-emerald-950/40 text-emerald-400' : 'border-[#1e3a5f] text-[#6b7280] hover:border-[#3b82f6]/50 hover:text-[#3b82f6]'}`}
-    >
-      {copied ? '✓' : (
+    <button onClick={() => { navigator.clipboard.writeText(value); setOk(true); setTimeout(() => setOk(false), 2000); }}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs transition-all ${ok ? 'border-emerald-500/60 bg-emerald-950/40 text-emerald-400' : 'border-[#1e2d42] text-[#6b7280] hover:border-[#3b82f6]/50 hover:text-[#3b82f6]'}`}>
+      {ok ? '✓' : (
         <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor">
           <path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/>
           <path d="M0 5a2 2 0 0 1 2-2h1v1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2z"/>
@@ -174,360 +354,335 @@ function CopyBtn({ value }: { value: string }) {
   );
 }
 
+// ─── Sağ panel: Test bilgileri ────────────────────────────────────────────────
+function CredentialsPanel({ creds, loading, selectedApp }: {
+  creds: TrialCreds | null;
+  loading: boolean;
+  selectedApp: AppInfo | null;
+}) {
+  const { display: countdown, expired } = useCountdown(creds?.startedAt ?? null);
+  const SERVER = SERVER_URL;
+  const m3u = creds ? `${SERVER}/get.php?username=${creds.username}&password=${creds.password}&type=m3u&output=ts` : '';
+  const [m3uOpen, setM3uOpen] = useState(false);
 
-// ─── localStorage'dan gerçek test bilgilerini oku ─────────────────────────────
-const LS_KEY = 'galya_modal_progress'; // aynı key ana sayfadaki gibi
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-5 space-y-3">
+        <div className="h-4 w-32 animate-pulse rounded bg-[#1e2d42]" />
+        <div className="h-10 w-full animate-pulse rounded-xl bg-[#1e2d42]" />
+        <div className="h-10 w-full animate-pulse rounded-xl bg-[#1e2d42]" />
+        <div className="h-10 w-full animate-pulse rounded-xl bg-[#1e2d42]" />
+      </div>
+    );
+  }
 
-interface TrialCreds {
-  username: string;
-  password: string;
-  startedAt: number; // ms timestamp
-}
+  if (!creds) {
+    return (
+      <div className="rounded-2xl border border-dashed border-[#1e2d42] bg-[#060e1a] p-6 text-center">
+        <div className="mb-3 text-3xl opacity-30">🔒</div>
+        <p className="mb-1 text-sm font-semibold text-white">Giriş Bilgileri Yok</p>
+        <p className="mb-4 text-xs text-[#6b7280]">
+          {selectedApp ? `${selectedApp.name} kurulumu için test bilgilerinizi görüntüleyin.` : 'Bir uygulama seçin ve kurulum bilgilerinizi görün.'}
+        </p>
+        <Link href="/giris" className="inline-flex items-center gap-1.5 rounded-xl bg-[#3b82f6] px-4 py-2 text-xs font-bold text-white hover:bg-[#2563eb]">
+          Giriş Yap →
+        </Link>
+      </div>
+    );
+  }
 
-function useTrialCredentials(): TrialCreds | null {
-  const [creds, setCreds] = useState<TrialCreds | null>(null);
-
-  useEffect(() => {
-    // Önce direkt trial credentials anahtarına bak
-    // Ana sayfada test tamamlanınca localStorage'a farklı bir key ile kaydediyoruz
-    // Burada iki olası kaynağı kontrol ediyoruz
-    try {
-      // 1. 'galya_trial_creds' — modal adım 4'te set edilen bilgiler
-      const raw = localStorage.getItem('galya_trial_creds');
-      if (raw) {
-        const parsed = JSON.parse(raw) as TrialCreds;
-        if (parsed.username && parsed.password) { setCreds(parsed); return; }
-      }
-      // 2. Fallback: galya_modal_progress içinde saklanan bilgi
-      const prog = localStorage.getItem(LS_KEY);
-      if (prog) {
-        const p = JSON.parse(prog);
-        if (p.username && p.password && p.startedAt) setCreds(p as TrialCreds);
-      }
-    } catch { /* ignore */ }
-  }, []);
-
-  return creds;
-}
-
-// ─── Kalan süre hesapla ───────────────────────────────────────────────────────
-function useCountdown(startedAt: number): string {
-  const TOTAL = 3 * 60 * 60 * 1000; // 3 saat
-  const [remaining, setRemaining] = useState(() => Math.max(0, TOTAL - (Date.now() - startedAt)));
-
-  useEffect(() => {
-    const id = setInterval(() => setRemaining(Math.max(0, TOTAL - (Date.now() - startedAt))), 1000);
-    return () => clearInterval(id);
-  }, [startedAt, TOTAL]);
-
-  if (remaining <= 0) return 'Süresi doldu';
-  const h = Math.floor(remaining / 3600000);
-  const m = Math.floor((remaining % 3600000) / 60000);
-  const s = Math.floor((remaining % 60000) / 1000);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${pad(h)}:${pad(m)}:${pad(s)}`;
-}
-
-// ─── Test bilgileri kartı ─────────────────────────────────────────────────────
-function TrialCredentialsCard({ creds }: { creds: TrialCreds }) {
-  const SERVER = 'http://pro4kiptv.xyz:2086';
-  const m3u    = `${SERVER}/get.php?username=${creds.username}&password=${creds.password}&type=m3u&output=ts`;
-  const countdown = useCountdown(creds.startedAt);
-  const isExpired = countdown === 'Süresi doldu';
-
-  const rows = [
-    { label: 'KULLANICI ADI', value: creds.username },
-    { label: 'ŞİFRE',         value: creds.password },
-    { label: 'SERVER URL',    value: SERVER },
-    { label: 'M3U URL',       value: m3u },
-  ];
+  if (expired) {
+    return (
+      <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-5 text-center">
+        <p className="mb-2 text-sm font-semibold text-[#6b7280]">⌛ Test Süresi Doldu</p>
+        <p className="mb-4 text-xs text-[#4b5563]">Premium pakete geçerek izlemeye devam edin.</p>
+        <Link href="/abonelik" className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white hover:bg-amber-600">
+          👑 Premium&apos;a Geç →
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className={`mb-8 rounded-2xl border p-5 ${isExpired ? 'border-[#1e2d42] bg-[#0a0f18] opacity-60' : 'border-[#3b82f6]/30 bg-[#0a1525]'}`}>
-      <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+    <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] overflow-hidden">
+      <div className="flex items-center justify-between border-b border-[#1e2d42] px-4 py-3">
         <div className="flex items-center gap-2">
-          {!isExpired && (
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-            </span>
-          )}
-          <p className="text-sm font-semibold text-white">
-            {isExpired ? '⌛ Test Süresi Doldu' : '🔗 Kurulum Bilgileriniz'}
-          </p>
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"/>
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"/>
+          </span>
+          <p className="text-xs font-semibold text-white">Giriş Bilgileriniz</p>
+          <p className="text-[10px] text-[#6b7280]">Bu bilgileri uygulamaya girin</p>
         </div>
-        {/* Geri sayım */}
-        <span className={`rounded-lg border px-3 py-1 font-mono text-sm font-bold ${
-          isExpired
-            ? 'border-[#1e2d42] text-[#4b5563]'
-            : 'border-emerald-500/30 bg-emerald-950/40 text-emerald-400'
-        }`}>
-          {isExpired ? '00:00:00' : countdown}
+        <span className="font-mono text-xs font-bold text-emerald-400">{countdown}</span>
+      </div>
+
+      <div className="divide-y divide-[#1e2d42]">
+        {[
+          { label: 'SERVER URL', value: SERVER },
+          { label: 'KULLANICI ADI', value: creds.username },
+          { label: 'ŞİFRE', value: creds.password },
+        ].map(row => (
+          <div key={row.label} className="flex items-center justify-between gap-3 px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-[#4b5563]">{row.label}</p>
+              <p className="mt-0.5 truncate font-mono text-sm text-white">{row.value}</p>
+            </div>
+            <CopyBtn value={row.value} />
+          </div>
+        ))}
+
+        {/* M3U açılır */}
+        <div>
+          <button onClick={() => setM3uOpen(v => !v)}
+            className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-[#0d1a2a]">
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-semibold uppercase tracking-widest text-[#4b5563]">🔗 M3U URL</span>
+            </div>
+            <span className={`text-xs text-[#4b5563] transition-transform ${m3uOpen ? 'rotate-180' : ''}`}>▼</span>
+          </button>
+          {m3uOpen && (
+            <div className="border-t border-[#1e2d42] px-4 py-3">
+              <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-[#4b5563]">M3U URL</p>
+              <div className="flex items-center gap-2">
+                <p className="min-w-0 flex-1 truncate font-mono text-xs text-[#8b9ab3]">{m3u}</p>
+                <CopyBtn value={m3u} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── App kartı ────────────────────────────────────────────────────────────────
+function AppCard({ app, onClick, selected }: { app: AppInfo; onClick: () => void; selected: boolean }) {
+  return (
+    <button onClick={onClick}
+      className={`flex w-full items-center gap-4 rounded-2xl border px-4 py-3.5 text-left transition-all ${selected ? 'border-[#3b82f6]/60 bg-[#0d1a2a]' : 'border-[#1e2d42] bg-[#0a1020] hover:border-[#3b82f6]/30 hover:bg-[#0c1525]'}`}>
+      {/* Logo */}
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#1e2d42] bg-[#111827]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={`/app-icons/${app.logo}`} alt={app.name}
+          className="h-full w-full object-cover"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = 'none';
+            (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+          }} />
+        <span className="hidden h-full w-full items-center justify-center text-lg font-bold text-white">
+          {app.name[0]}
         </span>
       </div>
-
-      {isExpired ? (
-        <div className="text-center py-4">
-          <p className="text-sm text-[#6b7280] mb-4">Test süreniz sona erdi. Paketi satın alarak kesintisiz izlemeye devam edebilirsiniz.</p>
-          <a
-            href="https://wa.me/447441921660?text=Merhaba%2C%20sat%C4%B1n%20almak%20istiyorum."
-            target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#25d366] px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1ebe5d]"
-          >
-            💬 WhatsApp ile Satın Al
-          </a>
+      {/* Bilgi */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="font-semibold text-white">{app.name}</p>
+          {app.recommended && (
+            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-400">★ Önerilen</span>
+          )}
         </div>
-      ) : (
-        <div className="grid gap-2 sm:grid-cols-2">
-          {rows.map((row) => (
-            <div key={row.label} className="flex items-center justify-between gap-2 rounded-xl border border-[#1e2d42] bg-[#060e1a] px-3 py-2.5">
-              <div className="min-w-0 flex-1">
-                <p className="text-[9px] font-semibold uppercase tracking-widest text-[#4b5563]">{row.label}</p>
-                <p className="mt-0.5 truncate font-mono text-sm font-medium text-[#8b9ab3]">{row.value}</p>
-              </div>
-              <CopyBtn value={row.value} />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+        <p className="text-xs text-[#6b7280]">⏱ {app.setupTime}</p>
+      </div>
+      <span className="text-[#4b5563] text-lg">→</span>
+    </button>
   );
 }
 
-// ─── Test yok kartı ──────────────────────────────────────────────────────────
-function NoTrialCard() {
-  return (
-    <div className="mb-8 rounded-2xl border border-dashed border-[#1e2d42] bg-[#060e1a] p-6 text-center">
-      <div className="mb-3 text-3xl opacity-40">🔒</div>
-      <p className="mb-1 font-semibold text-white">Henüz Test Hesabınız Yok</p>
-      <p className="mb-5 text-sm text-[#6b7280]">
-        Kurulum bilgilerinizi görmek için önce ücretsiz test hesabı açın.
-        Bilgiler buraya otomatik olarak yüklenecektir.
-      </p>
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 rounded-xl bg-[#3b82f6] px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#3b82f6]/25 transition-colors hover:bg-[#2563eb]"
-      >
-        ⚡ Ücretsiz Test Al
-      </Link>
-    </div>
-  );
-}
-
-// ─── Platform Kart bileşeni ───────────────────────────────────────────────────
-function PlatformCard({ platform }: { platform: Platform }) {
-  const [open, setOpen] = useState(false);
+// ─── Detay paneli (seçili uygulama) ───────────────────────────────────────────
+function AppDetail({ app, creds, credsLoading }: { app: AppInfo; creds: TrialCreds | null; credsLoading: boolean }) {
+  const SERVER = SERVER_URL;
+  const m3u = creds ? `${SERVER}/get.php?username=${creds.username}&password=${creds.password}&type=m3u&output=ts` : '';
 
   return (
-    <div
-      className={`rounded-2xl border transition-all duration-200 ${open ? 'border-[#3b82f6]/50 bg-[#0c1628]' : 'border-[#1e2d42] bg-[#0a1020] hover:border-[#3b82f6]/30 hover:bg-[#0c1525]'}`}
-    >
-      {/* Kart başlığı — tıklanabilir */}
-      <button
-        className="flex w-full items-center gap-4 px-5 py-4 text-left"
-        onClick={() => setOpen((v) => !v)}
-      >
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-2xl transition-colors ${open ? 'bg-[#1e3a5f]' : 'bg-[#111827]'}`}>
-          {platform.icon}
+    <div className="space-y-6">
+      {/* Uygulama başlığı + indirme butonu */}
+      <div className="flex items-center gap-4 rounded-2xl border border-[#1e2d42] bg-[#0a1525] px-5 py-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#1e2d42] bg-[#111827]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`/app-icons/${app.logo}`} alt={app.name} className="h-full w-full object-cover"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-white">{platform.label}</p>
-          <p className="text-xs text-[#6b7280]">{platform.sub}</p>
-          <div className="mt-1 flex items-center gap-3 text-[11px] text-[#4b5563]">
-            <span>{platform.appCount} uygulama</span>
-            <span>·</span>
-            <span>⏱ {platform.setupTime}</span>
-          </div>
+          <p className="font-bold text-white text-lg">{app.name}</p>
+          <p className="text-xs text-[#6b7280]">⏱ Kurulum süresi: {app.setupTime}</p>
         </div>
-        {/* Uygulama ikonları — mini önizleme */}
-        <div className="hidden items-center gap-1 sm:flex">
-          {platform.apps.slice(0, 3).map((app) => (
-            <div key={app.name} title={app.name}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#111827] border border-[#1e2d42] text-sm overflow-hidden">
-              {app.imgSrc ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={app.imgSrc} alt={app.name} className="h-full w-full object-cover rounded-lg"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-              ) : (
-                <span className="text-xs">{app.icon}</span>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="text-xs ml-2">
-          <span className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 font-medium transition-colors ${open ? 'border-[#3b82f6]/40 bg-[#1e3a5f]/60 text-[#3b82f6]' : 'border-[#1e2d42] text-[#6b7280] hover:text-white'}`}>
-            {open ? '↑ Kapat' : 'Seç →'}
-          </span>
-        </div>
-      </button>
+        <a href={app.downloadUrl} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-xl bg-[#3b82f6] px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-[#2563eb]">
+          ↗ İndir
+        </a>
+      </div>
 
-      {/* Açılır içerik */}
-      {open && (
-        <div className="border-t border-[#1e2d42] px-5 pb-6 pt-5">
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Sol: Adımlar */}
-            <div>
-              <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-[#6b7280]">Kurulum Adımları</p>
-              <ol className="space-y-3">
-                {platform.steps.map((s, i) => (
-                  <li key={i} className="flex gap-3">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b82f6] text-[11px] font-bold text-white">
-                      {i + 1}
-                    </span>
-                    <div>
-                      <p className="text-sm font-semibold text-white">{s.title}</p>
-                      <p className="text-xs leading-relaxed text-[#8b9ab3]">{s.desc}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-              {platform.note && (
-                <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-950/20 px-4 py-3">
-                  <p className="text-xs leading-relaxed text-amber-400">💡 {platform.note}</p>
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Sol: Kurulum adımları */}
+        <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-5">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-[#6b7280]">Kurulum Adımları</p>
+          <ol className="space-y-4">
+            {app.steps.map((s, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b82f6] text-[11px] font-bold text-white">
+                  {i + 1}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-white">{s.title}</p>
+                  <p className="text-xs leading-relaxed text-[#8b9ab3]">{s.desc}</p>
                 </div>
-              )}
-            </div>
-
-            {/* Sağ: Uygulamalar + Sunucu bilgileri */}
-            <div className="space-y-4">
-              <div>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#6b7280]">Önerilen Uygulamalar</p>
-                <div className="space-y-2">
-                  {platform.apps.map((app, i) => (
-                    <div key={app.name} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${i === 0 ? 'border-[#3b82f6]/30 bg-[#1e3a5f]/20' : 'border-[#1e2d42] bg-[#0d1525]'}`}>
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#111827] border border-[#1e2d42] text-sm overflow-hidden">
-                        {app.imgSrc ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={app.imgSrc} alt={app.name} className="h-full w-full object-cover rounded-lg"
-                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-                        ) : (
-                          <span>{app.icon}</span>
-                        )}
-                      </div>
-                      <span className={`text-sm font-medium ${i === 0 ? 'text-white' : 'text-[#8b9ab3]'}`}>{app.name}</span>
-                      {i === 0 && <span className="ml-auto rounded-full bg-[#3b82f6]/20 px-2 py-0.5 text-[10px] font-semibold text-[#3b82f6]">Önerilen</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Hızlı referans bilgileri */}
-              <div>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#6b7280]">Bağlantı Bilgileri</p>
-                <div className="space-y-2 rounded-xl border border-[#1e2d42] bg-[#060e1a] p-3">
-                  {[
-                    { label: 'SUNUCU URL', value: SERVER_URL },
-                    { label: 'PORT', value: '2086' },
-                    { label: 'KULLANICI ADI', value: 'Test bilginizden alın' },
-                    { label: 'ŞİFRE', value: 'Test bilginizden alın' },
-                  ].map((row) => (
-                    <div key={row.label} className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#4b5563]">{row.label}</span>
-                      <div className="flex items-center gap-1 min-w-0">
-                        <span className="rounded-md bg-[#0d1a2a] px-2 py-0.5 font-mono text-xs text-[#8b9ab3] truncate max-w-[160px]">{row.value}</span>
-                        {row.value !== 'Test bilginizden alın' && <CopyBtn value={row.value} />}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* WhatsApp destek butonu */}
-              <a
-                href={`https://wa.me/447441921660?text=${encodeURIComponent(`Merhaba, ${platform.label} kurulumunda yardıma ihtiyacım var.`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1ebe5d]"
-              >
-                💬 Kurulumda Sorun Var? WhatsApp Destek
-              </a>
-            </div>
-          </div>
+              </li>
+            ))}
+          </ol>
         </div>
-      )}
+
+        {/* Sağ: Canlı bilgiler */}
+        <div className="space-y-4">
+          <CredentialsPanel creds={creds} loading={credsLoading} selectedApp={app} />
+
+          {/* WhatsApp destek */}
+          <a href={`https://wa.me/447441921660?text=${encodeURIComponent(`Merhaba, ${app.name} kurulumunda yardıma ihtiyacım var.`)}`}
+            target="_blank" rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366]/10 border border-[#25d366]/20 py-3 text-sm font-semibold text-[#25d366] transition-all hover:bg-[#25d366]/20">
+            💬 Kurulumda Sorun Var? WhatsApp Destek
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Ana Sayfa ────────────────────────────────────────────────────────────────
-export default function KurulumRehberiPage() {
-  const trialCreds = useTrialCredentials();
+// ─── Header bileşeni ──────────────────────────────────────────────────────────
+function KurulumHeader() {
+  const { data: session, status } = useSession();
+  const isLoggedIn = status === 'authenticated';
+
   return (
-    <div className="min-h-screen bg-[#07111f] text-white">
-      {/* ─── Header bağlantısı (ana header yok, basit nav) ─────────────── */}
-      <div className="border-b border-[#1e2d42] bg-[#07111f]/95 backdrop-blur-md px-6 py-4">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Galya IPTV" className="h-8 w-auto object-contain"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-            <span className="text-base font-bold text-white">Galya <span className="text-[#3b82f6]">IPTV</span></span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/#paketler" className="text-sm text-[#8b9ab3] transition-colors hover:text-white">Paketler</Link>
-            <Link href="/#sss" className="text-sm text-[#8b9ab3] transition-colors hover:text-white">S.S.S</Link>
-            <a
-              href="https://wa.me/447441921660?text=Merhaba%2C%20sat%C4%B1n%20almak%20istiyorum."
-              target="_blank" rel="noopener noreferrer"
-              className="rounded-xl bg-[#3b82f6] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#2563eb]"
-            >
-              Ücretsiz Test Al
-            </a>
-          </div>
-        </div>
-      </div>
+    <div className="border-b border-[#1e2d42] bg-[#07111f]/95 backdrop-blur-md px-4 py-3 sticky top-0 z-50">
+      <div className="mx-auto flex max-w-6xl items-center justify-between">
+        <Link href="/" className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Galya IPTV" className="h-8 w-auto"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = 'none';
+              (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'inline';
+            }} />
+          <span className="hidden text-sm font-bold text-white">Galya <span className="text-[#3b82f6]">IPTV</span></span>
+        </Link>
 
-      <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-        {/* Başlık */}
-        <div className="mb-12 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#1e3a5f] bg-[#0d1a2a] px-4 py-1.5 text-xs text-[#8b9ab3]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#3b82f6]" />
-            Tüm platformlar için adım adım rehber
-          </div>
-          <h1 className="mb-3 text-4xl font-black tracking-tight md:text-5xl">
-            Uygulamada İzle
-          </h1>
-          <p className="text-base text-[#8b9ab3]">
-            Platformunu seç, uygulamayı indir ve izlemeye başla
-          </p>
-        </div>
-
-        {/* ── Test bilgileri — sadece gerçek test bilgileri gösterilir ── */}
-        {trialCreds ? (
-          <TrialCredentialsCard creds={trialCreds} />
-        ) : (
-          <NoTrialCard />
-        )}
-
-        {/* Platform kartları */}
-        <div className="space-y-3">
-          {PLATFORMS.map((platform) => (
-            <PlatformCard key={platform.id} platform={platform} />
+        <div className="hidden items-center gap-1 rounded-2xl border border-[#1e2d42] bg-[#0d1a2a] px-2 py-1.5 md:flex">
+          {[
+            { href: '/#paketler', label: 'Paketler' },
+            { href: '/#ozellikler', label: 'Özellikler' },
+            { href: '/#sss', label: 'SSS' },
+            { href: '/kurulum-rehberi', label: 'Kurulum Rehberi' },
+          ].map(item => (
+            <Link key={item.href} href={item.href}
+              className="rounded-xl px-4 py-1.5 text-sm font-medium text-[#8b9ab3] transition-colors hover:bg-[#162035] hover:text-white">
+              {item.label}
+            </Link>
           ))}
         </div>
 
+        <div className="flex items-center gap-3">
+          {isLoggedIn ? (
+            <>
+              <Link href="/profil" className="flex items-center gap-2 text-sm font-medium text-[#8b9ab3] transition-colors hover:text-white">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1e3a5f] text-xs font-bold text-[#3b82f6]">
+                  {session?.user?.name?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || 'U'}
+                </span>
+                Profilim
+              </Link>
+              <Link href="/abonelik" className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-amber-600">
+                👑 Premium
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/giris" className="text-sm font-medium text-[#8b9ab3] transition-colors hover:text-white">
+                Giriş Yap
+              </Link>
+              <Link href="/kayit" className="rounded-xl bg-[#3b82f6] px-4 py-2 text-sm font-bold text-white transition-all hover:bg-[#2563eb]">
+                Ücretsiz Test Al
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Ana bileşen ──────────────────────────────────────────────────────────────
+function KurulumInner() {
+  const { data: session } = useSession();
+  const userEmail = session?.user?.email ?? null;
+  const { creds, loading: credsLoading } = useTrialCreds(userEmail);
+
+  const [activePlatform, setActivePlatform] = useState<PlatformId>('android');
+  const [selectedApp, setSelectedApp] = useState<AppInfo | null>(null);
+
+  const platform = PLATFORMS.find(p => p.id === activePlatform)!;
+
+  // Platform değişince ilk uygulamayı seç
+  useEffect(() => {
+    setSelectedApp(platform.apps[0]);
+  }, [activePlatform, platform.apps]);
+
+  return (
+    <div className="min-h-screen bg-[#07111f] text-white">
+      <KurulumHeader />
+
+      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+
+        {/* Başlık */}
+        <div className="mb-10 text-center">
+          <h1 className="mb-3 text-4xl font-black tracking-tight md:text-5xl">
+            {selectedApp ? selectedApp.name : 'Uygulamada İzle'}
+          </h1>
+          <p className="text-base text-[#8b9ab3]">Platformunu seç, uygulamayı indir ve izlemeye başla</p>
+        </div>
+
+        {/* Platform tab'ları */}
+        <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
+          {PLATFORMS.map(p => (
+            <button key={p.id} onClick={() => setActivePlatform(p.id)}
+              className={`rounded-full border px-5 py-2 text-sm font-semibold transition-all ${activePlatform === p.id ? 'border-white bg-white text-[#07111f]' : 'border-[#1e2d42] text-[#8b9ab3] hover:border-[#3b82f6]/40 hover:text-white'}`}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Uygulama kartları */}
+        <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {platform.apps.map(app => (
+            <AppCard key={app.id} app={app}
+              selected={selectedApp?.id === app.id}
+              onClick={() => setSelectedApp(app)} />
+          ))}
+        </div>
+
+        {/* Seçili uygulama detayı */}
+        {selectedApp && (
+          <AppDetail app={selectedApp} creds={creds} credsLoading={credsLoading} />
+        )}
+
         {/* Alt CTA */}
-        <div className="mt-12 rounded-2xl border border-[#1e3a5f] bg-[#0d1a2a] p-6 text-center">
+        <div className="mt-12 rounded-2xl border border-[#1e2d42] bg-[#0a1525] p-6 text-center">
           <p className="mb-1 text-lg font-bold text-white">Kurulumda Takıldınız mı?</p>
-          <p className="mb-5 text-sm text-[#8b9ab3]">
-            WhatsApp destek hattımız 7/24 aktif. Uzaktan kurulum desteği de sağlıyoruz.
-          </p>
-          <a
-            href="https://wa.me/447441921660?text=Merhaba%2C%20kurulum%20konusunda%20yard%C4%B1ma%20ihtiyac%C4%B1m%20var."
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#25d366] px-8 py-3.5 font-bold text-white shadow-lg transition-colors hover:bg-[#1ebe5d]"
-          >
+          <p className="mb-5 text-sm text-[#8b9ab3]">WhatsApp destek hattımız 7/24 aktif. Uzaktan kurulum desteği de sağlıyoruz.</p>
+          <a href="https://wa.me/447441921660?text=Merhaba%2C%20kurulum%20konusunda%20yard%C4%B1ma%20ihtiyac%C4%B1m%20var."
+            target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#25d366] px-8 py-3.5 font-bold text-white shadow-lg transition-colors hover:bg-[#1ebe5d]">
             💬 WhatsApp Destek Hattı
           </a>
-          <p className="mt-4 text-xs text-[#374151]">
-            Henüz test hesabınız yok mu?{' '}
-            <Link href="/" className="text-[#3b82f6] transition-colors hover:underline">
-              Buradan ücretsiz test alın →
-            </Link>
-          </p>
         </div>
       </main>
     </div>
+  );
+}
+
+// ─── Export: SessionProvider sarmalı ─────────────────────────────────────────
+export default function KurulumRehberiPage() {
+  return (
+    <SessionProvider>
+      <KurulumInner />
+    </SessionProvider>
   );
 }
