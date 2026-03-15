@@ -4,8 +4,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { useSearchParams } from 'next/navigation';
 
 // ─── Metadata notu ────────────────────────────────────────────────────────────
 // Bu sayfa 'use client' olduğundan metadata'yı layout.tsx'e ekle:
