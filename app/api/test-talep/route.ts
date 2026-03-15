@@ -465,7 +465,7 @@ export async function POST(req: NextRequest) {
 
     // ── create_direct: OTP'siz, session email ile direkt test oluştur ──────
     if (action === 'create_direct') {
-      // Sadece email bazlı kontrol — IP kontrolü yok (farklı hesaplar aynı IP'yi paylaşabilir)
+      // 1. Email bazlı kontrol — en öncelikli
       const byEmail = await redisGet(`trial:email:${email}`);
       if (byEmail) {
         const existing: TrialRecord = JSON.parse(byEmail);
@@ -478,7 +478,30 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Yeni test oluştur
+      // 2. IP bazlı kontrol — aynı IP'den farklı hesapla test önleme
+      // (localhost ve private IP'leri atla)
+      if (ip !== 'unknown' && !ip.startsWith('127.') && !ip.startsWith('192.168.') && !ip.startsWith('10.')) {
+        const byIp = await redisGet(`trial:ip:${ip}`);
+        if (byIp) {
+          const ipRecord: TrialRecord = JSON.parse(byIp);
+          // Aynı email ise zaten yukarıda yakalandı. Farklı email ise engelle.
+          if (ipRecord.email !== email) {
+            return NextResponse.json({
+              success: false,
+              ipBlocked: true,
+              error: 'Bu IP adresinden daha önce bir test hesabı oluşturulmuş. Her IP adresi yalnızca 1 test alabilir.',
+            }, { status: 429 });
+          }
+        }
+      }
+
+      // 3. VPN/proxy kontrolü
+      const ipCheck = await checkIpReputation(ip);
+      if (ipCheck.blocked) {
+        return NextResponse.json({ success: false, error: ipCheck.reason }, { status: 403 });
+      }
+
+      // 4. Yeni test oluştur
       const creds = await createTrialUser();
       await recordTrial(email, ip, selectedPackage || 'Belirtilmedi', creds.username, creds.password);
       await sendTrialMail(email, creds.username, creds.password);
