@@ -27,6 +27,20 @@ function CopyBtn({ value, label }: { value: string; label?: string }) {
   );
 }
 
+// Kullanıcı emailinden deterministik ödeme kodu üretir (8 haneli sayı)
+function genPaymentCode(email: string): string {
+  let hash = 0;
+  const str = email.toLowerCase().trim();
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // 32-bit integer
+  }
+  // 8 haneli pozitif sayı
+  const code = Math.abs(hash) % 100000000;
+  return String(code).padStart(8, '0');
+}
+
 function OdemeInner() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
@@ -175,16 +189,27 @@ function OdemeInner() {
             )}
 
             {/* Açıklama alanı uyarısı */}
-            <div className="rounded-xl border border-[#3b82f6]/20 bg-[#3b82f6]/5 p-4">
-              <p className="text-sm font-semibold text-[#3b82f6] mb-1">📋 Açıklama Alanına Ne Yazmalısınız?</p>
-              <p className="text-xs text-[#8b9ab3]">
-                Havale/EFT açıklamasına{' '}
-                <span className="font-mono text-white bg-[#1e2d42] px-1.5 py-0.5 rounded">
-                  {userEmail || 'e-posta adresinizi'}
-                </span>{' '}
-                yazmanız aktivasyonu hızlandırır.
+            <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <span className="text-lg">💡</span>
+                <div>
+                  <p className="text-sm font-bold text-amber-400">Açıklamaya bu kodu yazın</p>
+                  <p className="text-xs text-amber-300/70 mt-0.5">
+                    Açıklamaya kodu yazmazsanız ödeme gerçekleşmeyip paranız askıda kalacaktır.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-xl bg-[#0d1a2a] border border-amber-500/20 px-4 py-3">
+                <span className="flex-1 font-mono text-xl font-black text-white tracking-widest">
+                  {userEmail ? genPaymentCode(userEmail) : '··········'}
+                </span>
+                {userEmail && (
+                  <CopyBtn value={genPaymentCode(userEmail)} label="Kopyala" />
+                )}
+              </div>
+              <p className="text-[10px] text-amber-300/50">
+                Bu kod hesabınıza özgüdür. Ödeme açıklamasına eksiksiz yazınız.
               </p>
-              {userEmail && <CopyBtn value={userEmail} label="E-postayı Kopyala" />}
             </div>
 
             {/* Ödeme Tamamlandı butonu */}
