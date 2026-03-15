@@ -274,7 +274,6 @@ function OdemeContent() {
                 <p className="text-sm font-semibold text-amber-400">Ödeme Yaparken Dikkat Edin</p>
               </div>
               <ul className="space-y-1 text-xs leading-relaxed text-amber-300/80">
-                <li>• <strong className="text-amber-300">Açıklama kısmını kesinlikle boş</strong> bırakın.</li>
                 <li>• Gönderilecek tutar <strong className="text-amber-300">birebir aynı</strong> olmalıdır.</li>
                 <li>• Aksi halde ödemeniz otomatik olarak onaylanmaz.</li>
                 {payInfo.note && payInfo.note !== 'Açıklama kısmını kesinlikle boş bırakın. Gönderilecek tutar birebir aynı olmalıdır.' && (
