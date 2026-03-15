@@ -937,13 +937,12 @@ function HomePageInner() {
                     )}
 
                     {/* ── LOGO ── */}
-                    <div className="mb-4 flex items-center justify-center">
+                    <div className="mb-2 flex items-center justify-center overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={pkg.logo}
                         alt={pkg.logoAlt}
-                        className="w-full"
-                        style={{ maxWidth: '280px', height: 'auto', display: 'block' }}
+                        style={{ width: '140%', maxWidth: '140%', height: 'auto', display: 'block', transform: 'scale(1.4)', transformOrigin: 'center' }}
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).style.display = 'none';
                           const fb = e.currentTarget.nextElementSibling as HTMLElement;
@@ -951,7 +950,7 @@ function HomePageInner() {
                         }}
                       />
                       {/* Fallback */}
-                      <div className="hidden w-full items-center justify-center py-6">
+                      <div className="hidden w-full items-center justify-center py-4">
                         <span className="text-3xl font-extrabold tracking-tight text-white">{pkg.name}</span>
                       </div>
                     </div>
