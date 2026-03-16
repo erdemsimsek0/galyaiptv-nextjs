@@ -644,6 +644,170 @@ function PaymentsTab({ secret }: { secret: string }) {
   );
 }
 
+// ─── Destek Talepleri Sekmesi ─────────────────────────────────────────────────
+const ISSUE_LABELS: Record<string, { icon: string; label: string }> = {
+  stream_error:    { icon: '📺', label: 'Yayın açılmıyor' },
+  buffering:       { icon: '⏳', label: 'Takılma / Donma' },
+  login:           { icon: '🔑', label: 'Giriş sorunu' },
+  payment:         { icon: '💳', label: 'Ödeme / Abonelik' },
+  missing_channel: { icon: '📡', label: 'Kanal eksik' },
+  other:           { icon: '💬', label: 'Diğer' },
+};
+
+function SupportTab({ secret }: { secret: string }) {
+  const [tickets, setTickets]   = useState<{
+    id: string; email: string; issue: string; phone: string; note: string;
+    status: 'open'|'closed'; createdAt: number; createdAtFormatted: string;
+  }[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [msg, setMsg]           = useState('');
+  const [msgType, setMsgType]   = useState<'ok'|'err'>('ok');
+  const [filter, setFilter]     = useState<'all'|'open'|'closed'>('all');
+  const [closing, setClosing]   = useState<string|null>(null);
+
+  const showMsg = (text: string, type: 'ok'|'err' = 'ok') => {
+    setMsg(text); setMsgType(type); setTimeout(() => setMsg(''), 4000);
+  };
+
+  const fetchTickets = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/support', { headers: { 'x-admin-secret': secret } });
+      const d = await res.json();
+      if (d.success) setTickets(d.tickets || []);
+      else showMsg(d.error || 'Hata', 'err');
+    } catch { showMsg('Bağlantı hatası', 'err'); }
+    finally { setLoading(false); }
+  }, [secret]);
+
+  useEffect(() => { fetchTickets(); }, [fetchTickets]);
+
+  const closeTicket = async (id: string) => {
+    setClosing(id);
+    try {
+      const res = await fetch('/api/support', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ id }),
+      });
+      const d = await res.json();
+      if (d.success) { showMsg('Kapatıldı.'); fetchTickets(); }
+      else showMsg(d.error || 'Hata', 'err');
+    } catch { showMsg('Bağlantı hatası', 'err'); }
+    finally { setClosing(null); }
+  };
+
+  const deleteTicket = async (id: string) => {
+    if (!confirm('Bu talebi silmek istediğinize emin misiniz?')) return;
+    try {
+      const res = await fetch('/api/support', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ id }),
+      });
+      const d = await res.json();
+      if (d.success) { showMsg('Silindi.'); fetchTickets(); }
+      else showMsg(d.error || 'Hata', 'err');
+    } catch { showMsg('Bağlantı hatası', 'err'); }
+  };
+
+  const filtered = tickets.filter(t => filter === 'all' || t.status === filter);
+  const openCount   = tickets.filter(t => t.status === 'open').length;
+  const closedCount = tickets.filter(t => t.status === 'closed').length;
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard label="Toplam Talep" value={tickets.length} icon="🎫" color="purple" />
+        <StatCard label="Açık"         value={openCount}       icon="🔴" color="orange" />
+        <StatCard label="Kapatıldı"    value={closedCount}     icon="✅" color="green" />
+      </div>
+
+      {/* Filtre + Yenile */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex gap-2">
+          {(['all','open','closed'] as const).map(s => (
+            <button key={s} onClick={() => setFilter(s)}
+              className={`px-3 py-2 rounded-xl text-xs font-medium transition-colors ${filter===s ? 'bg-[#7c3aed] text-white' : 'bg-[#1f2937] text-gray-400 border border-[#374151] hover:text-white'}`}>
+              {s === 'all' ? 'Tümü' : s === 'open' ? '🔴 Açık' : '✅ Kapatıldı'}
+            </button>
+          ))}
+        </div>
+        <button onClick={fetchTickets} className="ml-auto text-xs bg-[#1f2937] border border-[#374151] text-gray-400 px-3 py-2 rounded-xl hover:text-white">
+          ⟳ Yenile
+        </button>
+      </div>
+
+      {msg && <div className={`rounded-xl px-4 py-3 text-sm border ${msgType==='ok'?'bg-green-900/30 text-green-400 border-green-800/50':'bg-red-900/30 text-red-400 border-red-800/50'}`}>{msg}</div>}
+
+      {loading && <div className="text-center py-16 text-gray-400">Yükleniyor...</div>}
+
+      {!loading && filtered.length === 0 && (
+        <div className="text-center py-16 text-gray-500">
+          {filter === 'all' ? 'Henüz destek talebi yok.' : 'Bu kategoride talep bulunamadı.'}
+        </div>
+      )}
+
+      {/* Ticket listesi */}
+      {filtered.length > 0 && (
+        <div className="space-y-3">
+          {filtered.map(t => {
+            const meta = ISSUE_LABELS[t.issue] || { icon: '💬', label: t.issue };
+            return (
+              <div key={t.id}
+                className={`rounded-2xl border p-5 space-y-3 ${t.status === 'open' ? 'bg-[#111827] border-orange-800/30' : 'bg-[#0f1520] border-[#1f2937]'}`}>
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-xs px-2 py-1 rounded-lg border font-medium ${t.status === 'open' ? 'bg-orange-900/40 text-orange-400 border-orange-800/50' : 'bg-green-900/40 text-green-400 border-green-800/50'}`}>
+                        {t.status === 'open' ? '🔴 Açık' : '✅ Kapatıldı'}
+                      </span>
+                      <span className="text-xs px-2 py-1 rounded-lg border bg-purple-900/30 text-purple-300 border-purple-800/40 font-medium">
+                        {meta.icon} {meta.label}
+                      </span>
+                    </div>
+                    <p className="font-semibold text-white text-sm">{t.email}</p>
+                    <p className="text-xs text-gray-500">{t.createdAtFormatted}</p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    {t.status === 'open' && (
+                      <button onClick={() => closeTicket(t.id)} disabled={closing === t.id}
+                        className="text-xs bg-green-900/30 hover:bg-green-900/60 text-green-400 px-3 py-1.5 rounded-lg border border-green-800/40 transition-colors disabled:opacity-40">
+                        {closing === t.id ? '...' : '✓ Kapat'}
+                      </button>
+                    )}
+                    <button onClick={() => deleteTicket(t.id)}
+                      className="text-xs bg-red-900/30 hover:bg-red-900/60 text-red-400 px-3 py-1.5 rounded-lg border border-red-800/40 transition-colors">
+                      🗑
+                    </button>
+                  </div>
+                </div>
+
+                {/* Detaylar */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-xl bg-[#0d1a2a] border border-[#1e2d42] p-3">
+                  <div>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Telefon</p>
+                    <p className="text-sm font-mono text-white">{t.phone}</p>
+                  </div>
+                  {t.note && (
+                    <div className="sm:col-span-1">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Açıklama</p>
+                      <p className="text-sm text-gray-300">{t.note}</p>
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-[10px] text-gray-600 font-mono">ID: {t.id}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Fiyat Yönetimi Sekmesi ───────────────────────────────────────────────────
 const PLAN_LABELS: Record<string, { name: string; color: string; emoji: string }> = {
   max:    { name: 'GalyaStream Max',    color: '#ef4444', emoji: '👑' },
@@ -847,7 +1011,7 @@ export default function AdminPage() {
   const [data,      setData]      = useState<ApiResponse | null>(null);
   const [error,     setError]     = useState('');
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState<'trials'|'ips'|'payment'|'prices'|'payments'>('trials');
+  const [activeTab, setActiveTab] = useState<'trials'|'ips'|'payment'|'prices'|'payments'|'support'>('trials');
 
   const fetchData = useCallback(async (s: string) => {
     setLoading(true); setError('');
@@ -939,6 +1103,9 @@ export default function AdminPage() {
           <Tab active={activeTab === 'prices'} onClick={() => setActiveTab('prices')}>
             💰 Fiyat Yönetimi
           </Tab>
+          <Tab active={activeTab === 'support'} onClick={() => setActiveTab('support')}>
+            🎫 Destek Talepleri
+          </Tab>
         </div>
 
         {error && (
@@ -967,6 +1134,10 @@ export default function AdminPage() {
 
         {activeTab === 'prices' && (
           <PricesTab secret={secret} />
+        )}
+
+        {activeTab === 'support' && (
+          <SupportTab secret={secret} />
         )}
       </div>
     </div>
