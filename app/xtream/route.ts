@@ -1,79 +1,58 @@
 // app/api/xtream/route.ts
+// Artık bu route, istekleri Cloudflare Worker'a yönlendiriyor.
+// Cloudflare Worker HTTP portlarına (2086 vb.) sorunsuz bağlanabiliyor.
+
 import { NextRequest, NextResponse } from 'next/server';
 
-const XTREAM_SERVER = process.env.XTREAM_SERVER || 'http://pro4kiptv.xyz:2086';
+// Cloudflare Worker URL'ini buraya yaz (deploy ettikten sonra)
+const CF_WORKER_URL = process.env.CF_WORKER_URL || 'https://iptv-proxy.KULLANICI_ADIN.workers.dev';
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, password, action, extra } = await req.json() as {
-      username: string; password: string; action: string; extra?: Record<string, string>;
-    };
-    if (!username || !password || !action)
-      return NextResponse.json({ error: 'username, password, action gerekli' }, { status: 400 });
-
-    const params = new URLSearchParams({ username, password, action });
-    if (extra) Object.entries(extra).forEach(([k, v]) => params.set(k, v));
-    const url = `${XTREAM_SERVER}/player_api.php?${params.toString()}`;
+    const body = await req.json();
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000);
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json, */*' },
+    const timer = setTimeout(() => controller.abort(), 25000);
+
+    const res = await fetch(CF_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
       signal: controller.signal,
     }).finally(() => clearTimeout(timer));
 
-    if (!res.ok) return NextResponse.json({ error: `HTTP ${res.status}` }, { status: res.status });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
 
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); }
-    catch { return NextResponse.json({ error: 'Parse hatası', sample: text.slice(0, 300) }, { status: 502 }); }
-
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=60',
-        // HTTP sunuculara fetch yapılabilmesi için
-        'Access-Control-Allow-Origin': '*',
-      }
-    });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    // Timeout hatasını daha açıklayıcı yap
     if (msg.includes('abort') || msg.includes('signal')) {
-      return NextResponse.json({ error: 'Sunucu yanıt vermedi (timeout). Lütfen tekrar deneyin.' }, { status: 504 });
+      return NextResponse.json({ error: 'Zaman aşımı. Lütfen tekrar deneyin.' }, { status: 504 });
     }
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
 export async function GET(req: NextRequest) {
-  const s = new URL(req.url).searchParams;
-  const u = s.get('u'), p = s.get('p'), action = s.get('action');
-  if (!u || !p || !action)
-    return NextResponse.json({ error: 'u, p, action gerekli' }, { status: 400 });
-
-  const extra = Object.fromEntries([...s.entries()].filter(([k]) => !['u', 'p', 'action'].includes(k)));
-  const params = new URLSearchParams({ username: u, password: p, action, ...extra });
-  const url = `${XTREAM_SERVER}/player_api.php?${params.toString()}`;
-
   try {
+    const s = new URL(req.url).searchParams;
+    const workerUrl = new URL(CF_WORKER_URL);
+    s.forEach((v, k) => workerUrl.searchParams.set(k, v));
+
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000);
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json, */*' },
+    const timer = setTimeout(() => controller.abort(), 25000);
+
+    const res = await fetch(workerUrl.toString(), {
       signal: controller.signal,
     }).finally(() => clearTimeout(timer));
 
-    if (!res.ok) return NextResponse.json({ error: `HTTP ${res.status}` }, { status: res.status });
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); }
-    catch { return NextResponse.json({ error: 'Parse hatası', sample: text.slice(0, 300) }, { status: 502 }); }
-    return NextResponse.json(data, { headers: { 'Cache-Control': 'public, s-maxage=60' } });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     if (msg.includes('abort') || msg.includes('signal')) {
-      return NextResponse.json({ error: 'Sunucu yanıt vermedi (timeout). Lütfen tekrar deneyin.' }, { status: 504 });
+      return NextResponse.json({ error: 'Zaman aşımı. Lütfen tekrar deneyin.' }, { status: 504 });
     }
     return NextResponse.json({ error: msg }, { status: 500 });
   }
