@@ -18,59 +18,47 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Yetkisiz sunucu' }, { status: 403 });
     }
 
-    // Vercel HTTP→HTTPS: http:// URL'lerini https:// olarak dene
-    // Sunucu HTTPS desteklemiyorsa http:// ile dene
-    const urls = decoded.startsWith('http://')
-      ? [decoded.replace('http://', 'https://'), decoded]
-      : [decoded];
+    // Sunucu HTTP only — https:// gelirse http:// ye çevir
+    const finalUrl = decoded.replace('https://', 'http://');
 
-    let lastError = '';
-    for (const url of urls) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 20000);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
 
-        const res = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-            'Accept': 'application/json, */*',
-          },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeout);
-
-        if (!res.ok) {
-          lastError = `HTTP ${res.status}`;
-          continue;
-        }
-
-        const text = await res.text();
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch {
-          // Bazen XML veya HTML dönebilir — ham metin döndür
-          return new NextResponse(text, {
-            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-          });
-        }
-
-        return NextResponse.json(data, {
-          headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
-        });
-      } catch (e) {
-        lastError = e instanceof Error ? e.message : String(e);
-        continue;
-      }
+    let res: Response;
+    try {
+      res = await fetch(finalUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+          'Accept': 'application/json, */*',
+          'Connection': 'keep-alive',
+        },
+        signal: controller.signal,
+        // @ts-ignore — Node.js fetch HTTP desteği
+        redirect: 'follow',
+      });
+    } finally {
+      clearTimeout(timeout);
     }
 
-    return NextResponse.json(
-      { error: `Sunucuya ulaşılamadı: ${lastError}` },
-      { status: 502 }
-    );
+    if (!res.ok) {
+      return NextResponse.json({ error: `Upstream: ${res.status} ${res.statusText}` }, { status: res.status });
+    }
+
+    const text = await res.text();
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return NextResponse.json({ error: 'JSON parse hatası', sample: text.slice(0, 200) }, { status: 502 });
+    }
+
+    return NextResponse.json(data, {
+      headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
+    });
+
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Proxy hatası';
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
