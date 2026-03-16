@@ -136,7 +136,7 @@ const VideoPlayer = memo(function VideoPlayer({ src, title, onClose }: { src: st
               if (data.fatal) {
                 hls.destroy();
                 hlsRef.current = null;
-                video.src = src.replace('ext=m3u8', 'ext=ts');
+                video.src = src.replace('.m3u8', '.ts');
                 video.load();
                 video.play().catch(() => setError(true));
               }
