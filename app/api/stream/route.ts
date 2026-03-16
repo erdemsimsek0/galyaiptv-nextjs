@@ -1,26 +1,26 @@
 // app/api/stream/route.ts — galyastream.com
 //
-// MİMARİ:
-//   m3u8 manifest  →  bu Vercel route  (küçük metin, <1sn, timeout yok)
-//   .ts segmentler →  Cloudflare Worker (HTTPS→HTTP köprüsü, timeout yok)
+// MİMARİ: Her şey Vercel üzerinden — Cloudflare'e gerek yok.
+//   m3u8 manifest  → bu route (?type=live)         küçük metin, <1sn
+//   .ts segmentler → bu route (?seg=URL)            ~200KB, hızlı biter, timeout yok
+//   film/dizi      → bu route (?type=movie/series)  range request destekli
 //
-// VERCEL ENVIRONMENT VARIABLES (vercel.com → galyastream projesi → Settings → Env Vars):
-//   XTREAM_SERVER         = http://pro4kiptv.xyz:2086        (sunucu adresi)
-//   NEXT_PUBLIC_CF_WORKER = https://galyastream-proxy.SENIN_ADINIZ.workers.dev
+// Vercel IP'si IPTV sunucusu tarafından engellenmemiş (film/dizi zaten çalışıyor).
+// Cloudflare IP'si engellendiği için CF Worker yerine Vercel proxy kullanıyoruz.
+//
+// VERCEL ENVIRONMENT VARIABLES:
+//   XTREAM_SERVER = http://pro4kiptv.xyz:2086
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 15; // m3u8 okumak için 15sn fazlasıyla yeter
+export const maxDuration = 30;
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const SERVER      = process.env.XTREAM_SERVER          || 'http://pro4kiptv.xyz:2086';
-const CF_WORKER   = process.env.NEXT_PUBLIC_CF_WORKER  || '';
-
-const ALLOWED_ORIGIN = 'https://www.galyastream.com';
+const SERVER = process.env.XTREAM_SERVER || 'http://pro4kiptv.xyz:2086';
 
 const CORS = {
-  'Access-Control-Allow-Origin':  ALLOWED_ORIGIN,
+  'Access-Control-Allow-Origin': 'https://www.galyastream.com',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Range, Content-Type',
   'Vary': 'Origin',
@@ -31,17 +31,50 @@ export async function OPTIONS() {
 }
 
 export async function GET(req: NextRequest) {
-  const s    = new URL(req.url).searchParams;
+  const s = new URL(req.url).searchParams;
+  const seg = s.get('seg'); // segment proxy modu
+
+  // ── SEGMENT PROXY (?seg=URL) ─────────────────────────────────────────────────
+  // m3u8 içindeki .ts segmentlerini Vercel üzerinden proxy'le.
+  // Her segment ~200KB, çok hızlı biter — Vercel 30sn limitine takılmaz.
+  if (seg) {
+    try {
+      const decoded = decodeURIComponent(seg);
+
+      const res = await fetch(decoded, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': '*/*',
+        },
+        signal: AbortSignal.timeout(10_000),
+      });
+
+      return new NextResponse(res.body, {
+        status: res.status,
+        headers: {
+          'Content-Type': res.headers.get('content-type') || 'video/mp2t',
+          'Cache-Control': 'no-cache, no-store',
+          ...CORS,
+        },
+      });
+    } catch (e: unknown) {
+      return new NextResponse(
+        e instanceof Error ? e.message : 'Segment hatası',
+        { status: 502, headers: CORS }
+      );
+    }
+  }
+
   const type = s.get('type');
-  const u    = s.get('u');
-  const p    = s.get('p');
-  const id   = s.get('id');
+  const u = s.get('u');
+  const p = s.get('p');
+  const id = s.get('id');
 
   if (!type || !u || !p || !id) {
     return new NextResponse('Eksik parametre', { status: 400, headers: CORS });
   }
 
-  // ── CANLI YAYIN ─────────────────────────────────────────────────────────────
+  // ── CANLI YAYIN (?type=live) ─────────────────────────────────────────────────
   if (type === 'live') {
     const m3u8Url = `${SERVER}/live/${u}/${p}/${id}.m3u8`;
 
@@ -61,28 +94,29 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      const text    = await res.text();
+      const text = await res.text();
       const baseUrl = `${SERVER}/live/${u}/${p}/`;
+      // Segment proxy base URL — aynı Vercel route'u ?seg= parametresiyle
+      const proxyBase = `/api/stream?seg=`;
 
-      // m3u8 içindeki relative segment URL'lerini absolute yap,
-      // ardından Cloudflare Worker üzerinden geçir (HTTPS→HTTP köprüsü).
+      // m3u8 içindeki segment URL'lerini Vercel proxy'e yönlendir
       const rewritten = text.split('\n').map(line => {
         const t = line.trim();
 
         // Boş satır veya saf yorum
         if (!t || (t.startsWith('#') && !t.includes('URI="'))) return line;
 
-        // Segment satırı
+        // Segment satırı (.ts / .aac / .mp4 / .fmp4)
         if (/\.(ts|aac|mp4|fmp4)(\?|$)/i.test(t)) {
-          const abs = t.startsWith('http') ? t : baseUrl + t;
-          return CF_WORKER ? `${CF_WORKER}?url=${encodeURIComponent(abs)}` : abs;
+          const abs = t.startsWith('http') ? t : `${baseUrl}${t}`;
+          return `${proxyBase}${encodeURIComponent(abs)}`;
         }
 
         // EXT-X-KEY şifre anahtarı
         if (t.includes('URI="')) {
           return t.replace(/URI="([^"]+)"/, (_: string, uri: string) => {
-            const abs = uri.startsWith('http') ? uri : baseUrl + uri;
-            return `URI="${CF_WORKER ? `${CF_WORKER}?url=${encodeURIComponent(abs)}` : abs}"`;
+            const abs = uri.startsWith('http') ? uri : `${baseUrl}${uri}`;
+            return `URI="${proxyBase}${encodeURIComponent(abs)}"`;
           });
         }
 
@@ -109,10 +143,10 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── FİLM / DİZİ ─────────────────────────────────────────────────────────────
+  // ── FİLM / DİZİ (?type=movie veya ?type=series) ──────────────────────────────
   if (type === 'movie' || type === 'series') {
     const vodPath = type === 'movie' ? 'movie' : 'series';
-    const vodUrl  = `${SERVER}/${vodPath}/${u}/${p}/${id}.mp4`;
+    const vodUrl = `${SERVER}/${vodPath}/${u}/${p}/${id}.mp4`;
 
     try {
       const fetchHeaders: Record<string, string> = {
@@ -125,15 +159,15 @@ export async function GET(req: NextRequest) {
       const res = await fetch(vodUrl, { headers: fetchHeaders });
 
       const resHeaders: Record<string, string> = {
-        'Content-Type':   res.headers.get('content-type')   || 'video/mp4',
-        'Accept-Ranges':  'bytes',
-        'Cache-Control':  'no-cache',
+        'Content-Type': res.headers.get('content-type') || 'video/mp4',
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'no-cache',
         ...CORS,
       };
       const cl = res.headers.get('content-length');
       const cr = res.headers.get('content-range');
       if (cl) resHeaders['Content-Length'] = cl;
-      if (cr) resHeaders['Content-Range']  = cr;
+      if (cr) resHeaders['Content-Range'] = cr;
 
       return new NextResponse(res.body, { status: res.status, headers: resHeaders });
 
