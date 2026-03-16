@@ -1,7 +1,4 @@
 // app/api/xtream/route.ts
-// Xtream Codes API proxy — tarayıcıdan direkt erişimde CORS hatası olur
-// Bu route sunucu tarafından proxy eder
-
 import { NextRequest, NextResponse } from 'next/server';
 
 const ALLOWED_SERVER = 'pro4kiptv.xyz';
@@ -15,25 +12,39 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'url parametresi gerekli' }, { status: 400 });
     }
 
-    // Güvenlik: sadece kendi sunucumuza proxy yap
-    if (!targetUrl.includes(ALLOWED_SERVER)) {
+    const decoded = decodeURIComponent(targetUrl);
+
+    if (!decoded.includes(ALLOWED_SERVER)) {
       return NextResponse.json({ error: 'Yetkisiz sunucu' }, { status: 403 });
     }
 
-    const res = await fetch(targetUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; IPTV Client)' },
-      signal: AbortSignal.timeout(15000),
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+
+    const res = await fetch(decoded, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json, text/plain, */*',
+      },
+      signal: controller.signal,
     });
 
+    clearTimeout(timeout);
+
     if (!res.ok) {
-      return NextResponse.json({ error: `Upstream error: ${res.status}` }, { status: res.status });
+      return NextResponse.json({ error: `Upstream: ${res.status}` }, { status: res.status });
     }
 
-    const data = await res.json();
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return NextResponse.json({ error: 'Geçersiz yanıt', raw: text.slice(0, 200) }, { status: 502 });
+    }
+
     return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
-      },
+      headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Proxy hatası';
