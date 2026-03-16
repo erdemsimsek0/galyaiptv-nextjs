@@ -691,7 +691,7 @@ function DetailModal({ item, creds, activeTab, onClose }: {
     const seriesItem = item as XtreamSeries;
     if (!seriesItem.series_id) return;
     setLoadingEp(true);
-    fetch(WORKER, {
+    fetch('/api/xtream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
