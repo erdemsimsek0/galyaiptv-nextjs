@@ -408,18 +408,11 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
       const { username, password } = creds;
       const catAction = type === 'live' ? 'get_live_categories' : type === 'movies' ? 'get_vod_categories' : 'get_series_categories';
       const streamAction = type === 'live' ? 'get_live_streams' : type === 'movies' ? 'get_vod_streams' : 'get_series';
+      const base = `http://pro4kiptv.xyz:2086/player_api.php?username=${username}&password=${password}`;
 
       const [catRes, streamRes] = await Promise.all([
-        fetch('https://iptv-proxy.erdemsimsek06.workers.dev', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, action: catAction }),
-        }),
-        fetch('https://iptv-proxy.erdemsimsek06.workers.dev', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, action: streamAction }),
-        }),
+        fetch(`${base}&action=${catAction}`),
+        fetch(`${base}&action=${streamAction}`),
       ]);
 
       const catsData = await catRes.json();
@@ -690,16 +683,7 @@ function DetailModal({ item, creds, activeTab, onClose }: {
     const seriesItem = item as XtreamSeries;
     if (!seriesItem.series_id) return;
     setLoadingEp(true);
-    fetch('https://iptv-proxy.erdemsimsek06.workers.dev', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: creds.username,
-        password: creds.password,
-        action: 'get_series_info',
-        extra: { series_id: String(seriesItem.series_id) },
-      }),
-    })
+    fetch(`http://pro4kiptv.xyz:2086/player_api.php?username=${creds.username}&password=${creds.password}&action=get_series_info&series_id=${seriesItem.series_id}`)
       .then(r => r.json())
       .then(data => {
         if (data.episodes) setEpisodes(data.episodes);
