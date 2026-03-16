@@ -429,12 +429,17 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
       const catAction = type === 'live' ? 'get_live_categories' : type === 'movies' ? 'get_vod_categories' : 'get_series_categories';
       const streamAction = type === 'live' ? 'get_live_streams' : type === 'movies' ? 'get_vod_streams' : 'get_series';
 
-      const catUrl = xtreamUrl(username, password, catAction);
-      const streamUrl2 = xtreamUrl(username, password, streamAction);
-
       const [catRes, streamRes] = await Promise.all([
-        fetch(`/api/xtream?url=${encodeURIComponent(catUrl)}`),
-        fetch(`/api/xtream?url=${encodeURIComponent(streamUrl2)}`),
+        fetch('/api/xtream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, action: catAction }),
+        }),
+        fetch('/api/xtream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, action: streamAction }),
+        }),
       ]);
 
       const catsData = await catRes.json();
@@ -701,7 +706,11 @@ function DetailModal({ item, creds, activeTab, onClose }: {
     const seriesItem = item as XtreamSeries;
     if (!seriesItem.series_id) return;
     setLoadingEp(true);
-    fetch(`/api/xtream?url=${encodeURIComponent(xtreamUrl(creds.username, creds.password, 'get_series_info', `&series_id=${seriesItem.series_id}`))}`)
+    fetch('/api/xtream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: creds.username, password: creds.password, action: 'get_series_info', extra: { series_id: String(seriesItem.series_id) } }),
+    })
       .then(r => r.json())
       .then(data => {
         if (data.episodes) setEpisodes(data.episodes);
