@@ -1069,9 +1069,15 @@ function HomePageInner() {
                       ))}
                     </ul>
 
-                    {/* ── CTA Butonu — Ödeme sayfasına yönlendir ── */}
-                    <Link
-                      href={`/odeme?paket=${encodeURIComponent(pkg.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${totalPrice.toFixed(2)}&orijinal=${originalTotal.toFixed(2)}&indirim=${dur.discount}`}
+                    {/* ── CTA Butonu — Giriş kontrolü sonrası ödeme sayfasına yönlendir ── */}
+                    <button
+                      onClick={() => {
+                        if (!isLoggedIn) {
+                          openAuth('register');
+                          return;
+                        }
+                        window.location.href = `/odeme?paket=${encodeURIComponent(pkg.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${totalPrice.toFixed(2)}&orijinal=${originalTotal.toFixed(2)}&indirim=${dur.discount}`;
+                      }}
                       className={`flex w-full items-center justify-center rounded-xl py-3.5 text-[15px] font-bold transition-all ${
                         pkg.popular
                           ? 'bg-[#3b82f6] text-white shadow-lg shadow-[#3b82f6]/30 hover:bg-[#2563eb]'
@@ -1079,7 +1085,7 @@ function HomePageInner() {
                       }`}
                     >
                       {pkg.ctaLabel}
-                    </Link>
+                    </button>
                     {/* WhatsApp alternatif */}
                     <a
                       href={`${WHATSAPP_BASE}?text=${encodeURIComponent(waText)}`}
