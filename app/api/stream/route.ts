@@ -1,6 +1,4 @@
 // app/api/stream/route.ts
-// Canlı yayın, film ve dizi stream'lerini proxy'ler (Mixed Content sorunu için)
-
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -29,8 +27,9 @@ export async function GET(req: NextRequest) {
   try {
     const res = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': '*/*',
+        'Connection': 'keep-alive',
       },
     });
 
@@ -39,17 +38,21 @@ export async function GET(req: NextRequest) {
     }
 
     const contentType = res.headers.get('content-type') || 'video/mp2t';
-    
-    // Stream'i direkt geçir
-    return new NextResponse(res.body, {
-      status: 200,
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'no-cache',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    const contentLength = res.headers.get('content-length');
+
+    const headers: Record<string, string> = {
+      'Content-Type': contentType,
+      'Cache-Control': 'no-cache, no-store',
+      'Access-Control-Allow-Origin': '*',
+    };
+    if (contentLength) headers['Content-Length'] = contentLength;
+
+    return new NextResponse(res.body, { status: 200, headers });
+
   } catch (e: unknown) {
-    return new NextResponse(e instanceof Error ? e.message : 'Hata', { status: 500 });
+    return new NextResponse(
+      e instanceof Error ? e.message : 'Stream hatası',
+      { status: 500 }
+    );
   }
 }
