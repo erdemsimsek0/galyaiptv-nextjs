@@ -132,11 +132,11 @@ async function sendVerificationRequest(params: {
 
   const info = await transport.sendMail({
     to:      email,
-    from:    `Galya IPTV <${process.env.EMAIL_USER}>`,
-    subject: 'Galya IPTV – Giriş Bağlantınız',
+    from:    `GalyaStream <${process.env.EMAIL_USER}>`,
+    subject: 'GalyaStream – Giriş Bağlantınız',
     html: `
       <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#07111f;padding:32px;border-radius:16px">
-        <h1 style="color:#ffffff;font-size:22px;margin:0 0 8px">Galya IPTV</h1>
+        <h1 style="color:#ffffff;font-size:22px;margin:0 0 8px">GalyaStream</h1>
         <p style="color:#8b9ab3;font-size:14px;margin:0 0 24px">Aşağıdaki butona tıklayarak giriş yapabilirsiniz.</p>
         <a href="${url}" style="display:inline-block;background:#3b82f6;color:#fff;font-weight:700;font-size:15px;padding:14px 28px;border-radius:12px;text-decoration:none">
           Giriş Yap →
