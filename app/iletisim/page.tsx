@@ -2,31 +2,31 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'İletişim | Galya IPTV 7/24 WhatsApp Destek',
+  title: 'İletişim | GalyaStream 7/24 WhatsApp Destek',
   description:
-    'Galya IPTV ile 7/24 WhatsApp destek hattı üzerinden iletişime geçin. Ücretsiz IPTV test yayını, teknik destek ve kurulum yardımı için hemen ulaşın.',
+    'GalyaStream ile 7/24 WhatsApp destek hattı üzerinden iletişime geçin. Ücretsiz IPTV test yayını, teknik destek ve kurulum yardımı için hemen ulaşın.',
   keywords: [
-    'Galya IPTV iletişim',
+    'GalyaStream iletişim',
     'IPTV WhatsApp destek',
     'ücretsiz IPTV test',
     'IPTV müşteri hizmetleri',
     '7/24 IPTV destek',
   ],
-  alternates: { canonical: 'https://galyaiptv.com.tr/iletisim' },
+  alternates: { canonical: 'https://www.galyastream.com/iletisim' },
   robots: { index: true, follow: true },
   openGraph: {
-    title: 'İletişim | Galya IPTV 7/24 WhatsApp Destek',
+    title: 'İletişim | GalyaStream 7/24 WhatsApp Destek',
     description:
-      'Galya IPTV müşteri hizmetleri ile 7/24 WhatsApp üzerinden iletişime geçin.',
-    url: 'https://galyaiptv.com.tr/iletisim',
-    siteName: 'Galya IPTV',
+      'GalyaStream müşteri hizmetleri ile 7/24 WhatsApp üzerinden iletişime geçin.',
+    url: 'https://www.galyastream.com/iletisim',
+    siteName: 'GalyaStream',
     locale: 'tr_TR',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'İletişim | Galya IPTV 7/24 WhatsApp Destek',
-    description: 'Galya IPTV ile ücretsiz test yayını alın, 7/24 WhatsApp destek hattımıza ulaşın.',
+    title: 'İletişim | GalyaStream 7/24 WhatsApp Destek',
+    description: 'GalyaStream ile ücretsiz test yayını alın, 7/24 WhatsApp destek hattımıza ulaşın.',
   },
 };
 
@@ -35,13 +35,13 @@ const WHATSAPP_BASE = 'https://wa.me/447441921660';
 const contactSchema = {
   '@context': 'https://schema.org',
   '@type': 'ContactPage',
-  name: 'Galya IPTV İletişim',
-  url: 'https://galyaiptv.com.tr/iletisim',
+  name: 'GalyaStream İletişim',
+  url: 'https://www.galyastream.com/iletisim',
   description: '7/24 WhatsApp destek, ücretsiz IPTV test yayını ve teknik destek',
   mainEntity: {
     '@type': 'Organization',
-    name: 'Galya IPTV',
-    url: 'https://galyaiptv.com.tr',
+    name: 'GalyaStream',
+    url: 'https://www.galyastream.com',
     contactPoint: [
       {
         '@type': 'ContactPoint',
@@ -75,7 +75,7 @@ export default function ContactPage() {
       <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#18181f]/95 backdrop-blur-md">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="text-lg font-bold tracking-tight text-[#f1f0f5]">
-            Galya <span className="text-[#7c6fcd]">IPTV</span>
+            Galya<span className="text-[#7c6fcd]">Stream</span>
           </Link>
           <div className="flex items-center gap-6 text-sm text-[#9b98b0]">
             <Link href="/#paketler" className="transition-colors hover:text-white">Paketler</Link>
@@ -285,8 +285,8 @@ export default function ContactPage() {
 
       {/* ── Footer ────────────────────────────────────────────────────────── */}
       <footer className="border-t border-white/[0.08] bg-[#141418] px-6 py-10 text-center text-sm text-[#6b6880]">
-        <p className="mb-1 font-semibold text-[#9b98b0]">Galya IPTV</p>
-        <p>© {new Date().getFullYear()} Galya IPTV. Tüm hakları saklıdır.</p>
+        <p className="mb-1 font-semibold text-[#9b98b0]">GalyaStream</p>
+        <p>© {new Date().getFullYear()} GalyaStream. Tüm hakları saklıdır.</p>
         <div className="mt-5 flex flex-wrap justify-center gap-5 text-xs">
           <Link href="/#paketler" className="transition-colors hover:text-[#f1f0f5]">IPTV Fiyatları</Link>
           <Link href="/blog"      className="transition-colors hover:text-[#f1f0f5]">Blog</Link>
