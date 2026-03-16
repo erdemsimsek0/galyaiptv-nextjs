@@ -15,27 +15,27 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return {};
-  const url = 'https://galyaiptv.com.tr/blog/' + post.slug;
-  const ogImage = 'https://galyaiptv.com.tr/og-image.jpg';
+  const url = 'https://www.galyastream.com/blog/' + post.slug;
+  const ogImage = 'https://www.galyastream.com/og-image.png';
   return {
-    title: post.title + ' | Galya IPTV Blog',
+    title: post.title + ' | GalyaStream Blog',
     description: post.description,
     alternates: { canonical: url },
     robots: { index: true, follow: true },
     openGraph: {
-      title: post.title + ' | Galya IPTV Blog',
+      title: post.title + ' | GalyaStream Blog',
       description: post.description,
       url,
-      siteName: 'Galya IPTV',
+      siteName: 'GalyaStream',
       locale: 'tr_TR',
       type: 'article',
       publishedTime: post.date,
-      authors: ['Galya IPTV'],
+      authors: ['GalyaStream'],
       images: [{ url: ogImage, width: 1200, height: 630, alt: post.title }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: post.title + ' | Galya IPTV Blog',
+      title: post.title + ' | GalyaStream Blog',
       description: post.description,
       images: [ogImage],
     },
@@ -108,7 +108,7 @@ export default async function BlogPostPage({
   if (!post) notFound();
 
   const related   = getRelated(post.slug, post.category);
-  const postUrl   = 'https://galyaiptv.com.tr/blog/' + post.slug;
+  const postUrl   = 'https://www.galyastream.com/blog/' + post.slug;
   const catClass  = categoryColors[post.category] ?? 'bg-white/[0.06] text-[#9b98b0]';
 
   const articleSchema = {
@@ -119,15 +119,15 @@ export default async function BlogPostPage({
     url: postUrl,
     datePublished: post.date,
     dateModified: post.date,
-    author: { '@type': 'Organization', name: 'Galya IPTV', url: 'https://galyaiptv.com.tr' },
+    author: { '@type': 'Organization', name: 'GalyaStream', url: 'https://www.galyastream.com' },
     publisher: {
       '@type': 'Organization',
-      name: 'Galya IPTV',
-      url: 'https://galyaiptv.com.tr',
-      logo: { '@type': 'ImageObject', url: 'https://galyaiptv.com.tr/logo.png' },
+      name: 'GalyaStream',
+      url: 'https://www.galyastream.com',
+      logo: { '@type': 'ImageObject', url: 'https://www.galyastream.com/logo.png' },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
-    image: 'https://galyaiptv.com.tr/og-image.jpg',
+    image: 'https://www.galyastream.com/og-image.png',
     inLanguage: 'tr',
   };
 
@@ -135,8 +135,8 @@ export default async function BlogPostPage({
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: 'https://galyaiptv.com.tr/' },
-      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://galyaiptv.com.tr/blog' },
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: 'https://www.galyastream.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://www.galyastream.com/blog' },
       { '@type': 'ListItem', position: 3, name: post.title, item: postUrl },
     ],
   };
@@ -149,7 +149,7 @@ export default async function BlogPostPage({
       <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#18181f]/95 backdrop-blur-md">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="text-lg font-bold tracking-tight text-[#f1f0f5]">
-            Galya <span className="text-[#7c6fcd]">IPTV</span>
+            Galya<span className="text-[#7c6fcd]">Stream</span>
           </Link>
           <div className="flex items-center gap-6 text-sm text-[#9b98b0]">
             <Link href="/#paketler" className="transition-colors hover:text-white">Paketler</Link>
@@ -279,8 +279,8 @@ export default async function BlogPostPage({
       </main>
 
       <footer className="border-t border-white/[0.08] bg-[#141418] px-6 py-10 text-center text-sm text-[#6b6880]">
-        <p className="mb-1 font-semibold text-[#9b98b0]">Galya IPTV</p>
-        <p>© {new Date().getFullYear()} Galya IPTV. Tüm hakları saklıdır.</p>
+        <p className="mb-1 font-semibold text-[#9b98b0]">GalyaStream</p>
+        <p>© {new Date().getFullYear()} GalyaStream. Tüm hakları saklıdır.</p>
         <div className="mt-5 flex flex-wrap justify-center gap-5 text-xs">
           <Link href="/" className="transition-colors hover:text-[#f1f0f5]">Ana Sayfa</Link>
           <Link href="/#paketler" className="transition-colors hover:text-[#f1f0f5]">IPTV Fiyatları</Link>
