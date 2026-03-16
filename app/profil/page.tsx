@@ -643,7 +643,11 @@ function ProfilInner() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
 
+// ── Dışa açılan bileşen: kendi SessionProvider'ını taşır ─────────────────
 export default function ProfilPage() {
   return (
     <SessionProvider>
