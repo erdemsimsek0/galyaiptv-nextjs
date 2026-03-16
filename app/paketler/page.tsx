@@ -4,8 +4,8 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'IPTV Paketleri ve Fiyatları 2025',
   description:
-    'Galya IPTV paketleri: Aylık, 6 aylık, yıllık seçenekler. Uygun fiyat, kaliteli hizmet. Hemen IPTV satın al!',
-  alternates: { canonical: 'https://galyaiptv.com.tr/paketler' },
+    'GalyaStream paketleri: Aylık, 6 aylık, yıllık seçenekler. Uygun fiyat, kaliteli hizmet. Hemen IPTV satın al!',
+  alternates: { canonical: 'https://www.galyastream.com/paketler' },
 };
 
 const packages = [
@@ -49,7 +49,7 @@ export default function PaketlerPage() {
       <header className="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-sm border-b border-gray-800">
         <nav className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Galya IPTV
+            GalyaStream
           </Link>
           <div className="flex items-center gap-6 text-sm text-gray-300">
             <Link href="/paketler" className="text-white font-medium">Paketler</Link>
@@ -124,7 +124,7 @@ export default function PaketlerPage() {
       </main>
 
       <footer className="border-t border-gray-800 py-8 px-4 text-center text-gray-500 text-sm mt-8">
-        <p>© {new Date().getFullYear()} Galya IPTV. Tüm hakları saklıdır.</p>
+        <p>© {new Date().getFullYear()} GalyaStream. Tüm hakları saklıdır.</p>
       </footer>
     </>
   );
