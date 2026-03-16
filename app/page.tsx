@@ -154,7 +154,7 @@ const categoryPackages = [
     basePrice: 229.90,
     features: [
       { bold: true,  text: 'TV + Spor + Film + Dizi Tek Pakette' },
-      { bold: true,  text: '15.000+ Güncel İçerik ve Platform Arşivi' },
+      { bold: true,  text: '65.000+ Güncel İçerik ve Platform Arşivi' },
       { bold: false, text: 'Yetişkin İçeriklere Dahil Erişim' },
       { bold: false, text: 'HD / FHD / 4K Yüksek Kalite Yayın' },
       { bold: false, text: 'Tüm Cihazlarda Kesintisiz İzleme' },
