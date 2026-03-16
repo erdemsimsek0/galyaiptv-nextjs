@@ -10,10 +10,29 @@ const nextConfig = {
       { protocol: 'http',  hostname: 'pro4kiptv.xyz', port: '2086' },
       { protocol: 'https', hostname: 'pro4kiptv.xyz', port: '2086' },
       { protocol: 'http',  hostname: '**' },
+      { protocol: 'https', hostname: '**' },
     ],
   },
   compress: true,
   poweredByHeader: false,
+
+  // Vercel'de HTTP kaynaklara sunucu tarafı fetch için gerekli
+  experimental: {
+    serverComponentsExternalPackages: [],
+  },
+
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type' },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
