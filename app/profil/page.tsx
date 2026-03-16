@@ -238,7 +238,8 @@ function ProfilInner() {
     { id: 'other',          icon: '💬', title: 'Diğer',                   desc: 'Başka bir konu hakkında' },
   ];
 
-  const openSupport = () => { setSupportStep('select'); setSelectedIssue(''); setSupportPhone(''); setSupportNote(''); setSupportMsg(''); setShowSupport(true); }; = async () => {
+  const openSupport = () => { setSupportStep('select'); setSelectedIssue(''); setSupportPhone(''); setSupportNote(''); setSupportMsg(''); setShowSupport(true); };
+  const submitSupport = async () => {
     if (!supportPhone.trim()) { setSupportMsg('Telefon numarası zorunludur.'); return; }
     setSupportLoading(true); setSupportMsg('');
     try {
