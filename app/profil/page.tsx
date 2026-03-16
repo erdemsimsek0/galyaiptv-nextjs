@@ -126,12 +126,22 @@ function ProfilInner() {
   const userEmail = session?.user?.email ?? null;
   const creds   = useTrialCreds(userEmail);
   const { display: countdown, expired } = useCountdown(creds?.startedAt ?? null);
+
+  // ── Tüm state'ler — erken return'lerden ÖNCE ──────────────────────────────
   const [signingOut, setSigningOut] = useState(false);
   const [trialModal, setTrialModal] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
   const [trialMsg, setTrialMsg] = useState('');
   const [trialProgress, setTrialProgress] = useState(0);
   const trialProgressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [refCopied, setRefCopied] = useState(false);
+  const [showSupport, setShowSupport]       = useState(false);
+  const [supportStep, setSupportStep]       = useState<'select'|'form'|'done'>('select');
+  const [selectedIssue, setSelectedIssue]   = useState('');
+  const [supportPhone, setSupportPhone]     = useState('');
+  const [supportNote, setSupportNote]       = useState('');
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [supportMsg, setSupportMsg]         = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -212,7 +222,6 @@ function ProfilInner() {
   // ── Referans sistemi ──────────────────────────────────────────────────────
   const referralCode = email ? btoa(email).replace(/=/g, '').slice(0, 10).toUpperCase() : '';
   const referralLink = typeof window !== 'undefined' ? `${window.location.origin}/?ref=${referralCode}` : '';
-  const [refCopied, setRefCopied] = useState(false);
   const copyReferral = () => {
     navigator.clipboard.writeText(referralLink);
     setRefCopied(true);
@@ -228,16 +237,8 @@ function ProfilInner() {
     { id: 'missing_channel',icon: '📡', title: 'Kanal eksik',             desc: 'İstediğim kanal listede yok' },
     { id: 'other',          icon: '💬', title: 'Diğer',                   desc: 'Başka bir konu hakkında' },
   ];
-  const [showSupport, setShowSupport]       = useState(false);
-  const [supportStep, setSupportStep]       = useState<'select'|'form'|'done'>('select');
-  const [selectedIssue, setSelectedIssue]   = useState('');
-  const [supportPhone, setSupportPhone]     = useState('');
-  const [supportNote, setSupportNote]       = useState('');
-  const [supportLoading, setSupportLoading] = useState(false);
-  const [supportMsg, setSupportMsg]         = useState('');
 
-  const openSupport = () => { setSupportStep('select'); setSelectedIssue(''); setSupportPhone(''); setSupportNote(''); setSupportMsg(''); setShowSupport(true); };
-  const submitSupport = async () => {
+  const openSupport = () => { setSupportStep('select'); setSelectedIssue(''); setSupportPhone(''); setSupportNote(''); setSupportMsg(''); setShowSupport(true); }; = async () => {
     if (!supportPhone.trim()) { setSupportMsg('Telefon numarası zorunludur.'); return; }
     setSupportLoading(true); setSupportMsg('');
     try {
