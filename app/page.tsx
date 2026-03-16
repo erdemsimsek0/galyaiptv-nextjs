@@ -129,8 +129,8 @@ const categoryPackages = [
     id: 'spor',
     // Logo dosyası: /public/paket-logoları/logo-sports.png
     logo: '/paket-logoları/logo-sports.png',
-    logoAlt: 'Montana Sports',
-    name: 'Montana Sports',
+    logoAlt: 'GalyaStream Sports',
+    name: 'GalyaStream Sports',
     desc: 'Tüm spor yayınları ve TV kanalları — maçlar, turnuvalar tek yerde.',
     basePrice: 159.90,
     features: [
@@ -148,8 +148,8 @@ const categoryPackages = [
     id: 'max',
     // Logo dosyası: /public/paket-logoları/logo-max.png
     logo: '/paket-logoları/logo-max.png',
-    logoAlt: 'Montana Max',
-    name: 'Montana Max',
+    logoAlt: 'GalyaStream Max',
+    name: 'GalyaStream Max',
     desc: 'Tüm içeriklere sınırsız erişim — film, dizi, spor ve TV kanalları bir arada.',
     basePrice: 229.90,
     features: [
@@ -167,8 +167,8 @@ const categoryPackages = [
     id: 'cinema',
     // Logo dosyası: /public/paket-logoları/logo-cinema.png
     logo: '/paket-logoları/logo-cinema.png',
-    logoAlt: 'Montana Cinema',
-    name: 'Montana Cinema',
+    logoAlt: 'GalyaStream Cinema',
+    name: 'GalyaStream Cinema',
     desc: '15.000+ film ve dizi seçkisi — en popüler ve sevilen yapımlar bir arada.',
     basePrice: 129.90,
     features: [
@@ -733,13 +733,15 @@ function HomePageInner() {
               src="/logo.png"
               alt="GalyaStream"
               className="h-9 w-auto object-contain"
+              style={{ display: 'none' }}
+              onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'block'; const fb = e.currentTarget.nextElementSibling as HTMLElement; if (fb) fb.style.display = 'none'; }}
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = 'none';
                 const fb = e.currentTarget.nextElementSibling as HTMLElement;
                 if (fb) fb.style.display = 'flex';
               }}
             />
-            <span style={{ display: "none" }} className="items-center gap-1 text-lg font-bold tracking-tight text-white">
+            <span style={{ display: "flex" }} className="items-center gap-1 text-lg font-bold tracking-tight text-white">
               Galya<span className="text-[#3b82f6]">Stream</span>
             </span>
           </Link>
@@ -754,6 +756,7 @@ function HomePageInner() {
               { href: '/#yorumlar',    label: 'Yorumlar'          },
               { href: '/#sss',         label: 'SSS'               },
               { href: '/kurulum-rehberi', label: 'Kurulum Rehberi'},
+              { href: '/blog',            label: 'Blog'              },
               ].map((item) => (
                 <Link
                   key={item.href}
@@ -815,7 +818,7 @@ function HomePageInner() {
         {mobileMenuOpen && (
           <div className="border-t border-[#1e3a5f] bg-[#0d1117] px-4 pb-4 md:hidden">
             <div className="flex flex-col gap-1 pt-3 text-sm">
-              {[{ href: '/#paketler', label: 'Paketler' }, { href: '/#ozellikler', label: 'Özellikler' }, { href: '/#platformlar', label: 'Platformlar' }, { href: '/#yorumlar', label: 'Yorumlar' }, { href: '/#sss', label: 'S.S.S' }, { href: '/kurulum-rehberi', label: 'Kurulum Rehberi' }].map((item) => (
+              {[{ href: '/#paketler', label: 'Paketler' }, { href: '/#ozellikler', label: 'Özellikler' }, { href: '/#platformlar', label: 'Platformlar' }, { href: '/#yorumlar', label: 'Yorumlar' }, { href: '/#sss', label: 'S.S.S' }, { href: '/kurulum-rehberi', label: 'Kurulum Rehberi' }, { href: '/blog', label: 'Blog' }].map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-[#9ca3af] transition-colors hover:bg-[#1e3a5f]/30 hover:text-white">{item.label}</Link>
               ))}
               <button onClick={() => { setMobileMenuOpen(false); openAuth(); }} className="mt-2 rounded-xl bg-[#3b82f6] py-3 text-sm font-bold text-white">Kayıt Ol</button>
@@ -1414,6 +1417,7 @@ function HomePageInner() {
               <Link href="/#platformlar" className="transition-colors hover:text-white">Desteklenen Cihazlar</Link>
               <Link href="/#sss" className="transition-colors hover:text-white">S.S.S</Link>
               <Link href="/kurulum-rehberi" className="transition-colors hover:text-white">Kurulum Rehberi</Link>
+              <Link href="/blog" className="transition-colors hover:text-white">Blog</Link>
               <Link href="/blog" className="transition-colors hover:text-white">Blog</Link>
               <Link href="/iletisim" className="transition-colors hover:text-white">İletişim</Link>
               <Link href="/blog/iptv-nedir" className="transition-colors hover:text-white">IPTV Nedir?</Link>
