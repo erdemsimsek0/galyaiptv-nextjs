@@ -77,7 +77,7 @@ export default function KayitPage() {
             <>
               <div className="mb-7 text-center">
                 <h1 className="text-xl font-black text-white sm:text-2xl">Hesap Oluştur</h1>
-                <p className="mt-1.5 text-sm text-[#6b7280]">Yeni bir Galya IPTV hesabı oluşturun</p>
+                <p className="mt-1.5 text-sm text-[#6b7280]">Yeni bir GalyaStream hesabı oluşturun</p>
               </div>
 
               {/* Google */}
@@ -178,7 +178,7 @@ function LogoWithFallback() {
   if (failed) {
     return (
       <span className="text-xl font-black text-white">
-        Galya <span className="text-[#3b82f6]">IPTV</span>
+        Galya<span className="text-[#3b82f6]">Stream</span>
       </span>
     );
   }
@@ -186,7 +186,7 @@ function LogoWithFallback() {
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src="/logo.png"
-      alt="Galya IPTV"
+      alt="GalyaStream"
       className="h-10 w-auto"
       onError={() => setFailed(true)}
     />
