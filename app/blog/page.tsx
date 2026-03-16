@@ -3,21 +3,21 @@ import Link from 'next/link';
 import { blogPosts } from '@/lib/blog-posts';
 
 export const metadata: Metadata = {
-  title: 'IPTV Blog – Rehberler, İpuçları ve Haberler | Galya IPTV',
+  title: 'IPTV Blog – Rehberler, İpuçları ve Haberler | GalyaStream',
   description:
-    'IPTV kurulum rehberleri, en iyi player uygulamaları, fiyat karşılaştırmaları, donma çözümleri ve güncel IPTV haberleri. Galya IPTV Blog.',
-  alternates: { canonical: 'https://galyaiptv.com.tr/blog' },
+    'IPTV kurulum rehberleri, en iyi player uygulamaları, fiyat karşılaştırmaları, donma çözümleri ve güncel IPTV haberleri. GalyaStream Blog.',
+  alternates: { canonical: 'https://www.galyastream.com/blog' },
   openGraph: {
-    title: 'IPTV Blog – Rehberler, İpuçları ve Haberler | Galya IPTV',
+    title: 'IPTV Blog – Rehberler, İpuçları ve Haberler | GalyaStream',
     description: 'IPTV kurulum rehberleri, en iyi uygulamalar, fiyat karşılaştırmaları ve haberler.',
-    url: 'https://galyaiptv.com.tr/blog',
-    siteName: 'Galya IPTV',
+    url: 'https://www.galyastream.com/blog',
+    siteName: 'GalyaStream',
     locale: 'tr_TR',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'IPTV Blog | Galya IPTV',
+    title: 'IPTV Blog | GalyaStream',
     description: 'IPTV rehberleri, kurulum ipuçları ve en iyi IPTV paketleri.',
   },
 };
@@ -34,19 +34,19 @@ const categoryColors: Record<string, string> = {
 const blogListSchema = {
   '@context': 'https://schema.org',
   '@type': 'Blog',
-  name: 'Galya IPTV Blog',
-  url: 'https://galyaiptv.com.tr/blog',
+  name: 'GalyaStream Blog',
+  url: 'https://www.galyastream.com/blog',
   description: 'IPTV rehberleri, ipuçları ve haberleri',
   publisher: {
     '@type': 'Organization',
-    name: 'Galya IPTV',
-    url: 'https://galyaiptv.com.tr',
-    logo: { '@type': 'ImageObject', url: 'https://galyaiptv.com.tr/logo.png' },
+    name: 'GalyaStream',
+    url: 'https://www.galyastream.com',
+    logo: { '@type': 'ImageObject', url: 'https://www.galyastream.com/logo.png' },
   },
   blogPost: blogPosts.map((p) => ({
     '@type': 'BlogPosting',
     headline: p.title,
-    url: 'https://galyaiptv.com.tr/blog/' + p.slug,
+    url: 'https://www.galyastream.com/blog/' + p.slug,
     datePublished: p.date,
     description: p.description,
   })),
@@ -69,7 +69,7 @@ export default function BlogPage() {
       <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#18181f]/95 backdrop-blur-md">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="text-lg font-bold tracking-tight text-[#f1f0f5]">
-            Galya <span className="text-[#7c6fcd]">IPTV</span>
+            Galya<span className="text-[#7c6fcd]">Stream</span>
           </Link>
           <div className="flex items-center gap-6 text-sm text-[#9b98b0]">
             <Link href="/#paketler" className="transition-colors hover:text-white">Paketler</Link>
@@ -181,8 +181,8 @@ export default function BlogPage() {
       </main>
 
       <footer className="border-t border-white/[0.08] bg-[#141418] px-6 py-10 text-center text-sm text-[#6b6880]">
-        <p className="mb-1 font-semibold text-[#9b98b0]">Galya IPTV</p>
-        <p>© {new Date().getFullYear()} Galya IPTV. Tüm hakları saklıdır.</p>
+        <p className="mb-1 font-semibold text-[#9b98b0]">GalyaStream</p>
+        <p>© {new Date().getFullYear()} GalyaStream. Tüm hakları saklıdır.</p>
         <div className="mt-5 flex flex-wrap justify-center gap-5 text-xs">
           <Link href="/#paketler" className="transition-colors hover:text-[#f1f0f5]">IPTV Fiyatları</Link>
           <Link href="/blog" className="transition-colors hover:text-[#f1f0f5]">Blog</Link>
