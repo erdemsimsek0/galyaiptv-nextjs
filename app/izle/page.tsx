@@ -78,27 +78,24 @@ function VideoPlayer({ src, title, onClose }: { src: string; title: string; onCl
     setError(false);
     setLoading(true);
 
-    // HTTP stream'i HTTPS sayfasından oynatmak için
-    // önce native video dene (bazı tarayıcılar izin verir),
-    // sonra HLS.js ile dene
+    if (hlsRef.current) {
+      (hlsRef.current as { destroy: () => void }).destroy();
+      hlsRef.current = null;
+    }
+    video.src = '';
+
+    const isLive = src.includes('type=live');
+    const isMovie = src.includes('type=movie');
+    const isSeries = src.includes('type=series');
+
     const load = async () => {
-      if (hlsRef.current) {
-        (hlsRef.current as { destroy: () => void }).destroy();
-        hlsRef.current = null;
-      }
-      video.src = '';
-
-      const isProxied = src.includes('/api/stream');
-      const isLive = src.includes('type=live') || src.includes('/live/');
-
-      if (isProxied && isLive) {
-        // Canlı proxy - HLS.js ile m3u8 olarak dene
+      if (isLive) {
+        // Canlı: m3u8 proxy ile HLS.js dene
         const m3u8src = src.replace('&ext=ts', '&ext=m3u8');
         try {
-          const HlsModule = await import('hls.js');
-          const Hls = HlsModule.default;
+          const { default: Hls } = await import('hls.js');
           if (Hls.isSupported()) {
-            const hls = new Hls({ enableWorker: false, lowLatencyMode: true, maxBufferLength: 30 });
+            const hls = new Hls({ enableWorker: false, lowLatencyMode: true });
             hlsRef.current = hls;
             hls.loadSource(m3u8src);
             hls.attachMedia(video);
@@ -106,14 +103,14 @@ function VideoPlayer({ src, title, onClose }: { src: string; title: string; onCl
               setLoading(false);
               video.play().catch(() => {});
             });
-            hls.on(Hls.Events.ERROR, (_: unknown, data: { fatal: boolean }) => {
+            hls.on(Hls.Events.ERROR, (_: unknown, data: { fatal: boolean; type: string }) => {
               if (data.fatal) {
-                // m3u8 olmadı, ts dene
                 hls.destroy();
                 hlsRef.current = null;
-                video.src = src; // .ts proxy
+                // ts proxy dene
+                video.src = src;
                 video.load();
-                video.play().catch(() => {});
+                video.play().catch(() => setError(true));
               }
             });
             return;
@@ -121,7 +118,7 @@ function VideoPlayer({ src, title, onClose }: { src: string; title: string; onCl
         } catch { /**/ }
         video.src = src;
       } else {
-        // Film, dizi veya proxied movie - direkt oynat
+        // Film / dizi: mp4 proxy
         video.src = src;
       }
       video.load();
@@ -131,7 +128,6 @@ function VideoPlayer({ src, title, onClose }: { src: string; title: string; onCl
     video.onloadeddata = () => setLoading(false);
     video.oncanplay = () => setLoading(false);
     video.onerror = () => { setError(true); setLoading(false); };
-
     load();
 
     return () => {
@@ -152,13 +148,11 @@ function VideoPlayer({ src, title, onClose }: { src: string; title: string; onCl
           ✕
         </button>
       </div>
-
       {loading && !error && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="h-12 w-12 rounded-full border-2 border-white/20 border-t-white animate-spin" />
         </div>
       )}
-
       {error ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
           <div className="text-4xl mb-4">📺</div>
@@ -169,18 +163,12 @@ function VideoPlayer({ src, title, onClose }: { src: string; title: string; onCl
           </button>
         </div>
       ) : (
-        <video
-          ref={videoRef}
-          className="w-full h-full"
-          controls
-          autoPlay
-          playsInline
-          crossOrigin="anonymous"
-        />
+        <video ref={videoRef} className="w-full h-full" controls autoPlay playsInline />
       )}
     </div>
   );
 }
+
 
 // ─── Content Card ─────────────────────────────────────────────────────────────
 function ContentCard({ item, onClick, type }: {
@@ -465,8 +453,8 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
 
       setCategories(Array.isArray(catsData) ? catsData : []);
       const streamList = Array.isArray(streamsData) ? streamsData : [];
-      setItems(streamList.slice(0, 300));
-      setFilteredItems(streamList.slice(0, 300));
+      setItems(streamList);
+      setFilteredItems(streamList);
     } catch (e) {
       console.error(e);
       setFetchError('Sunucuya bağlanılamadı. Lütfen tekrar deneyin.');
