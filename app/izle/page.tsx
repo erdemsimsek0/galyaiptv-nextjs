@@ -55,7 +55,7 @@ type ContentType = 'live' | 'movies' | 'series';
 type ViewMode = 'home' | 'browse' | 'live' | 'movies' | 'series' | 'watch' | 'detail';
 
 // ─── Xtream API helper ────────────────────────────────────────────────────────
-const SERVER = 'http://pro4kiptv.xyz:2086';
+const SERVER = 'https://pro4kiptv.xyz:2086';
 
 function xtreamUrl(username: string, password: string, action: string, extra = '') {
   return `${SERVER}/player_api.php?username=${username}&password=${password}&action=${action}${extra}`;
