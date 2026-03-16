@@ -52,7 +52,7 @@ interface XtreamSeries extends XtreamStream {
 }
 
 type ContentType = 'live' | 'movies' | 'series';
-type ViewMode = 'home' | 'live' | 'movies' | 'series' | 'watch' | 'detail';
+type ViewMode = 'home' | 'browse' | 'live' | 'movies' | 'series' | 'watch' | 'detail';
 
 // ─── Xtream API helper ────────────────────────────────────────────────────────
 const SERVER = 'http://pro4kiptv.xyz:2086';
