@@ -202,7 +202,22 @@ function OdemeInner() {
             {/* Ödeme Tamamlandı butonu */}
             {paymentInfo && (
               <button
-                onClick={() => setConfirmed(true)}
+                onClick={async () => {
+                // Redis'e ödeme bildirimi kaydet
+                try {
+                  await fetch('/api/payments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      email: userEmail,
+                      plan: paket,
+                      amount: toplam,
+                      paymentCode: '87964103873',
+                    }),
+                  });
+                } catch { /* sessiz geç */ }
+                setConfirmed(true);
+              }}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-4 text-sm font-bold text-white transition-all hover:bg-emerald-700"
               >
                 ✅ Ödemeyi Yaptım, Aktif Et
