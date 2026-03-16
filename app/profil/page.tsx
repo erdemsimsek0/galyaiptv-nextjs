@@ -316,6 +316,14 @@ function ProfilInner() {
           <div className="border-b border-[#1e2d42] px-5 py-3">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4b5563]">Hızlı İşlemler</p>
           </div>
+          <Link href="/izle" className="flex items-center gap-4 border-b border-[#1e2d42] px-5 py-4 transition-colors hover:bg-[#0d1a2a]">
+            <span className="text-xl">🎬</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white">Webde İzle</p>
+              <p className="text-xs text-[#6b7280]">Tarayıcıdan direkt izle</p>
+            </div>
+            <span className="text-[#4b5563]">›</span>
+          </Link>
           <Link href="/kurulum-rehberi" className="flex items-center gap-4 border-b border-[#1e2d42] px-5 py-4 transition-colors hover:bg-[#0d1a2a]">
             <span className="text-xl">📺</span>
             <div className="flex-1 min-w-0">
