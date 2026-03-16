@@ -58,64 +58,116 @@ type ViewMode = 'home' | 'browse' | 'live' | 'movies' | 'series' | 'watch' | 'de
 const SERVER = process.env.NEXT_PUBLIC_XTREAM_SERVER || 'http://pro4kiptv.xyz:2086';
 
 function streamUrl(username: string, password: string, streamId: number, ext = 'ts') {
-  // /api/stream proxy üzerinden geç (Mixed Content sorunu için)
-  return `/api/stream?type=live&u=${username}&p=${password}&id=${streamId}&ext=${ext}`;
+  return `${SERVER}/live/${username}/${password}/${streamId}.${ext}`;
 }
 
 function vodUrl(username: string, password: string, streamId: number) {
-  return `/api/stream?type=movie&u=${username}&p=${password}&id=${streamId}`;
+  return `${SERVER}/movie/${username}/${password}/${streamId}.mp4`;
 }
 
 // ─── Video Player ─────────────────────────────────────────────────────────────
 function VideoPlayer({ src, title, onClose }: { src: string; title: string; onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<unknown>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
     setError(false);
     setLoading(true);
 
-    const loadHls = async () => {
-      // /api/stream proxy URL'leri direkt video src olarak kullan
-      if (src.includes('/api/stream')) {
-        video.src = src;
-        return;
+    // HTTP stream'i HTTPS sayfasından oynatmak için
+    // önce native video dene (bazı tarayıcılar izin verir),
+    // sonra HLS.js ile dene
+    const load = async () => {
+      // Temizle
+      if (hlsRef.current) {
+        (hlsRef.current as { destroy: () => void }).destroy();
+        hlsRef.current = null;
       }
-      if (src.includes('.m3u8') || src.includes('/live/')) {
+      video.src = '';
+
+      const isLive = src.includes('/live/');
+      const isM3u8 = src.includes('.m3u8');
+
+      if (isLive || isM3u8) {
+        // Önce .m3u8 URL'i dene
+        const m3u8src = isM3u8 ? src : src.replace(/\.(ts|mp4)$/, '.m3u8');
         try {
-          const Hls = (await import('hls.js')).default;
+          const HlsModule = await import('hls.js');
+          const Hls = HlsModule.default;
           if (Hls.isSupported()) {
-            const hls = new Hls({ enableWorker: false, lowLatencyMode: true });
-            hls.loadSource(src);
+            const hls = new Hls({
+              enableWorker: false,
+              lowLatencyMode: true,
+              maxBufferLength: 30,
+              maxMaxBufferLength: 60,
+            });
+            hlsRef.current = hls;
+            hls.loadSource(m3u8src);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
               setLoading(false);
               video.play().catch(() => {});
             });
-            hls.on(Hls.Events.ERROR, (_, data) => {
-              if (data.fatal) setError(true);
+            hls.on(Hls.Events.ERROR, (_: unknown, data: { fatal: boolean }) => {
+              if (data.fatal) {
+                // m3u8 çalışmadı, .ts dene
+                hls.destroy();
+                hlsRef.current = null;
+                const tssrc = src.replace(/\.(m3u8|mp4)$/, '.ts');
+                video.src = tssrc;
+                video.load();
+                video.play().catch(() => {});
+              }
             });
-            return () => hls.destroy();
+            return;
           } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = src;
+            // Safari native HLS
+            video.src = m3u8src;
+            video.load();
+            video.play().catch(() => {});
+            return;
           }
-        } catch {
-          video.src = src;
-        }
-      } else {
+        } catch { /* HLS.js yoksa direkt dene */ }
+        // Fallback: direkt ts
         video.src = src;
+      } else {
+        // Film/dizi - direkt mp4
+        video.src = src;
+      }
+      video.load();
+      video.play().catch(() => {});
+    };
+
+    video.onloadeddata = () => setLoading(false);
+    video.oncanplay = () => setLoading(false);
+    video.onerror = () => {
+      // Video hatası - Mixed Content olabilir, proxy dene
+      const proxyUrl = src.includes('/live/')
+        ? `/api/stream?type=live&u=${src.split('/live/')[1]?.split('/')[0]}&p=${src.split('/live/')[1]?.split('/')[1]}&id=${src.split('/live/')[1]?.split('/')[2]?.split('.')[0]}&ext=ts`
+        : null;
+      if (proxyUrl && video.src !== proxyUrl) {
+        video.src = proxyUrl;
+        video.load();
+        video.play().catch(() => {});
+      } else {
+        setError(true);
+        setLoading(false);
       }
     };
 
-    const cleanup = loadHls();
-    video.onloadeddata = () => setLoading(false);
-    video.onerror = () => setError(true);
+    load();
 
-    return () => { cleanup.then(fn => fn && fn()); };
+    return () => {
+      if (hlsRef.current) {
+        (hlsRef.current as { destroy: () => void }).destroy();
+        hlsRef.current = null;
+      }
+      video.src = '';
+    };
   }, [src]);
 
   return (
@@ -150,6 +202,7 @@ function VideoPlayer({ src, title, onClose }: { src: string; title: string; onCl
           controls
           autoPlay
           playsInline
+          crossOrigin="anonymous"
         />
       )}
     </div>
@@ -716,7 +769,7 @@ function DetailModal({ item, creds, activeTab, onClose }: {
   }, [item, creds, activeTab]);
 
   const playEpisode = (episodeId: number, title: string) => {
-    setPlayingSrc(`/api/stream?type=series&u=${creds.username}&p=${creds.password}&id=${episodeId}`);
+    setPlayingSrc(`${SERVER}/series/${creds.username}/${creds.password}/${episodeId}.mp4`);
     setPlayingTitle(title);
   };
 
