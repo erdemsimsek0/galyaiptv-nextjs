@@ -18,34 +18,57 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Yetkisiz sunucu' }, { status: 403 });
     }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
+    // Vercel HTTP→HTTPS: http:// URL'lerini https:// olarak dene
+    // Sunucu HTTPS desteklemiyorsa http:// ile dene
+    const urls = decoded.startsWith('http://')
+      ? [decoded.replace('http://', 'https://'), decoded]
+      : [decoded];
 
-    const res = await fetch(decoded, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json, text/plain, */*',
-      },
-      signal: controller.signal,
-    });
+    let lastError = '';
+    for (const url of urls) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
 
-    clearTimeout(timeout);
+        const res = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            'Accept': 'application/json, */*',
+          },
+          signal: controller.signal,
+        });
 
-    if (!res.ok) {
-      return NextResponse.json({ error: `Upstream: ${res.status}` }, { status: res.status });
+        clearTimeout(timeout);
+
+        if (!res.ok) {
+          lastError = `HTTP ${res.status}`;
+          continue;
+        }
+
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          // Bazen XML veya HTML dönebilir — ham metin döndür
+          return new NextResponse(text, {
+            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+          });
+        }
+
+        return NextResponse.json(data, {
+          headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
+        });
+      } catch (e) {
+        lastError = e instanceof Error ? e.message : String(e);
+        continue;
+      }
     }
 
-    const text = await res.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      return NextResponse.json({ error: 'Geçersiz yanıt', raw: text.slice(0, 200) }, { status: 502 });
-    }
-
-    return NextResponse.json(data, {
-      headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
-    });
+    return NextResponse.json(
+      { error: `Sunucuya ulaşılamadı: ${lastError}` },
+      { status: 502 }
+    );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Proxy hatası';
     return NextResponse.json({ error: message }, { status: 500 });
