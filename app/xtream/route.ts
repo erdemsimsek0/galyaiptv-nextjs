@@ -1,64 +1,65 @@
 // app/api/xtream/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-const ALLOWED_SERVER = 'pro4kiptv.xyz';
+const XTREAM_SERVER = process.env.XTREAM_SERVER || 'http://pro4kiptv.xyz:2086';
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const targetUrl = searchParams.get('url');
+    const { username, password, action, extra } = await req.json() as {
+      username: string; password: string; action: string; extra?: Record<string, string>;
+    };
+    if (!username || !password || !action)
+      return NextResponse.json({ error: 'username, password, action gerekli' }, { status: 400 });
 
-    if (!targetUrl) {
-      return NextResponse.json({ error: 'url parametresi gerekli' }, { status: 400 });
-    }
-
-    const decoded = decodeURIComponent(targetUrl);
-
-    if (!decoded.includes(ALLOWED_SERVER)) {
-      return NextResponse.json({ error: 'Yetkisiz sunucu' }, { status: 403 });
-    }
-
-    // Sunucu HTTP only — https:// gelirse http:// ye çevir
-    const finalUrl = decoded.replace('https://', 'http://');
+    const params = new URLSearchParams({ username, password, action });
+    if (extra) Object.entries(extra).forEach(([k, v]) => params.set(k, v));
+    const url = `${XTREAM_SERVER}/player_api.php?${params.toString()}`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
+    const timer = setTimeout(() => controller.abort(), 20000);
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json, */*' },
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timer));
 
-    let res: Response;
-    try {
-      res = await fetch(finalUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-          'Accept': 'application/json, */*',
-          'Connection': 'keep-alive',
-        },
-        signal: controller.signal,
-        // @ts-ignore — Node.js fetch HTTP desteği
-        redirect: 'follow',
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    if (!res.ok) {
-      return NextResponse.json({ error: `Upstream: ${res.status} ${res.statusText}` }, { status: res.status });
-    }
+    if (!res.ok) return NextResponse.json({ error: `HTTP ${res.status}` }, { status: res.status });
 
     const text = await res.text();
-
     let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      return NextResponse.json({ error: 'JSON parse hatası', sample: text.slice(0, 200) }, { status: 502 });
-    }
+    try { data = JSON.parse(text); }
+    catch { return NextResponse.json({ error: 'Parse hatası', sample: text.slice(0, 300) }, { status: 502 }); }
 
-    return NextResponse.json(data, {
-      headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
-    });
+    return NextResponse.json(data, { headers: { 'Cache-Control': 'public, s-maxage=60' } });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+  }
+}
 
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message }, { status: 500 });
+export async function GET(req: NextRequest) {
+  const s = new URL(req.url).searchParams;
+  const u = s.get('u'), p = s.get('p'), action = s.get('action');
+  if (!u || !p || !action)
+    return NextResponse.json({ error: 'u, p, action gerekli' }, { status: 400 });
+
+  const extra = Object.fromEntries([...s.entries()].filter(([k]) => !['u','p','action'].includes(k)));
+  const params = new URLSearchParams({ username: u, password: p, action, ...extra });
+  const url = `${XTREAM_SERVER}/player_api.php?${params.toString()}`;
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json, */*' },
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timer));
+
+    if (!res.ok) return NextResponse.json({ error: `HTTP ${res.status}` }, { status: res.status });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { return NextResponse.json({ error: 'Parse hatası', sample: text.slice(0, 300) }, { status: 502 }); }
+    return NextResponse.json(data, { headers: { 'Cache-Control': 'public, s-maxage=60' } });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
   }
 }
