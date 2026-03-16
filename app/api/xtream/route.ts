@@ -1,88 +1,77 @@
-// app/api/xtream/route.ts
-// Node.js runtime kullan - Vercel'in farklı IP havuzundan çıkar
-
+// app/api/stream/route.ts
+// HTTP IPTV stream'lerini HTTPS üzerinden proxy'ler
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const XTREAM_SERVER = process.env.XTREAM_SERVER || 'http://pro4kiptv.xyz:2086';
-
-async function proxyRequest(params: URLSearchParams) {
-  const url = `${XTREAM_SERVER}/player_api.php?${params.toString()}`;
-
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'application/json, */*',
-      'Accept-Language': 'tr-TR,tr;q=0.9',
-      'Connection': 'keep-alive',
-    },
-    // @ts-ignore - Node.js fetch'te cache kontrolü
-    cache: 'no-store',
-  });
-
-  return res;
-}
-
-export async function POST(req: NextRequest) {
-  try {
-    const { username, password, action, extra } = await req.json();
-
-    if (!username || !password || !action) {
-      return NextResponse.json({ error: 'username, password, action gerekli' }, { status: 400 });
-    }
-
-    const params = new URLSearchParams({ username, password, action });
-    if (extra) Object.entries(extra).forEach(([k, v]) => params.set(k, String(v)));
-
-    const res = await proxyRequest(params);
-
-    if (!res.ok) {
-      return NextResponse.json({ error: `Upstream HTTP ${res.status}` }, { status: res.status });
-    }
-
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); }
-    catch { return NextResponse.json({ error: 'Parse hatası', sample: text.slice(0, 300) }, { status: 502 }); }
-
-    return NextResponse.json(data, {
-      headers: { 'Cache-Control': 'public, s-maxage=60' }
-    });
-  } catch (e: unknown) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
-  }
-}
+const SERVER = process.env.XTREAM_SERVER || 'http://pro4kiptv.xyz:2086';
 
 export async function GET(req: NextRequest) {
+  const s = new URL(req.url).searchParams;
+  const type = s.get('type');
+  const u = s.get('u');
+  const p = s.get('p');
+  const id = s.get('id');
+  const ext = s.get('ext') || 'ts';
+
+  if (!type || !u || !p || !id) {
+    return new NextResponse('Eksik parametre', { status: 400 });
+  }
+
+  let url = '';
+  if (type === 'live')   url = `${SERVER}/live/${u}/${p}/${id}.${ext}`;
+  if (type === 'movie')  url = `${SERVER}/movie/${u}/${p}/${id}.mp4`;
+  if (type === 'series') url = `${SERVER}/series/${u}/${p}/${id}.mp4`;
+
+  if (!url) return new NextResponse('Geçersiz tip', { status: 400 });
+
   try {
-    const s = new URL(req.url).searchParams;
-    const u = s.get('u'), p = s.get('p'), action = s.get('action');
+    // Range header'ı ilet (ileri/geri sarma için)
+    const rangeHeader = req.headers.get('range');
+    const fetchHeaders: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'Accept': '*/*',
+      'Connection': 'keep-alive',
+    };
+    if (rangeHeader) fetchHeaders['Range'] = rangeHeader;
 
-    if (!u || !p || !action) {
-      return NextResponse.json({ error: 'u, p, action gerekli' }, { status: 400 });
+    const res = await fetch(url, { headers: fetchHeaders });
+
+    if (!res.ok && res.status !== 206) {
+      return new NextResponse(`Stream hatası: ${res.status}`, { status: res.status });
     }
 
-    const extra = Object.fromEntries([...s.entries()].filter(([k]) => !['u', 'p', 'action'].includes(k)));
-    const params = new URLSearchParams({ username: u, password: p, action, ...extra });
+    const resHeaders: Record<string, string> = {
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-cache',
+    };
 
-    const res = await proxyRequest(params);
+    // Orijinal header'ları geçir
+    const ct = res.headers.get('content-type');
+    const cl = res.headers.get('content-length');
+    const cr = res.headers.get('content-range');
+    const ac = res.headers.get('accept-ranges');
 
-    if (!res.ok) {
-      return NextResponse.json({ error: `Upstream HTTP ${res.status}` }, { status: res.status });
-    }
+    if (ct) resHeaders['Content-Type'] = ct;
+    else if (type === 'live') resHeaders['Content-Type'] = ext === 'm3u8' ? 'application/vnd.apple.mpegurl' : 'video/mp2t';
+    else resHeaders['Content-Type'] = 'video/mp4';
 
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); }
-    catch { return NextResponse.json({ error: 'Parse hatası', sample: text.slice(0, 300) }, { status: 502 }); }
+    if (cl) resHeaders['Content-Length'] = cl;
+    if (cr) resHeaders['Content-Range'] = cr;
+    if (ac) resHeaders['Accept-Ranges'] = ac;
+    else resHeaders['Accept-Ranges'] = 'bytes';
 
-    return NextResponse.json(data, {
-      headers: { 'Cache-Control': 'public, s-maxage=60' }
+    return new NextResponse(res.body, {
+      status: rangeHeader ? 206 : res.status,
+      headers: resHeaders,
     });
+
   } catch (e: unknown) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+    return new NextResponse(
+      e instanceof Error ? e.message : 'Stream hatası',
+      { status: 500 }
+    );
   }
 }
