@@ -98,9 +98,13 @@ function OdemeInner() {
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Galya IPTV" className="h-8 w-auto"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-            <span className="text-sm font-bold">Galya <span className="text-[#3b82f6]">IPTV</span></span>
+            <img src="/logo.png" alt="GalyaStream" className="h-8 w-auto"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                const next = e.currentTarget.nextElementSibling as HTMLElement;
+                if (next) next.style.display = 'inline';
+              }} />
+            <span className="hidden text-sm font-bold">Galya<span className="text-[#3b82f6]">Stream</span></span>
           </Link>
           <Link href="/abonelik" className="text-xs text-[#6b7280] hover:text-white">← Paketlere Dön</Link>
         </div>
