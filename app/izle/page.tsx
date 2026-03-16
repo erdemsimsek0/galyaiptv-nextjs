@@ -58,11 +58,12 @@ type ViewMode = 'home' | 'browse' | 'live' | 'movies' | 'series' | 'watch' | 'de
 const SERVER = process.env.NEXT_PUBLIC_XTREAM_SERVER || 'http://pro4kiptv.xyz:2086';
 
 function streamUrl(username: string, password: string, streamId: number, ext = 'ts') {
-  return `${SERVER}/live/${username}/${password}/${streamId}.${ext}`;
+  // /api/stream proxy üzerinden geç (Mixed Content sorunu için)
+  return `/api/stream?type=live&u=${username}&p=${password}&id=${streamId}&ext=${ext}`;
 }
 
 function vodUrl(username: string, password: string, streamId: number) {
-  return `${SERVER}/movie/${username}/${password}/${streamId}.mp4`;
+  return `/api/stream?type=movie&u=${username}&p=${password}&id=${streamId}`;
 }
 
 // ─── Video Player ─────────────────────────────────────────────────────────────
@@ -710,7 +711,7 @@ function DetailModal({ item, creds, activeTab, onClose }: {
   }, [item, creds, activeTab]);
 
   const playEpisode = (episodeId: number, title: string) => {
-    setPlayingSrc(`${SERVER}/series/${creds.username}/${creds.password}/${episodeId}.mp4`);
+    setPlayingSrc(`/api/stream?type=series&u=${creds.username}&p=${creds.password}&id=${episodeId}`);
     setPlayingTitle(title);
   };
 
