@@ -209,6 +209,50 @@ function ProfilInner() {
     }
   };
 
+  // ── Referans sistemi ──────────────────────────────────────────────────────
+  const referralCode = email ? btoa(email).replace(/=/g, '').slice(0, 10).toUpperCase() : '';
+  const referralLink = typeof window !== 'undefined' ? `${window.location.origin}/?ref=${referralCode}` : '';
+  const [refCopied, setRefCopied] = useState(false);
+  const copyReferral = () => {
+    navigator.clipboard.writeText(referralLink);
+    setRefCopied(true);
+    setTimeout(() => setRefCopied(false), 2000);
+  };
+
+  // ── Destek talebi ─────────────────────────────────────────────────────────
+  const SUPPORT_ISSUES = [
+    { id: 'stream_error',   icon: '📺', title: 'Yayın açılmıyor',        desc: 'Kanal veya içerik yüklenmiyor' },
+    { id: 'buffering',      icon: '⏳', title: 'Takılma / Donma',         desc: 'Yayın sürekli kesiliyor' },
+    { id: 'login',          icon: '🔑', title: 'Giriş sorunu',            desc: 'Kullanıcı adı / şifre çalışmıyor' },
+    { id: 'payment',        icon: '💳', title: 'Ödeme / Abonelik',        desc: 'Ödeme veya paket sorunu' },
+    { id: 'missing_channel',icon: '📡', title: 'Kanal eksik',             desc: 'İstediğim kanal listede yok' },
+    { id: 'other',          icon: '💬', title: 'Diğer',                   desc: 'Başka bir konu hakkında' },
+  ];
+  const [showSupport, setShowSupport]       = useState(false);
+  const [supportStep, setSupportStep]       = useState<'select'|'form'|'done'>('select');
+  const [selectedIssue, setSelectedIssue]   = useState('');
+  const [supportPhone, setSupportPhone]     = useState('');
+  const [supportNote, setSupportNote]       = useState('');
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [supportMsg, setSupportMsg]         = useState('');
+
+  const openSupport = () => { setSupportStep('select'); setSelectedIssue(''); setSupportPhone(''); setSupportNote(''); setSupportMsg(''); setShowSupport(true); };
+  const submitSupport = async () => {
+    if (!supportPhone.trim()) { setSupportMsg('Telefon numarası zorunludur.'); return; }
+    setSupportLoading(true); setSupportMsg('');
+    try {
+      const res = await fetch('/api/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, issue: selectedIssue, phone: supportPhone, note: supportNote }),
+      });
+      const d = await res.json();
+      if (d.success) setSupportStep('done');
+      else setSupportMsg(d.error || 'Gönderilemedi.');
+    } catch { setSupportMsg('Sunucuya bağlanılamadı.'); }
+    finally { setSupportLoading(false); }
+  };
+
   const handleSignOut = async () => {
     setSigningOut(true);
     await signOut({ callbackUrl: '/' });
@@ -383,6 +427,55 @@ function ProfilInner() {
           </div>
         )}
 
+        {/* ── Arkadaş Davet Et ──────────────────────────────────────────────── */}
+        <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] overflow-hidden">
+          <div className="border-b border-[#1e2d42] px-5 py-3 flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4b5563]">Arkadaş Davet Et</p>
+            <span className="text-xs text-[#3b82f6] bg-[#3b82f6]/10 border border-[#3b82f6]/20 px-2 py-0.5 rounded-full">Yakında ödül sistemi</span>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🎁</span>
+              <div>
+                <p className="text-sm font-semibold text-white">Davet linkinizi paylaşın</p>
+                <p className="text-xs text-[#6b7280] mt-0.5">Arkadaşlarınız bu link üzerinden kayıt olsun. Yakında referans ödülleri aktif olacak.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-[#060e1a] border border-[#1e2d42] rounded-xl px-3 py-2.5">
+              <span className="flex-1 font-mono text-xs text-[#6b7280] truncate">{referralLink || 'galyastream.com/?ref=...'}</span>
+              <button onClick={copyReferral}
+                className={`shrink-0 text-xs px-3 py-1.5 rounded-lg font-semibold transition-all ${refCopied ? 'bg-emerald-600 text-white' : 'bg-[#3b82f6] hover:bg-[#2563eb] text-white'}`}>
+                {refCopied ? '✓ Kopyalandı' : 'Kopyala'}
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <a href={`https://wa.me/?text=${encodeURIComponent(`GalyaStream'i dene! ${referralLink}`)}`} target="_blank" rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-[#1e2d42] bg-[#060e1a] py-2 text-xs font-semibold text-[#6b7280] hover:text-white hover:border-white/20 transition-all">
+                📱 WhatsApp
+              </a>
+              <a href={`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("GalyaStream'i dene!")}`} target="_blank" rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-[#1e2d42] bg-[#060e1a] py-2 text-xs font-semibold text-[#6b7280] hover:text-white hover:border-white/20 transition-all">
+                ✈️ Telegram
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Destek Talebi ─────────────────────────────────────────────────── */}
+        <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] overflow-hidden">
+          <div className="border-b border-[#1e2d42] px-5 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4b5563]">Destek</p>
+          </div>
+          <button onClick={openSupport} className="flex w-full items-center gap-4 px-5 py-4 transition-colors hover:bg-[#0d1a2a]">
+            <span className="text-xl">🎫</span>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm font-semibold text-white">Destek Talebi Aç</p>
+              <p className="text-xs text-[#6b7280]">Sorun yaşıyorsanız bize bildirin</p>
+            </div>
+            <span className="text-[#4b5563]">›</span>
+          </button>
+        </div>
+
         {/* ── Hesap ─────────────────────────────────────────────────────────── */}
         <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] overflow-hidden">
           <div className="border-b border-[#1e2d42] px-5 py-3">
@@ -466,11 +559,91 @@ function ProfilInner() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
+      {/* ── Destek Talebi Modal ───────────────────────────────────────────── */}
+      {showSupport && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-[#0a1525] border border-[#1e2d42] rounded-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#1e2d42]">
+              <p className="font-bold text-white">🎫 Destek Talebi</p>
+              <button onClick={() => setShowSupport(false)} className="text-[#6b7280] hover:text-white text-lg leading-none">✕</button>
+            </div>
 
-// ── Dışa açılan bileşen: kendi SessionProvider'ını taşır ─────────────────
+            {supportStep === 'select' && (
+              <div className="p-5 space-y-3">
+                <p className="text-sm text-[#6b7280]">Yaşadığınız sorunu seçin:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {SUPPORT_ISSUES.map(issue => (
+                    <button key={issue.id} onClick={() => { setSelectedIssue(issue.id); setSupportStep('form'); }}
+                      className="flex flex-col items-start gap-1 rounded-xl border border-[#1e2d42] bg-[#060e1a] p-3 text-left hover:border-[#3b82f6]/40 hover:bg-[#3b82f6]/5 transition-all">
+                      <span className="text-xl">{issue.icon}</span>
+                      <p className="text-xs font-semibold text-white">{issue.title}</p>
+                      <p className="text-[10px] text-[#6b7280]">{issue.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {supportStep === 'form' && (
+              <div className="p-5 space-y-4">
+                {/* Seçilen sorun */}
+                <div className="flex items-center gap-2 rounded-xl bg-[#3b82f6]/10 border border-[#3b82f6]/20 px-3 py-2">
+                  <span>{SUPPORT_ISSUES.find(i => i.id === selectedIssue)?.icon}</span>
+                  <span className="text-sm font-semibold text-white">{SUPPORT_ISSUES.find(i => i.id === selectedIssue)?.title}</span>
+                  <button onClick={() => setSupportStep('select')} className="ml-auto text-xs text-[#3b82f6] hover:underline">Değiştir</button>
+                </div>
+
+                {/* Telefon */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-[#6b7280]">Telefon Numaranız <span className="text-red-400">*</span></label>
+                  <input
+                    type="tel"
+                    placeholder="05XX XXX XX XX"
+                    value={supportPhone}
+                    onChange={e => setSupportPhone(e.target.value)}
+                    className="w-full bg-[#060e1a] border border-[#1e2d42] text-white rounded-xl px-4 py-2.5 outline-none focus:border-[#3b82f6] transition-colors text-sm"
+                  />
+                </div>
+
+                {/* Not */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-[#6b7280]">Açıklama (opsiyonel)</label>
+                  <textarea
+                    placeholder="Sorunu daha detaylı anlatın..."
+                    value={supportNote}
+                    onChange={e => setSupportNote(e.target.value)}
+                    rows={3}
+                    className="w-full bg-[#060e1a] border border-[#1e2d42] text-white rounded-xl px-4 py-2.5 outline-none focus:border-[#3b82f6] transition-colors text-sm resize-none"
+                  />
+                </div>
+
+                {supportMsg && <p className="text-xs text-red-400">{supportMsg}</p>}
+
+                <button onClick={submitSupport} disabled={supportLoading}
+                  className="w-full bg-[#3b82f6] hover:bg-[#2563eb] disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors text-sm">
+                  {supportLoading ? 'Gönderiliyor...' : '📨 Talebi Gönder'}
+                </button>
+              </div>
+            )}
+
+            {supportStep === 'done' && (
+              <div className="p-8 text-center space-y-4">
+                <div className="text-5xl">✅</div>
+                <div>
+                  <p className="font-bold text-white text-lg">Talebiniz Alındı!</p>
+                  <p className="text-sm text-[#6b7280] mt-1">En kısa sürede sizinle iletişime geçeceğiz.</p>
+                </div>
+                <button onClick={() => setShowSupport(false)}
+                  className="rounded-xl bg-[#1e2d42] px-6 py-2.5 text-sm text-white hover:bg-[#263548]">
+                  Kapat
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
 export default function ProfilPage() {
   return (
     <SessionProvider>
