@@ -54,7 +54,7 @@ type ViewMode = 'home' | 'browse';
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 function streamUrl(username: string, password: string, streamId: number) {
-  return `/api/stream?type=live&u=${username}&p=${password}&id=${streamId}&ext=m3u8`;
+  return `/api/stream?type=live&u=${username}&p=${password}&id=${streamId}`;
 }
 function vodUrl(username: string, password: string, streamId: number) {
   return `/api/stream?type=movie&u=${username}&p=${password}&id=${streamId}`;
