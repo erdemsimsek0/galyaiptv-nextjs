@@ -3,6 +3,101 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSession, SessionProvider } from 'next-auth/react';
+import { trackEvent, trackPurchaseIntent, trackTrialStart, trackWhatsAppClick } from '@/lib/analytics';
+
+// ─── Canlı Destek Widget ──────────────────────────────────────────────────────
+function LiveChat() {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="fixed bottom-20 right-4 z-50 md:bottom-6 md:right-6">
+      {isOpen && (
+        <div className="mb-4 w-72 rounded-2xl border border-[#1e3a5f] bg-[#111827] p-4 shadow-2xl">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              <span className="text-sm font-semibold text-white">Canlı Destek</span>
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              aria-label="Destek penceresini kapat"
+              className="flex h-6 w-6 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#1e3a5f] hover:text-white text-sm"
+            >✕</button>
+          </div>
+          <p className="mb-1 text-xs text-[#9ca3af]">Ortalama yanıt süresi: <span className="text-white font-medium">&lt; 2 dakika</span></p>
+          <p className="mb-3 text-xs text-[#6b7280]">WhatsApp&apos;tan yazın, hemen yanıtlayalım.</p>
+          <a
+            href="https://wa.me/447441921660"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackWhatsAppClick('live_chat_widget')}
+            className="flex items-center justify-center gap-2 rounded-xl bg-[#25d366] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1ebe5d]"
+          >
+            💬 WhatsApp&apos;a Yaz
+          </a>
+        </div>
+      )}
+      <button
+        onClick={() => { setIsOpen(!isOpen); if (!isOpen) trackEvent('live_chat_opened'); }}
+        aria-label="Canlı destek"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#25d366] text-2xl shadow-lg shadow-[#25d366]/30 transition-transform hover:scale-110"
+      >
+        {isOpen ? '✕' : '💬'}
+      </button>
+    </div>
+  );
+}
+
+// ─── Sosyal Kanıt (Son Satışlar) ──────────────────────────────────────────────
+const RECENT_SALES = [
+  { name: 'Ahmet K.', location: 'İstanbul', time: '2 dk önce', package: 'Max 12 Ay' },
+  { name: 'Mehmet Y.', location: 'Almanya', time: '5 dk önce', package: 'Sports 6 Ay' },
+  { name: 'Fatma S.', location: 'İzmir', time: '8 dk önce', package: 'Max 12 Ay' },
+  { name: 'Can D.', location: 'Hollanda', time: '12 dk önce', package: 'Cinema 3 Ay' },
+  { name: 'Ayşe T.', location: 'Londra', time: '15 dk önce', package: 'Max 12 Ay' },
+  { name: 'Emre B.', location: 'Ankara', time: '3 dk önce', package: 'Sports 12 Ay' },
+];
+
+function SocialProof() {
+  const [visible, setVisible] = useState(false);
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const firstShow = setTimeout(() => {
+      setVisible(true);
+      setTimeout(() => setVisible(false), 5000);
+    }, 8000);
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % RECENT_SALES.length);
+      setVisible(true);
+      setTimeout(() => setVisible(false), 5000);
+    }, 35000);
+    return () => { clearTimeout(firstShow); clearInterval(interval); };
+  }, []);
+
+  if (!visible) return null;
+  const sale = RECENT_SALES[current];
+
+  return (
+    <div className="fixed bottom-24 left-4 z-40 max-w-[260px] md:bottom-8 md:left-6"
+      style={{ animation: 'slideInFromBottom 0.4s ease-out' }}>
+      <style>{`@keyframes slideInFromBottom{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
+      <div className="rounded-xl border border-[#1e3a5f] bg-[#111827]/95 p-3 shadow-lg backdrop-blur">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1e1b4b] text-sm font-bold text-[#818cf8]">
+            {sale.name[0]}
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-white">{sale.name} · {sale.location}</p>
+            <p className="text-[11px] text-[#9ca3af]">{sale.package} satın aldı · {sale.time}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 
 function SessionProviderWrapper({ children }: { children: React.ReactNode }) {
@@ -691,6 +786,7 @@ function HomePageInner() {
         setTrialCredentials(creds);
         // Kurulum rehberi sayfasında okunabilmesi için ayrıca kaydet
         try { localStorage.setItem('galya_trial_creds', JSON.stringify(creds)); } catch { }
+        trackTrialStart(email);
         setStep(4); setStatusMsg(''); setIsCreating(false); addToast('Test hesabınız hazır!', 'success'); }
       else { addToast(data.error || 'Kod hatalı. Lütfen tekrar deneyin.', 'error'); setStatusMsg(''); setIsCreating(false); }
     } catch { addToast('Bir hata oluştu. Tekrar deneyin.', 'error'); setStatusMsg(''); setIsCreating(false); }
@@ -1072,6 +1168,7 @@ function HomePageInner() {
                     {/* ── CTA Butonu — Giriş kontrolü sonrası ödeme sayfasına yönlendir ── */}
                     <button
                       onClick={() => {
+                        trackPurchaseIntent(pkg.name, totalPrice, dur.label);
                         if (!isLoggedIn) {
                           openAuth('register');
                           return;
@@ -1393,7 +1490,7 @@ function HomePageInner() {
               <button onClick={() => smartAction()} className="rounded-xl bg-[#6366f1] px-10 py-4 font-semibold text-white shadow-xl shadow-[#6366f1]/25 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
                 ⚡ Ücretsiz Test Al
               </button>
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-[#25d366] px-8 py-4 font-semibold text-white transition-all hover:bg-[#1ebe5d]">
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackWhatsAppClick('footer_cta')} className="flex items-center justify-center gap-2 rounded-xl bg-[#25d366] px-8 py-4 font-semibold text-white transition-all hover:bg-[#1ebe5d]">
                 💬 WhatsApp ile İletişim
               </a>
             </div>
@@ -1724,6 +1821,12 @@ function HomePageInner() {
           </div>
         </div>
       )}
+
+      {/* ─── Canlı Destek Widget ─────────────────────────────────────────────── */}
+      <LiveChat />
+
+      {/* ─── Sosyal Kanıt Popup'u ────────────────────────────────────────────── */}
+      <SocialProof />
     </>
   );
 }
