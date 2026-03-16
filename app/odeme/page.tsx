@@ -98,12 +98,9 @@ function OdemeInner() {
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="GalyaStream" className="h-8 w-auto"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = 'none';
-                const next = e.currentTarget.nextElementSibling as HTMLElement;
-                if (next) next.style.display = 'inline';
-              }} />
+            <img src="/logo.png" alt="GalyaStream" className="h-8 w-auto" style={{ display: 'none' }}
+              onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.display='block'; const n=e.currentTarget.nextElementSibling as HTMLElement; if(n) n.style.display='none'; }}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; const n=e.currentTarget.nextElementSibling as HTMLElement; if(n) n.style.display='inline'; }} />
             <span className="hidden text-sm font-bold">Galya<span className="text-[#3b82f6]">Stream</span></span>
           </Link>
           <Link href="/abonelik" className="text-xs text-[#6b7280] hover:text-white">← Paketlere Dön</Link>
