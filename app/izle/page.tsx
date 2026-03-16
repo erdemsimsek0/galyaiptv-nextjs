@@ -282,6 +282,111 @@ function NoTrialScreen({ onLogin }: { onLogin: () => void }) {
   );
 }
 
+
+// ─── Home Screen (Ana Sayfa) ──────────────────────────────────────────────────
+function HomeScreen({ creds, onNavigate }: {
+  creds: TrialCreds;
+  onNavigate: (tab: ContentType) => void;
+}) {
+  const TRIAL_TOTAL = 3 * 60 * 60 * 1000;
+  const remaining = Math.max(0, TRIAL_TOTAL - (Date.now() - creds.startedAt));
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const expired = remaining <= 0;
+
+  return (
+    <div className="flex-1 overflow-y-auto">
+      {/* Hero */}
+      <div className="relative px-6 py-16 text-center">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full bg-[#3b82f6]/10 blur-3xl" />
+        </div>
+        <div className="relative">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-white/60">
+            {expired ? (
+              <><span className="text-amber-400">⌛</span> Test süreniz doldu</>
+            ) : (
+              <><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"/><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"/></span>
+                Aktif Test — <span className="font-mono font-bold text-emerald-400">{pad(h)} saat {pad(m)} dk kaldı</span>
+              </>
+            )}
+          </div>
+          <h1 className="mb-2 text-3xl sm:text-4xl font-black text-white">
+            Hoş Geldiniz! 👋
+          </h1>
+          <p className="text-white/50 text-sm mb-8">Premium eğlence deneyimine hazır mısınız?</p>
+
+          {/* Stats */}
+          <div className="grid grid-cols-4 gap-3 max-w-lg mx-auto mb-10">
+            {[
+              { icon: '🎬', value: '15.000+', label: 'Film & Dizi' },
+              { icon: '📡', value: '1.500+', label: 'Canlı Kanal' },
+              { icon: '⚡', value: '4K HDR', label: 'Ultra Kalite' },
+              { icon: '🎧', value: '7/24', label: 'Canlı Destek' },
+            ].map(s => (
+              <div key={s.label} className="rounded-2xl bg-white/5 border border-white/10 p-3">
+                <div className="text-xl mb-1">{s.icon}</div>
+                <div className="text-white font-black text-xs sm:text-sm">{s.value}</div>
+                <div className="text-white/30 text-[9px]">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick access */}
+      <div className="px-6 pb-10">
+        <h2 className="text-sm font-bold text-white/50 uppercase tracking-widest mb-4">Hızlı Erişim</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            { tab: 'live' as ContentType, icon: '📡', title: 'Canlı Yayınlar', desc: 'Spor, haber, eğlence ve daha fazlası', color: 'from-red-900/30 to-red-950/10 border-red-500/20' },
+            { tab: 'movies' as ContentType, icon: '🎬', title: 'Filmler', desc: '15.000+ film arşivi, tüm türler', color: 'from-blue-900/30 to-blue-950/10 border-blue-500/20' },
+            { tab: 'series' as ContentType, icon: '📺', title: 'Diziler', desc: 'Yerli, yabancı, tüm platformlar', color: 'from-purple-900/30 to-purple-950/10 border-purple-500/20' },
+          ].map(item => (
+            <button key={item.tab} onClick={() => onNavigate(item.tab)}
+              className={`flex items-center gap-4 rounded-2xl border bg-gradient-to-br ${item.color} p-5 text-left hover:scale-[1.02] transition-all`}>
+              <span className="text-3xl">{item.icon}</span>
+              <div>
+                <p className="font-bold text-white">{item.title}</p>
+                <p className="text-white/40 text-xs mt-0.5">{item.desc}</p>
+              </div>
+              <span className="ml-auto text-white/20 text-lg">›</span>
+            </button>
+          ))}
+        </div>
+
+        {expired && (
+          <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 text-center">
+            <p className="text-amber-400 font-bold mb-2">⌛ Test Süreniz Doldu</p>
+            <p className="text-white/50 text-sm mb-4">Premium pakete geçerek kesintisiz izlemeye devam edin.</p>
+            <Link href="/abonelik"
+              className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-amber-600">
+              👑 Premium&apos;a Geç →
+            </Link>
+          </div>
+        )}
+
+        {/* Credentials */}
+        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
+          <p className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-3">Bağlantı Bilgileriniz</p>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {[
+              { label: 'Kullanıcı Adı', value: creds.username },
+              { label: 'Şifre', value: creds.password },
+            ].map(row => (
+              <div key={row.label} className="rounded-xl bg-white/5 p-3">
+                <p className="text-white/30 text-[10px] mb-1">{row.label}</p>
+                <p className="font-mono text-white text-xs truncate">{row.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Player ──────────────────────────────────────────────────────────────
 function PlayerApp({ creds }: { creds: TrialCreds }) {
   const [viewMode, setViewMode] = useState<ViewMode>('home');
@@ -310,28 +415,43 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
   const countdownStr = `${pad(h)}:${pad(m)}:${pad(s)}`;
   const expired = remaining <= 0;
 
+  const [fetchError, setFetchError] = useState('');
+
   const fetchContent = useCallback(async (type: ContentType) => {
     setLoading(true);
     setItems([]);
     setCategories([]);
     setActiveCat('all');
     setSearch('');
+    setFetchError('');
     try {
       const { username, password } = creds;
-      let catAction = type === 'live' ? 'get_live_categories' : type === 'movies' ? 'get_vod_categories' : 'get_series_categories';
-      let streamAction = type === 'live' ? 'get_live_streams' : type === 'movies' ? 'get_vod_streams' : 'get_series';
+      const catAction = type === 'live' ? 'get_live_categories' : type === 'movies' ? 'get_vod_categories' : 'get_series_categories';
+      const streamAction = type === 'live' ? 'get_live_streams' : type === 'movies' ? 'get_vod_streams' : 'get_series';
+
+      const catUrl = xtreamUrl(username, password, catAction);
+      const streamUrl2 = xtreamUrl(username, password, streamAction);
 
       const [catRes, streamRes] = await Promise.all([
-        fetch(`/api/xtream?url=${encodeURIComponent(xtreamUrl(username, password, catAction))}`),
-        fetch(`/api/xtream?url=${encodeURIComponent(xtreamUrl(username, password, streamAction))}`),
+        fetch(`/api/xtream?url=${encodeURIComponent(catUrl)}`),
+        fetch(`/api/xtream?url=${encodeURIComponent(streamUrl2)}`),
       ]);
-      const cats: XtreamCategory[] = await catRes.json();
-      const streams: (XtreamStream | XtreamSeries)[] = await streamRes.json();
-      setCategories(Array.isArray(cats) ? cats : []);
-      setItems(Array.isArray(streams) ? streams.slice(0, 500) : []);
-      setFilteredItems(Array.isArray(streams) ? streams.slice(0, 500) : []);
+
+      const catsData = await catRes.json();
+      const streamsData = await streamRes.json();
+
+      if (catsData.error || streamsData.error) {
+        setFetchError(catsData.error || streamsData.error || 'Bağlantı hatası');
+        return;
+      }
+
+      setCategories(Array.isArray(catsData) ? catsData : []);
+      const streamList = Array.isArray(streamsData) ? streamsData : [];
+      setItems(streamList.slice(0, 300));
+      setFilteredItems(streamList.slice(0, 300));
     } catch (e) {
       console.error(e);
+      setFetchError('Sunucuya bağlanılamadı. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
     }
@@ -402,13 +522,17 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
 
           {/* Nav tabs */}
           <nav className="hidden md:flex items-center gap-1 bg-white/5 rounded-2xl p-1">
+            <button onClick={() => { setViewMode('home'); }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${viewMode === 'home' ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}>
+              🏠 Ana Sayfa
+            </button>
             {[
               { tab: 'live' as ContentType, icon: '📡', label: 'Canlı' },
               { tab: 'movies' as ContentType, icon: '🎬', label: 'Filmler' },
               { tab: 'series' as ContentType, icon: '📺', label: 'Diziler' },
             ].map(({ tab, icon, label }) => (
-              <button key={tab} onClick={() => handleTabChange(tab)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === tab ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}>
+              <button key={tab} onClick={() => { setViewMode('browse'); handleTabChange(tab); }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${viewMode !== 'home' && activeTab === tab ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}>
                 <span>{icon}</span> {label}
               </button>
             ))}
@@ -427,7 +551,10 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
                 👑 Premium&apos;a Geç
               </Link>
             )}
-            <Link href="/profil" className="text-xs text-white/50 hover:text-white">Profil</Link>
+            <Link href="/profil" className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white">
+              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold">P</span>
+              Profil
+            </Link>
           </div>
         </div>
 
@@ -457,6 +584,13 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
       )}
 
       <div className="flex h-[calc(100vh-56px)] overflow-hidden">
+        {/* Home screen */}
+        {viewMode === 'home' && (
+          <HomeScreen creds={creds} onNavigate={(tab) => { setViewMode('browse'); handleTabChange(tab); }} />
+        )}
+
+        {viewMode !== 'home' && (
+        <>
         {/* Sidebar — categories */}
         <aside className="hidden lg:flex flex-col w-52 shrink-0 border-r border-white/5 overflow-y-auto py-4">
           <p className="px-4 text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-2">Kategoriler</p>
@@ -509,6 +643,16 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
               <div className="flex items-center justify-center py-24">
                 <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#3b82f6] animate-spin" />
               </div>
+            ) : fetchError ? (
+              <div className="text-center py-24">
+                <div className="text-4xl mb-3">⚠️</div>
+                <p className="text-white/60 mb-2">Bağlantı hatası</p>
+                <p className="text-white/30 text-sm mb-4">{fetchError}</p>
+                <button onClick={() => fetchContent(activeTab)}
+                  className="rounded-xl bg-white/10 px-5 py-2 text-sm text-white hover:bg-white/20">
+                  Tekrar Dene
+                </button>
+              </div>
             ) : filteredItems.length === 0 ? (
               <div className="text-center py-24 text-white/30">
                 <div className="text-4xl mb-3">🔍</div>
@@ -532,6 +676,8 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
             )}
           </div>
         </main>
+        </>
+        )}
       </div>
     </div>
   );
