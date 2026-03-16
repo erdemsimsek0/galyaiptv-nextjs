@@ -1,1 +1,741 @@
+'use client';
 
+import { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
+import { useSession, SessionProvider } from 'next-auth/react';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface TrialCreds {
+  email?: string;
+  username: string;
+  password: string;
+  startedAt: number;
+}
+
+interface XtreamCategory {
+  category_id: string;
+  category_name: string;
+  parent_id: number;
+}
+
+interface XtreamStream {
+  stream_id: number;
+  name: string;
+  stream_icon: string;
+  epg_channel_id?: string;
+  stream_type?: string;
+  rating?: string;
+  added?: string;
+  // VOD
+  cover?: string;
+  plot?: string;
+  cast?: string;
+  director?: string;
+  genre?: string;
+  releasedate?: string;
+  duration?: string;
+  // Series
+  series_id?: number;
+  num?: number;
+  year?: string;
+  category_id?: string;
+}
+
+interface XtreamSeries extends XtreamStream {
+  series_id: number;
+  cover: string;
+  plot: string;
+  genre: string;
+  releasedate: string;
+  rating: string;
+  last_modified: string;
+}
+
+type ContentType = 'live' | 'movies' | 'series';
+type ViewMode = 'home' | 'live' | 'movies' | 'series' | 'watch' | 'detail';
+
+// ─── Xtream API helper ────────────────────────────────────────────────────────
+const SERVER = 'http://pro4kiptv.xyz:2086';
+
+function xtreamUrl(username: string, password: string, action: string, extra = '') {
+  return `${SERVER}/player_api.php?username=${username}&password=${password}&action=${action}${extra}`;
+}
+
+function streamUrl(username: string, password: string, streamId: number, ext = 'ts') {
+  return `${SERVER}/live/${username}/${password}/${streamId}.${ext}`;
+}
+
+function vodUrl(username: string, password: string, streamId: number) {
+  return `${SERVER}/movie/${username}/${password}/${streamId}.mp4`;
+}
+
+// ─── Video Player ─────────────────────────────────────────────────────────────
+function VideoPlayer({ src, title, onClose }: { src: string; title: string; onClose: () => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    setError(false);
+    setLoading(true);
+
+    // Try HLS.js for m3u8, direct for mp4/ts
+    const loadHls = async () => {
+      if (src.includes('.m3u8') || src.includes('/live/')) {
+        try {
+          const Hls = (await import('hls.js')).default;
+          if (Hls.isSupported()) {
+            const hls = new Hls({ enableWorker: false, lowLatencyMode: true });
+            hls.loadSource(src);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+              setLoading(false);
+              video.play().catch(() => {});
+            });
+            hls.on(Hls.Events.ERROR, (_, data) => {
+              if (data.fatal) setError(true);
+            });
+            return () => hls.destroy();
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = src;
+          }
+        } catch {
+          video.src = src;
+        }
+      } else {
+        video.src = src;
+      }
+    };
+
+    const cleanup = loadHls();
+    video.onloadeddata = () => setLoading(false);
+    video.onerror = () => setError(true);
+
+    return () => { cleanup.then(fn => fn && fn()); };
+  }, [src]);
+
+  return (
+    <div className="fixed inset-0 z-[200] bg-black flex flex-col">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 to-transparent absolute top-0 left-0 right-0 z-10">
+        <p className="text-white font-semibold truncate max-w-[70%]">{title}</p>
+        <button onClick={onClose}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors text-lg">
+          ✕
+        </button>
+      </div>
+
+      {loading && !error && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="h-12 w-12 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+        </div>
+      )}
+
+      {error ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+          <div className="text-4xl mb-4">📺</div>
+          <p className="text-white font-semibold mb-2">Yayın yüklenemedi</p>
+          <p className="text-white/50 text-sm mb-6">Bu kanal şu an erişilebilir olmayabilir.</p>
+          <button onClick={onClose} className="rounded-xl bg-white/10 px-6 py-2.5 text-sm text-white hover:bg-white/20">
+            Geri Dön
+          </button>
+        </div>
+      ) : (
+        <video
+          ref={videoRef}
+          className="w-full h-full"
+          controls
+          autoPlay
+          playsInline
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Content Card ─────────────────────────────────────────────────────────────
+function ContentCard({ item, onClick, type }: {
+  item: XtreamStream | XtreamSeries;
+  onClick: () => void;
+  type: ContentType;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const img = (item as XtreamSeries).cover || item.stream_icon || '';
+
+  return (
+    <button onClick={onClick}
+      className="group relative flex flex-col rounded-xl overflow-hidden bg-[#1a1a2e] border border-white/5 hover:border-white/20 hover:scale-[1.03] transition-all duration-200 text-left">
+      {/* Thumbnail */}
+      <div className={`relative overflow-hidden bg-[#0d0d1a] ${type === 'live' ? 'aspect-video' : 'aspect-[2/3]'}`}>
+        {img && !imgError ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={img} alt={item.name} className="w-full h-full object-cover"
+            onError={() => setImgError(true)} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-3xl opacity-20">{type === 'live' ? '📺' : type === 'movies' ? '🎬' : '📺'}</span>
+          </div>
+        )}
+        {/* Play overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-2xl bg-white/20 rounded-full w-10 h-10 flex items-center justify-center backdrop-blur-sm">
+            ▶
+          </span>
+        </div>
+        {/* Rating badge */}
+        {item.rating && Number(item.rating) > 0 && (
+          <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 rounded-md px-1.5 py-0.5 backdrop-blur-sm">
+            <span className="text-yellow-400 text-[10px]">★</span>
+            <span className="text-white text-[10px] font-semibold">{Number(item.rating).toFixed(1)}</span>
+          </div>
+        )}
+        {/* Live badge */}
+        {type === 'live' && (
+          <div className="absolute top-2 right-2 flex items-center gap-1 bg-red-600/90 rounded-md px-1.5 py-0.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            <span className="text-white text-[9px] font-bold">CANLI</span>
+          </div>
+        )}
+      </div>
+      {/* Info */}
+      <div className="p-2.5">
+        <p className="text-white text-xs font-semibold truncate">{item.name}</p>
+        {(item as XtreamSeries).genre && (
+          <p className="text-white/40 text-[10px] truncate mt-0.5">{(item as XtreamSeries).genre}</p>
+        )}
+        {(item as XtreamSeries).releasedate && (
+          <p className="text-white/40 text-[10px] mt-0.5">{(item as XtreamSeries).releasedate?.slice(0, 4)}</p>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// ─── No Trial / Landing screen ────────────────────────────────────────────────
+function NoTrialScreen({ onLogin }: { onLogin: () => void }) {
+  return (
+    <div className="min-h-screen bg-[#070714] flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
+      {/* Background glow */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-[#3b82f6]/10 blur-3xl" />
+      </div>
+
+      <div className="relative z-10 max-w-lg">
+        <div className="mb-6 text-6xl">🎬</div>
+        <h1 className="mb-3 text-4xl font-black text-white tracking-tight">
+          Galya<span className="text-[#3b82f6]">Stream</span> Player
+        </h1>
+        <p className="mb-8 text-lg text-white/60">
+          15.000+ film, dizi ve 1.500+ canlı kanal. Hemen izlemeye başla.
+        </p>
+
+        {/* Stats */}
+        <div className="mb-10 grid grid-cols-4 gap-3">
+          {[
+            { icon: '🎬', value: '15.000+', label: 'Film & Dizi' },
+            { icon: '📡', value: '1.500+', label: 'Canlı Kanal' },
+            { icon: '⚡', value: '4K HDR', label: 'Ultra Kalite' },
+            { icon: '🎧', value: '7/24', label: 'Canlı Destek' },
+          ].map(s => (
+            <div key={s.label} className="rounded-2xl bg-white/5 border border-white/10 p-3">
+              <div className="text-2xl mb-1">{s.icon}</div>
+              <div className="text-white font-black text-sm">{s.value}</div>
+              <div className="text-white/40 text-[10px]">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Device icons */}
+        <div className="mb-8">
+          <p className="text-white/40 text-xs mb-3">Tüm cihazlarında izle</p>
+          <div className="flex items-center justify-center gap-6">
+            {[['📱', 'iOS & Android'], ['📺', 'Smart TV'], ['💻', 'Windows & Mac'], ['⬜', 'Tablet']].map(([icon, label]) => (
+              <div key={label as string} className="flex flex-col items-center gap-1">
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-lg">{icon}</div>
+                <span className="text-white/30 text-[9px]">{label as string}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA */}
+        <Link href="/profil"
+          className="flex w-full items-center justify-center gap-3 rounded-2xl bg-white py-4 text-base font-black text-black transition-all hover:bg-white/90 hover:scale-[1.02] mb-3">
+          <span>▶</span> 3 Saat Ücretsiz Dene
+        </Link>
+        <p className="text-white/30 text-xs">*Deneme sürecinde herhangi bir ödeme yapmazsınız</p>
+
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <div className="flex-1 h-px bg-white/10" />
+          <span className="text-white/30 text-xs">Zaten hesabınız var mı?</span>
+          <div className="flex-1 h-px bg-white/10" />
+        </div>
+        <button onClick={onLogin}
+          className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors">
+          Giriş Yap
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Player ──────────────────────────────────────────────────────────────
+function PlayerApp({ creds }: { creds: TrialCreds }) {
+  const [viewMode, setViewMode] = useState<ViewMode>('home');
+  const [activeTab, setActiveTab] = useState<ContentType>('live');
+  const [categories, setCategories] = useState<XtreamCategory[]>([]);
+  const [items, setItems] = useState<(XtreamStream | XtreamSeries)[]>([]);
+  const [filteredItems, setFilteredItems] = useState<(XtreamStream | XtreamSeries)[]>([]);
+  const [activeCat, setActiveCat] = useState<string>('all');
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [playingSrc, setPlayingSrc] = useState('');
+  const [playingTitle, setPlayingTitle] = useState('');
+  const [selectedItem, setSelectedItem] = useState<XtreamStream | XtreamSeries | null>(null);
+
+  // Countdown
+  const TRIAL_TOTAL = 3 * 60 * 60 * 1000;
+  const [remaining, setRemaining] = useState(Math.max(0, TRIAL_TOTAL - (Date.now() - creds.startedAt)));
+  useEffect(() => {
+    const id = setInterval(() => setRemaining(r => Math.max(0, r - 1000)), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  const s = Math.floor((remaining % 60000) / 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const countdownStr = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  const expired = remaining <= 0;
+
+  const fetchContent = useCallback(async (type: ContentType) => {
+    setLoading(true);
+    setItems([]);
+    setCategories([]);
+    setActiveCat('all');
+    setSearch('');
+    try {
+      const { username, password } = creds;
+      let catAction = type === 'live' ? 'get_live_categories' : type === 'movies' ? 'get_vod_categories' : 'get_series_categories';
+      let streamAction = type === 'live' ? 'get_live_streams' : type === 'movies' ? 'get_vod_streams' : 'get_series';
+
+      const [catRes, streamRes] = await Promise.all([
+        fetch(`/api/xtream?url=${encodeURIComponent(xtreamUrl(username, password, catAction))}`),
+        fetch(`/api/xtream?url=${encodeURIComponent(xtreamUrl(username, password, streamAction))}`),
+      ]);
+      const cats: XtreamCategory[] = await catRes.json();
+      const streams: (XtreamStream | XtreamSeries)[] = await streamRes.json();
+      setCategories(Array.isArray(cats) ? cats : []);
+      setItems(Array.isArray(streams) ? streams.slice(0, 500) : []);
+      setFilteredItems(Array.isArray(streams) ? streams.slice(0, 500) : []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [creds]);
+
+  useEffect(() => {
+    fetchContent('live');
+  }, [fetchContent]);
+
+  useEffect(() => {
+    let result = items;
+    if (activeCat !== 'all') {
+      result = result.filter(i => (i as XtreamStream).category_id === activeCat);
+    }
+    if (search) {
+      result = result.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
+    }
+    setFilteredItems(result);
+  }, [activeCat, search, items]);
+
+  const handleTabChange = (tab: ContentType) => {
+    setActiveTab(tab);
+    fetchContent(tab);
+  };
+
+  const handlePlay = (item: XtreamStream | XtreamSeries) => {
+    const { username, password } = creds;
+    if (activeTab === 'live') {
+      setPlayingSrc(streamUrl(username, password, item.stream_id || (item as XtreamSeries).series_id, 'ts'));
+    } else if (activeTab === 'movies') {
+      setPlayingSrc(vodUrl(username, password, item.stream_id));
+    } else {
+      setSelectedItem(item);
+      return;
+    }
+    setPlayingTitle(item.name);
+  };
+
+  const handleItemClick = (item: XtreamStream | XtreamSeries) => {
+    if (activeTab === 'series') {
+      setSelectedItem(item);
+    } else {
+      handlePlay(item);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#070714] text-white">
+      {/* Video Player Overlay */}
+      {playingSrc && (
+        <VideoPlayer src={playingSrc} title={playingTitle}
+          onClose={() => { setPlayingSrc(''); setPlayingTitle(''); }} />
+      )}
+
+      {/* Detail Modal */}
+      {selectedItem && (
+        <DetailModal item={selectedItem} creds={creds} activeTab={activeTab}
+          onClose={() => setSelectedItem(null)} />
+      )}
+
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-[#070714]/95 backdrop-blur-md border-b border-white/5">
+        <div className="flex items-center justify-between px-4 h-14">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-1.5">
+            <span className="text-base font-black text-white">Galya<span className="text-[#3b82f6]">Stream</span></span>
+          </Link>
+
+          {/* Nav tabs */}
+          <nav className="hidden md:flex items-center gap-1 bg-white/5 rounded-2xl p-1">
+            {[
+              { tab: 'live' as ContentType, icon: '📡', label: 'Canlı' },
+              { tab: 'movies' as ContentType, icon: '🎬', label: 'Filmler' },
+              { tab: 'series' as ContentType, icon: '📺', label: 'Diziler' },
+            ].map(({ tab, icon, label }) => (
+              <button key={tab} onClick={() => handleTabChange(tab)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === tab ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}>
+                <span>{icon}</span> {label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Right */}
+          <div className="flex items-center gap-3">
+            {!expired ? (
+              <div className="flex items-center gap-1.5 rounded-lg bg-emerald-950/50 border border-emerald-500/30 px-2.5 py-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="font-mono text-xs font-bold text-emerald-400">{countdownStr}</span>
+              </div>
+            ) : (
+              <Link href="/abonelik"
+                className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white">
+                👑 Premium&apos;a Geç
+              </Link>
+            )}
+            <Link href="/profil" className="text-xs text-white/50 hover:text-white">Profil</Link>
+          </div>
+        </div>
+
+        {/* Mobile tabs */}
+        <div className="flex md:hidden border-t border-white/5">
+          {[
+            { tab: 'live' as ContentType, icon: '📡', label: 'Canlı' },
+            { tab: 'movies' as ContentType, icon: '🎬', label: 'Filmler' },
+            { tab: 'series' as ContentType, icon: '📺', label: 'Diziler' },
+          ].map(({ tab, icon, label }) => (
+            <button key={tab} onClick={() => handleTabChange(tab)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-all ${activeTab === tab ? 'text-white border-b-2 border-[#3b82f6]' : 'text-white/40'}`}>
+              {icon} {label}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {/* Expired warning */}
+      {expired && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 text-center">
+          <p className="text-xs font-semibold text-amber-400">
+            ⌛ Test süreniz doldu —{' '}
+            <Link href="/abonelik" className="underline">Şimdi Premium&apos;a Geç →</Link>
+          </p>
+        </div>
+      )}
+
+      <div className="flex h-[calc(100vh-56px)] overflow-hidden">
+        {/* Sidebar — categories */}
+        <aside className="hidden lg:flex flex-col w-52 shrink-0 border-r border-white/5 overflow-y-auto py-4">
+          <p className="px-4 text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-2">Kategoriler</p>
+          <button onClick={() => setActiveCat('all')}
+            className={`px-4 py-2 text-sm text-left transition-colors ${activeCat === 'all' ? 'text-white font-semibold bg-white/5' : 'text-white/50 hover:text-white'}`}>
+            Tümü
+          </button>
+          {categories.map(cat => (
+            <button key={cat.category_id} onClick={() => setActiveCat(cat.category_id)}
+              className={`px-4 py-2 text-sm text-left truncate transition-colors ${activeCat === cat.category_id ? 'text-white font-semibold bg-white/5' : 'text-white/50 hover:text-white'}`}>
+              {cat.category_name}
+            </button>
+          ))}
+        </aside>
+
+        {/* Main content */}
+        <main className="flex-1 overflow-y-auto">
+          {/* Search + Mobile categories */}
+          <div className="sticky top-0 bg-[#070714]/95 backdrop-blur-md px-4 py-3 border-b border-white/5 z-10">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                <span className="text-white/30 text-sm">🔍</span>
+                <input
+                  type="text"
+                  placeholder={activeTab === 'live' ? 'Kanal ara...' : activeTab === 'movies' ? 'Film ara...' : 'Dizi ara...'}
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="flex-1 bg-transparent text-white text-sm placeholder:text-white/30 outline-none"
+                />
+              </div>
+            </div>
+            {/* Mobile category pills */}
+            <div className="flex gap-2 overflow-x-auto mt-2 pb-1 lg:hidden scrollbar-hide">
+              <button onClick={() => setActiveCat('all')}
+                className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${activeCat === 'all' ? 'border-white bg-white text-black' : 'border-white/20 text-white/60'}`}>
+                Tümü
+              </button>
+              {categories.slice(0, 20).map(cat => (
+                <button key={cat.category_id} onClick={() => setActiveCat(cat.category_id)}
+                  className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-all whitespace-nowrap ${activeCat === cat.category_id ? 'border-white bg-white text-black' : 'border-white/20 text-white/60'}`}>
+                  {cat.category_name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Content grid */}
+          <div className="p-4">
+            {loading ? (
+              <div className="flex items-center justify-center py-24">
+                <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#3b82f6] animate-spin" />
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="text-center py-24 text-white/30">
+                <div className="text-4xl mb-3">🔍</div>
+                <p>Sonuç bulunamadı</p>
+              </div>
+            ) : (
+              <div className={`grid gap-3 ${
+                activeTab === 'live'
+                  ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+                  : 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8'
+              }`}>
+                {filteredItems.map((item, i) => (
+                  <ContentCard
+                    key={(item.stream_id || (item as XtreamSeries).series_id || i)}
+                    item={item}
+                    type={activeTab}
+                    onClick={() => handleItemClick(item)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// ─── Detail Modal (Series / Movie detail) ─────────────────────────────────────
+function DetailModal({ item, creds, activeTab, onClose }: {
+  item: XtreamStream | XtreamSeries;
+  creds: TrialCreds;
+  activeTab: ContentType;
+  onClose: () => void;
+}) {
+  const [episodes, setEpisodes] = useState<Record<string, { id: number; title: string; episode_num: number }[]>>({});
+  const [season, setSeason] = useState('1');
+  const [playingSrc, setPlayingSrc] = useState('');
+  const [playingTitle, setPlayingTitle] = useState('');
+  const [loadingEp, setLoadingEp] = useState(false);
+
+  useEffect(() => {
+    if (activeTab !== 'series') return;
+    const seriesItem = item as XtreamSeries;
+    if (!seriesItem.series_id) return;
+    setLoadingEp(true);
+    fetch(`/api/xtream?url=${encodeURIComponent(xtreamUrl(creds.username, creds.password, 'get_series_info', `&series_id=${seriesItem.series_id}`))}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.episodes) setEpisodes(data.episodes);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingEp(false));
+  }, [item, creds, activeTab]);
+
+  const playEpisode = (episodeId: number, title: string) => {
+    setPlayingSrc(`${SERVER}/series/${creds.username}/${creds.password}/${episodeId}.mp4`);
+    setPlayingTitle(title);
+  };
+
+  const playMovie = () => {
+    setPlayingSrc(vodUrl(creds.username, creds.password, item.stream_id));
+    setPlayingTitle(item.name);
+  };
+
+  const cover = (item as XtreamSeries).cover || item.stream_icon || '';
+  const plot = (item as XtreamSeries).plot || '';
+  const genre = (item as XtreamSeries).genre || '';
+  const year = (item as XtreamSeries).releasedate?.slice(0, 4) || (item as XtreamSeries).year || '';
+  const seasons = Object.keys(episodes).sort((a, b) => Number(a) - Number(b));
+
+  return (
+    <>
+      {playingSrc && (
+        <VideoPlayer src={playingSrc} title={playingTitle} onClose={() => { setPlayingSrc(''); setPlayingTitle(''); }} />
+      )}
+
+      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4"
+        onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+        <div className="w-full max-w-2xl bg-[#0f0f1a] rounded-t-2xl sm:rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+
+          {/* Hero */}
+          <div className="relative">
+            {cover ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={cover} alt={item.name} className="w-full h-48 sm:h-64 object-cover" />
+            ) : (
+              <div className="w-full h-32 bg-[#1a1a2e] flex items-center justify-center">
+                <span className="text-5xl opacity-20">🎬</span>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f1a] via-[#0f0f1a]/40 to-transparent" />
+            <button onClick={onClose}
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80">
+              ✕
+            </button>
+          </div>
+
+          <div className="px-5 pb-6 -mt-8 relative">
+            <h2 className="text-2xl font-black text-white mb-1">{item.name}</h2>
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              {activeTab === 'series' && <span className="text-xs bg-white/10 text-white px-2 py-0.5 rounded">Dizi</span>}
+              {activeTab === 'movies' && <span className="text-xs bg-white/10 text-white px-2 py-0.5 rounded">Film</span>}
+              {genre && <span className="text-xs text-white/50">{genre}</span>}
+              {year && <span className="text-xs text-white/50">• {year}</span>}
+              {item.rating && Number(item.rating) > 0 && (
+                <span className="flex items-center gap-1 text-xs text-yellow-400">★ {Number(item.rating).toFixed(1)}</span>
+              )}
+            </div>
+
+            {plot && <p className="text-sm text-white/60 leading-relaxed mb-5">{plot}</p>}
+
+            {/* Movie play button */}
+            {activeTab === 'movies' && (
+              <button onClick={playMovie}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-black text-black hover:bg-white/90 mb-4">
+                ▶ İzle
+              </button>
+            )}
+
+            {/* Series episodes */}
+            {activeTab === 'series' && (
+              <div>
+                {loadingEp ? (
+                  <div className="flex justify-center py-6">
+                    <div className="h-6 w-6 rounded-full border-2 border-white/10 border-t-white animate-spin" />
+                  </div>
+                ) : seasons.length > 0 ? (
+                  <>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-bold text-white">Bölümler</p>
+                      <select value={season} onChange={e => setSeason(e.target.value)}
+                        className="bg-white/10 border border-white/20 text-white text-xs rounded-lg px-3 py-1.5 outline-none">
+                        {seasons.map(s => (
+                          <option key={s} value={s} className="bg-[#0f0f1a]">{s}. Sezon</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      {(episodes[season] || []).map(ep => (
+                        <button key={ep.id} onClick={() => playEpisode(ep.id, ep.title || `${item.name} - S${season}E${ep.episode_num}`)}
+                          className="flex w-full items-center gap-3 rounded-xl bg-white/5 hover:bg-white/10 p-3 text-left transition-colors">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-xs font-bold text-white">
+                            {ep.episode_num}
+                          </span>
+                          <p className="text-sm text-white truncate">{ep.title || `Bölüm ${ep.episode_num}`}</p>
+                          <span className="ml-auto text-white/30 text-lg">▶</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-center text-white/30 py-6 text-sm">Bölüm bulunamadı</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Main wrapper ─────────────────────────────────────────────────────────────
+function IzleInner() {
+  const { data: session, status } = useSession();
+  const [creds, setCreds] = useState<TrialCreds | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  useEffect(() => {
+    if (status === 'loading') return;
+
+    // Check localStorage first
+    try {
+      const raw = localStorage.getItem('galya_trial_creds');
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.username && (!p.email || p.email === session?.user?.email)) {
+          setCreds(p);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch { /* */ }
+
+    // Try Redis if logged in
+    if (session?.user?.email) {
+      fetch('/api/test-talep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_trial', email: session.user.email }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success && data.username) {
+            const cr = { email: session.user!.email!, username: data.username, password: data.password, startedAt: data.startedAt };
+            setCreds(cr);
+            try { localStorage.setItem('galya_trial_creds', JSON.stringify(cr)); } catch { /* */ }
+          }
+        })
+        .catch(() => { })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [status, session]);
+
+  if (status === 'loading' || loading) {
+    return (
+      <div className="min-h-screen bg-[#070714] flex items-center justify-center">
+        <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#3b82f6] animate-spin" />
+      </div>
+    );
+  }
+
+  if (!creds) {
+    return <NoTrialScreen onLogin={() => setShowLoginPrompt(true)} />;
+  }
+
+  return <PlayerApp creds={creds} />;
+}
+
+export default function IzlePage() {
+  return (
+    <SessionProvider>
+      <IzleInner />
+    </SessionProvider>
+  );
+}
