@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'IPTV Satın Al | 4K IPTV Paketleri – GalyaStream',
     description:
-      '85.000+ kanal ve 4K yayın kalitesiyle Türkiye'nin en iyi IPTV deneyimi.',
+      "85.000+ kanal ve 4K yayın kalitesiyle Türkiye'nin en iyi IPTV deneyimi.",
     images: [OG_IMAGE_PATH],
   },
   alternates: {
