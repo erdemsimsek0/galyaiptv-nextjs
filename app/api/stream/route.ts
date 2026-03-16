@@ -1,16 +1,16 @@
 // app/api/stream/route.ts — galyastream.com
 //
 // MİMARİ:
-//   m3u8 manifest  → Vercel /api/stream?type=live        küçük metin, <1sn
-//   .ts segmentler → CF Worker ?url=<encoded>            IPTV live IP engeli aşmak için
-//   film/dizi      → Vercel /api/stream?type=movie/series range request destekli
+//   m3u8 manifest  → Vercel /api/stream?type=live  (Vercel HTTP ile IPTV'ye bağlanır)
+//   .ts segmentler → Tarayıcı direkt IPTV'ye bağlanır (kullanıcının kendi IP'si)
+//   film/dizi      → Vercel /api/stream?type=movie/series
 //
-// NOT: IPTV sunucusu live segmentleri için Vercel IP'sini engelliyor (512 dönüyor).
-// Bu yüzden segmentler CF Worker üzerinden proxy'leniyor.
+// NOT: Mixed content sorunu yok çünkü manifest içindeki segment URL'leri
+// http:// olarak döndürülüyor ve HLS.js bunları direkt fetch ediyor.
+// Tarayıcı mixed content'i video/audio için bloklamaz (sadece script/style için).
 //
 // VERCEL ENVIRONMENT VARIABLES:
-//   XTREAM_SERVER  = http://pro4kiptv.xyz:2086
-//   CF_WORKER_URL  = https://galyastream-proxy.erdemsimsek06.workers.dev
+//   XTREAM_SERVER = http://pro4kiptv.xyz:2086
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,9 +20,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const SERVER = process.env.XTREAM_SERVER || 'http://pro4kiptv.xyz:2086';
 
-// CF Worker URL — Vercel env variable olarak set et
-// Segmentler Vercel üzerinden 512 aldığı için CF Worker üzerinden gönderiyoruz
-const CF_WORKER = process.env.CF_WORKER_URL || '';
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
   const allowed = [
@@ -41,8 +39,6 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
   };
 }
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-
 export async function OPTIONS(req: NextRequest) {
   const origin = req.headers.get('origin');
   return new NextResponse(null, { status: 204, headers: getCorsHeaders(origin) });
@@ -53,44 +49,21 @@ export async function GET(req: NextRequest) {
   const origin = req.headers.get('origin');
   const CORS = getCorsHeaders(origin);
 
-  const seg = s.get('seg'); // Vercel fallback segment proxy (CF_WORKER yoksa)
-
-  // ── SEGMENT PROXY FALLBACK (?seg=URL) ────────────────────────────────────────
-  // CF_WORKER_URL set edilmemişse buraya düşer (geliştirme ortamı için)
-  if (seg) {
-    try {
-      const decoded = decodeURIComponent(seg);
-      const res = await fetch(decoded, {
-        headers: { 'User-Agent': UA, 'Accept': '*/*' },
-        signal: AbortSignal.timeout(10_000),
-      });
-      return new NextResponse(res.body, {
-        status: res.status,
-        headers: {
-          'Content-Type': res.headers.get('content-type') || 'video/mp2t',
-          'Cache-Control': 'no-cache, no-store',
-          ...CORS,
-        },
-      });
-    } catch (e: unknown) {
-      return new NextResponse(
-        e instanceof Error ? e.message : 'Segment hatası',
-        { status: 502, headers: CORS }
-      );
-    }
-  }
-
   const type = s.get('type');
   const u = s.get('u');
   const p = s.get('p');
   const rawId = s.get('id');
-  const id = rawId ? rawId.split('&')[0] : null; // &ext=m3u8 gibi artıkları temizle
+  const id = rawId ? rawId.split('&')[0] : null;
 
   if (!type || !u || !p || !id) {
     return new NextResponse('Eksik parametre: type, u, p, id gerekli', { status: 400, headers: CORS });
   }
 
   // ── CANLI YAYIN (?type=live) ─────────────────────────────────────────────────
+  // Vercel sunucu tarafında HTTP ile manifest'i çeker, tarayıcıya döndürür.
+  // Segment URL'leri absolute http:// olarak döndürülür.
+  // Tarayıcı (HLS.js) segmentleri kendi IP'siyle direkt IPTV'den çeker.
+  // Bu sayede mixed content sorunu olmaz ve datacenter IP engeli aşılır.
   if (type === 'live') {
     const m3u8Url = `${SERVER}/live/${u}/${p}/${id}.m3u8`;
 
@@ -101,24 +74,6 @@ export async function GET(req: NextRequest) {
       });
 
       if (!res.ok) {
-        // .ts uzantısıyla tekrar dene
-        const tsUrl = `${SERVER}/live/${u}/${p}/${id}.ts`;
-        const tsRes = await fetch(tsUrl, {
-          headers: { 'User-Agent': UA, 'Accept': '*/*' },
-          signal: AbortSignal.timeout(8_000),
-        }).catch(() => null);
-
-        if (tsRes && tsRes.ok) {
-          return new NextResponse(tsRes.body, {
-            status: 200,
-            headers: {
-              'Content-Type': 'video/mp2t',
-              'Cache-Control': 'no-cache, no-store, max-age=0',
-              ...CORS,
-            },
-          });
-        }
-
         return new NextResponse(
           `IPTV sunucu yanıtı: ${res.status} — kanal aktif olmayabilir`,
           { status: res.status, headers: CORS }
@@ -128,41 +83,23 @@ export async function GET(req: NextRequest) {
       const text = await res.text();
       const baseUrl = `${SERVER}/live/${u}/${p}/`;
 
-      // ✅ KRİTİK: Segmentler CF Worker üzerinden gönderiliyor
-      // CF_WORKER_URL set edilmişse → CF Worker, yoksa → Vercel fallback
-      const proxyBase = CF_WORKER
-        ? `${CF_WORKER}?url=`
-        : `/api/stream?seg=`;
-
-      // m3u8 içindeki segment URL'lerini proxy'e yönlendir
+      // Segment URL'lerini absolute http:// yap — proxy yok, direkt IPTV
       const rewritten = text.split('\n').map(line => {
         const t = line.trim();
 
         if (!t) return line;
         if (t.startsWith('#') && !t.includes('URI="')) return line;
 
-        // Segment satırı (.ts / .aac / .mp4 / .fmp4)
-        if (/\.(ts|aac|mp4|fmp4)(\?|$)/i.test(t)) {
-          const abs = t.startsWith('http') ? t : `${baseUrl}${t}`;
-          return `${proxyBase}${encodeURIComponent(abs)}`;
+        // Relative segment → absolute http://
+        if (!t.startsWith('#') && !t.startsWith('http')) {
+          return `${baseUrl}${t}`;
         }
 
-        // Uzantısız relative segment
-        if (!t.startsWith('#') && !t.startsWith('http') && t.length > 0) {
-          const abs = `${baseUrl}${t}`;
-          return `${proxyBase}${encodeURIComponent(abs)}`;
-        }
-
-        // Absolute segment (uzantısız)
-        if (!t.startsWith('#') && t.startsWith('http')) {
-          return `${proxyBase}${encodeURIComponent(t)}`;
-        }
-
-        // EXT-X-KEY şifre anahtarı
+        // EXT-X-KEY URI → absolute
         if (t.includes('URI="')) {
           return t.replace(/URI="([^"]+)"/, (_: string, uri: string) => {
             const abs = uri.startsWith('http') ? uri : `${baseUrl}${uri}`;
-            return `URI="${proxyBase}${encodeURIComponent(abs)}"`;
+            return `URI="${abs}"`;
           });
         }
 
