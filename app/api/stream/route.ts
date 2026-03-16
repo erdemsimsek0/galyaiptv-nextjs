@@ -17,18 +17,46 @@ import { NextRequest, NextResponse } from 'next/server';
 const SERVER = process.env.XTREAM_SERVER || 'http://pro4kiptv.xyz:2086';
 const SERVER_HOST = new URL(SERVER).hostname;
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+// Farklı User-Agent'lar — sunucu hangisini kabul ederse
+const UA_LIST = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'VLC/3.0.20 LibVLC/3.0.20',
+  'Lavf/58.76.100',
+  'stagefright/1.2 (Linux;Android 14)',
+  'okhttp/4.9.0',
+];
 
-// IPTV sunucusunun tanıyacağı header'lar
-function iptvHeaders(refererPath = '') {
-  return {
-    'User-Agent': UA,
-    'Accept': '*/*',
-    'Accept-Encoding': 'identity',
-    'Referer': `http://${SERVER_HOST}/${refererPath}`,
-    'Origin': `http://${SERVER_HOST}`,
-    'Connection': 'keep-alive',
-  };
+// IPTV sunucusunun tanıyacağı header kombinasyonları — sırayla denenir
+function buildHeaderSets(refererPath = ''): Record<string, string>[] {
+  return [
+    // 1. Tarayıcı benzeri
+    {
+      'User-Agent': UA_LIST[0],
+      'Accept': '*/*',
+      'Referer': `http://${SERVER_HOST}/${refererPath}`,
+      'Origin': `http://${SERVER_HOST}`,
+    },
+    // 2. VLC
+    {
+      'User-Agent': UA_LIST[1],
+      'Accept': '*/*',
+      'Icy-MetaData': '1',
+    },
+    // 3. FFmpeg/Lavf
+    {
+      'User-Agent': UA_LIST[2],
+      'Accept': '*/*',
+    },
+    // 4. Android player
+    {
+      'User-Agent': UA_LIST[3],
+      'Accept': '*/*',
+    },
+    // 5. Minimal
+    {
+      'User-Agent': UA_LIST[4],
+    },
+  ];
 }
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
@@ -52,45 +80,67 @@ export async function OPTIONS(req: NextRequest) {
   return new NextResponse(null, { status: 204, headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
+// Segment veya m3u8 için çoklu header denemesi
+async function fetchWithFallback(
+  url: string,
+  refererPath = '',
+  timeoutMs = 10_000
+): Promise<Response> {
+  const headerSets = buildHeaderSets(refererPath);
+  let lastError: unknown;
+
+  for (const headers of headerSets) {
+    try {
+      const res = await fetch(url, {
+        headers,
+        signal: AbortSignal.timeout(timeoutMs),
+        // @ts-ignore — Node.js fetch: redirect takibi
+        redirect: 'follow',
+      });
+
+      // 200-299 veya 206 (partial) kabul et
+      if (res.ok || res.status === 206) return res;
+
+      // 512 / 403 / 401 → sonraki header setini dene
+      if (res.status === 512 || res.status === 403 || res.status === 401) {
+        // Body'yi tüket, bağlantıyı serbest bırak
+        await res.body?.cancel();
+        continue;
+      }
+
+      // Diğer hatalar (404, 502 vb.) → direkt dön
+      return res;
+    } catch (e) {
+      lastError = e;
+      // Timeout veya network hatası → sonraki dene
+    }
+  }
+
+  // Tüm denemeler başarısız
+  throw lastError ?? new Error('Tüm header kombinasyonları başarısız');
+}
+
 export async function GET(req: NextRequest) {
   const s = new URL(req.url).searchParams;
   const origin = req.headers.get('origin');
   const CORS = getCorsHeaders(origin);
 
   // ── SEGMENT PROXY (?seg=URL) ─────────────────────────────────────────────────
-  // Tarayıcı HTTPS'ten HTTP segment çekemez (mixed content).
-  // Vercel sunucu tarafında HTTP'ye bağlanıp tarayıcıya HTTPS olarak döner.
   const seg = s.get('seg');
   if (seg) {
     try {
       const decoded = decodeURIComponent(seg);
-      const res = await fetch(decoded, {
-        headers: iptvHeaders('live/'),
-        signal: AbortSignal.timeout(10_000),
-      });
 
-      // 512 gelirse farklı header kombinasyonu dene
-      if (res.status === 512 || res.status === 403) {
-        const res2 = await fetch(decoded, {
-          headers: {
-            'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18',
-            'Accept': '*/*',
-            'Connection': 'keep-alive',
-          },
-          signal: AbortSignal.timeout(10_000),
-        });
-        return new NextResponse(res2.body, {
-          status: res2.ok ? 200 : res2.status,
-          headers: {
-            'Content-Type': res2.headers.get('content-type') || 'video/mp2t',
-            'Cache-Control': 'no-cache, no-store',
-            ...CORS,
-          },
-        });
+      // URL güvenlik kontrolü — sadece beklenen sunucuya istek at
+      const segUrl = new URL(decoded);
+      if (segUrl.hostname !== SERVER_HOST) {
+        return new NextResponse('Geçersiz segment kaynağı', { status: 400, headers: CORS });
       }
 
+      const res = await fetchWithFallback(decoded, 'live/', 12_000);
+
       return new NextResponse(res.body, {
-        status: res.status,
+        status: res.ok ? 200 : res.status,
         headers: {
           'Content-Type': res.headers.get('content-type') || 'video/mp2t',
           'Cache-Control': 'no-cache, no-store',
@@ -98,10 +148,9 @@ export async function GET(req: NextRequest) {
         },
       });
     } catch (e: unknown) {
-      return new NextResponse(
-        e instanceof Error ? e.message : 'Segment hatası',
-        { status: 502, headers: CORS }
-      );
+      const msg = e instanceof Error ? e.message : 'Segment hatası';
+      const isTimeout = e instanceof Error && e.name === 'TimeoutError';
+      return new NextResponse(msg, { status: isTimeout ? 504 : 502, headers: CORS });
     }
   }
 
@@ -120,22 +169,18 @@ export async function GET(req: NextRequest) {
     const m3u8Url = `${SERVER}/live/${u}/${p}/${id}.m3u8`;
 
     try {
-      const res = await fetch(m3u8Url, {
-        headers: iptvHeaders(`live/${u}/${p}/`),
-        signal: AbortSignal.timeout(12_000),
-      });
+      const res = await fetchWithFallback(m3u8Url, `live/${u}/${p}/`, 15_000);
 
       if (!res.ok) {
+        const body = await res.text().catch(() => '');
         return new NextResponse(
-          `IPTV sunucu yanıtı: ${res.status}`,
+          `IPTV sunucu yanıtı: ${res.status}${body ? ' — ' + body.slice(0, 200) : ''}`,
           { status: res.status, headers: CORS }
         );
       }
 
       const text = await res.text();
       const baseUrl = `${SERVER}/live/${u}/${p}/`;
-
-      // Segmentleri /api/stream?seg= üzerinden proxy'le (HTTPS köprüsü)
       const proxyBase = `/api/stream?seg=`;
 
       const rewritten = text.split('\n').map(line => {
@@ -143,13 +188,11 @@ export async function GET(req: NextRequest) {
         if (!t) return line;
         if (t.startsWith('#') && !t.includes('URI="')) return line;
 
-        // Segment satırı
         if (!t.startsWith('#')) {
           const abs = t.startsWith('http') ? t : `${baseUrl}${t}`;
           return `${proxyBase}${encodeURIComponent(abs)}`;
         }
 
-        // EXT-X-KEY
         if (t.includes('URI="')) {
           return t.replace(/URI="([^"]+)"/, (_: string, uri: string) => {
             const abs = uri.startsWith('http') ? uri : `${baseUrl}${uri}`;
@@ -172,7 +215,7 @@ export async function GET(req: NextRequest) {
     } catch (e: unknown) {
       const isTimeout = e instanceof Error && e.name === 'TimeoutError';
       return new NextResponse(
-        isTimeout ? 'Sunucu 12sn yanıt vermedi.' : (e instanceof Error ? e.message : 'Hata'),
+        isTimeout ? 'Sunucu 15sn yanıt vermedi.' : (e instanceof Error ? e.message : 'Hata'),
         { status: isTimeout ? 504 : 500, headers: CORS }
       );
     }
@@ -184,7 +227,10 @@ export async function GET(req: NextRequest) {
     const vodUrl = `${SERVER}/${vodPath}/${u}/${p}/${id}.mp4`;
 
     try {
-      const fetchHeaders: Record<string, string> = { 'User-Agent': UA, 'Accept': '*/*' };
+      const fetchHeaders: Record<string, string> = {
+        'User-Agent': UA_LIST[0],
+        'Accept': '*/*',
+      };
       const range = req.headers.get('range');
       if (range) fetchHeaders['Range'] = range;
 
