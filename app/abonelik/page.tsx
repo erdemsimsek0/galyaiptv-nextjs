@@ -34,15 +34,15 @@ interface Plan {
 }
 
 const PLANS: Plan[] = [
-  { id: 'max', logo: '/paket-logoları/logo-max.png', logoAlt: 'Montana Max', name: 'Max',
+  { id: 'max', logo: '/paket-logoları/logo-max.png', logoAlt: 'GalyaStream Max', name: 'Max',
     desc: 'Tüm içeriklere sınırsız erişim — film, dizi, spor ve TV kanalları bir arada.',
     basePrice: 229.90, popular: true, accentColor: '#ef4444',
     features: ['TV + Spor + Film + Dizi Tek Pakette','15.000+ Güncel İçerik ve Platform Arşivi','Yetişkin İçeriklere Dahil Erişim','HD / FHD / 4K Yüksek Kalite Yayın','Tüm Cihazlarda Kesintisiz İzleme'] },
-  { id: 'sports', logo: '/paket-logoları/logo-sports.png', logoAlt: 'Montana Sports', name: 'Sports',
+  { id: 'sports', logo: '/paket-logoları/logo-sports.png', logoAlt: 'GalyaStream Sports', name: 'Sports',
     desc: 'Tüm spor yayınları ve TV kanalları — maçlar, turnuvalar tek yerde.',
     basePrice: 159.90, popular: false, accentColor: '#22c55e',
     features: ['Canlı Spor Kanalları ve Maç Yayınları','Avrupa ve Yerel Spor Kanalları Tek Yerde','HD / FHD / 4K Akıcı Yayın Deneyimi','Hızlı Kanal Geçişi ve Stabil İzleme','Smart TV ve Tüm Cihazlarla Uyumlu'] },
-  { id: 'cinema', logo: '/paket-logoları/logo-cinema.png', logoAlt: 'Montana Cinema', name: 'Cinema',
+  { id: 'cinema', logo: '/paket-logoları/logo-cinema.png', logoAlt: 'GalyaStream Cinema', name: 'Cinema',
     desc: '15.000+ film ve dizi seçkisi — en popüler ve sevilen yapımlar bir arada.',
     basePrice: 129.90, popular: false, accentColor: '#f59e0b',
     features: ['15.000+ Film ve Dizi Arşivi','En Popüler ve Yeni Eklenen Yapımlar','Altyazı ve Dublaj Seçenekleri','HD / FHD / 4K Sinema Kalitesi','Telefon, Tablet ve Smart TV Uyumlu'] },
@@ -62,8 +62,8 @@ function AbonelikHeader() {
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2">
         <Link href="/" className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="GalyaStream" className="h-8 w-auto" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
-          <span className="text-sm font-bold text-white">Galya<span className="text-[#3b82f6]">Stream</span></span>
+          <img src="/logo.png" alt="GalyaStream" className="h-8 w-auto" style={{ display: 'none' }} onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.display='block'; const n=e.currentTarget.nextElementSibling as HTMLElement; if(n) n.style.display='none'; }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; const n=e.currentTarget.nextElementSibling as HTMLElement; if(n) n.style.display='inline'; }} />
+          <span style={{ display: "inline" }} className="text-sm font-bold text-white">Galya<span className="text-[#3b82f6]">Stream</span></span>
         </Link>
         <div className="hidden items-center md:flex">
           <div className="flex items-center gap-1 rounded-2xl border border-[#1e2d42] bg-[#0d1a2a] px-2 py-1.5">
