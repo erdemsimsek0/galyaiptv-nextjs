@@ -104,7 +104,7 @@ function LogoWithFallback({ className = 'h-8 w-auto' }: { className?: string }) 
   if (failed) {
     return (
       <span className="text-sm font-bold text-white">
-        Galya <span className="text-[#3b82f6]">IPTV</span>
+        Galya<span className="text-[#3b82f6]">Stream</span>
       </span>
     );
   }
@@ -112,7 +112,7 @@ function LogoWithFallback({ className = 'h-8 w-auto' }: { className?: string }) 
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src="/logo.png"
-      alt="Galya IPTV"
+      alt="GalyaStream"
       className={className}
       onError={() => setFailed(true)}
     />
@@ -433,7 +433,7 @@ function ProfilInner() {
             ) : (
               <>
                 <div className="mb-6">
-                  <p className="text-xl font-black text-white">Galya <span className="text-[#3b82f6]">IPTV</span></p>
+                  <p className="text-xl font-black text-white">Galya<span className="text-[#3b82f6]">Stream</span></p>
                 </div>
                 <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#1e3a5f] text-4xl">
                   {trialProgress >= 100 ? '✅' : '⚡'}
