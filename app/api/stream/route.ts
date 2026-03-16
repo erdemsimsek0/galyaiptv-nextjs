@@ -1,7 +1,7 @@
 // app/api/stream/route.ts
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 10;
+export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -26,7 +26,43 @@ export async function GET(req: NextRequest) {
 
   if (!url) return new NextResponse('Geçersiz tip', { status: 400 });
 
-  // HTTP URL'e direkt redirect et - tarayıcı Mixed Content engelini
-  // bazı durumlarda aşar, en azından film/dizi için çalışır
-  return NextResponse.redirect(url, { status: 302 });
+  try {
+    const rangeHeader = req.headers.get('range');
+    const fetchHeaders: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'Accept': '*/*',
+    };
+    if (rangeHeader) fetchHeaders['Range'] = rangeHeader;
+
+    const res = await fetch(url, { headers: fetchHeaders });
+
+    const resHeaders: Record<string, string> = {
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-cache, no-store',
+    };
+
+    const ct = res.headers.get('content-type');
+    const cl = res.headers.get('content-length');
+    const cr = res.headers.get('content-range');
+    const ar = res.headers.get('accept-ranges');
+
+    if (ct) resHeaders['Content-Type'] = ct;
+    else if (ext === 'm3u8') resHeaders['Content-Type'] = 'application/vnd.apple.mpegurl';
+    else if (type === 'live') resHeaders['Content-Type'] = 'video/mp2t';
+    else resHeaders['Content-Type'] = 'video/mp4';
+
+    if (cl) resHeaders['Content-Length'] = cl;
+    if (cr) resHeaders['Content-Range'] = cr;
+    resHeaders['Accept-Ranges'] = ar || 'bytes';
+
+    return new NextResponse(res.body, {
+      status: res.status,
+      headers: resHeaders,
+    });
+  } catch (e: unknown) {
+    return new NextResponse(
+      e instanceof Error ? e.message : 'Stream hatası',
+      { status: 500 }
+    );
+  }
 }
