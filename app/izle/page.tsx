@@ -410,12 +410,12 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
       const streamAction = type === 'live' ? 'get_live_streams' : type === 'movies' ? 'get_vod_streams' : 'get_series';
 
       const [catRes, streamRes] = await Promise.all([
-        fetch('/api/xtream', {
+        fetch('https://iptv-proxy.erdemsimsek06.workers.dev', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password, action: catAction }),
         }),
-        fetch('/api/xtream', {
+        fetch('https://iptv-proxy.erdemsimsek06.workers.dev', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password, action: streamAction }),
@@ -690,7 +690,7 @@ function DetailModal({ item, creds, activeTab, onClose }: {
     const seriesItem = item as XtreamSeries;
     if (!seriesItem.series_id) return;
     setLoadingEp(true);
-    fetch('/api/xtream', {
+    fetch('https://iptv-proxy.erdemsimsek06.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
