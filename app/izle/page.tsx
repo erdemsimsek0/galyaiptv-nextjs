@@ -131,7 +131,16 @@ function VideoPlayer({ src, title, onClose }: { src: string; title: string; onCl
     video.onerror = () => { setError(true); setLoading(false); };
     load();
 
+    // 30 saniye içinde yüklenmezse hata göster
+    const timeout = setTimeout(() => {
+      if (video.readyState === 0) {
+        setError(true);
+        setLoading(false);
+      }
+    }, 30000);
+
     return () => {
+      clearTimeout(timeout);
       if (hlsRef.current) {
         (hlsRef.current as { destroy: () => void }).destroy();
         hlsRef.current = null;
@@ -186,7 +195,7 @@ function ContentCard({ item, onClick, type }: {
       <div className={`relative overflow-hidden bg-[#0d0d1a] ${type === 'live' ? 'aspect-video' : 'aspect-[2/3]'}`}>
         {img && !imgError ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={img} alt={item.name} className="w-full h-full object-cover"
+          <img src={img} alt={item.name} className="w-full h-full object-cover" loading="lazy"
             onError={() => setImgError(true)} />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -473,13 +482,14 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
   useEffect(() => {
     let result = items;
     if (activeCat !== 'all') {
-      // category_id string veya number olabilir, String() ile normalize et
       result = result.filter(i => String((i as XtreamStream).category_id) === String(activeCat));
     }
     if (search) {
       result = result.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
     }
-    setFilteredItems(result);
+    // Performans: arama veya kategori seçilmişse tümünü göster, değilse ilk 200
+    const limit = (activeCat !== 'all' || search) ? result.length : 200;
+    setFilteredItems(result.slice(0, limit));
   }, [activeCat, search, items]);
 
   // ─── FIX: handleTabChange artık viewMode'u da ayarlıyor ──
