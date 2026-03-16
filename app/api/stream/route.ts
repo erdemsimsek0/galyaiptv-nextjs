@@ -1,7 +1,7 @@
 // app/api/stream/route.ts — galyastream.com
 //
 // MİMARİ:
-//   m3u8 manifest  →  bu Vercel route (küçük metin, <1sn, timeout yok)
+//   m3u8 manifest  →  bu Vercel route  (küçük metin, <1sn, timeout yok)
 //   .ts segmentler →  Cloudflare Worker (HTTPS→HTTP köprüsü, timeout yok)
 //
 // VERCEL ENVIRONMENT VARIABLES (vercel.com → galyastream projesi → Settings → Env Vars):
