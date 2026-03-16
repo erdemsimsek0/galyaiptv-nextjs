@@ -54,12 +54,8 @@ interface XtreamSeries extends XtreamStream {
 type ContentType = 'live' | 'movies' | 'series';
 type ViewMode = 'home' | 'browse' | 'live' | 'movies' | 'series' | 'watch' | 'detail';
 
-// ─── Xtream API helper ────────────────────────────────────────────────────────
-const SERVER = 'http://pro4kiptv.xyz:2086';
-
-function xtreamUrl(username: string, password: string, action: string, extra = '') {
-  return `${SERVER}/player_api.php?username=${username}&password=${password}&action=${action}${extra}`;
-}
+// ─── Xtream stream URL helpers (client-side direct stream URLs) ───────────────
+const SERVER = process.env.NEXT_PUBLIC_XTREAM_SERVER || 'http://pro4kiptv.xyz:2086';
 
 function streamUrl(username: string, password: string, streamId: number, ext = 'ts') {
   return `${SERVER}/live/${username}/${password}/${streamId}.${ext}`;
@@ -82,7 +78,6 @@ function VideoPlayer({ src, title, onClose }: { src: string; title: string; onCl
     setError(false);
     setLoading(true);
 
-    // Try HLS.js for m3u8, direct for mp4/ts
     const loadHls = async () => {
       if (src.includes('.m3u8') || src.includes('/live/')) {
         try {
@@ -119,7 +114,6 @@ function VideoPlayer({ src, title, onClose }: { src: string; title: string; onCl
 
   return (
     <div className="fixed inset-0 z-[200] bg-black flex flex-col">
-      {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 to-transparent absolute top-0 left-0 right-0 z-10">
         <p className="text-white font-semibold truncate max-w-[70%]">{title}</p>
         <button onClick={onClose}
@@ -168,7 +162,6 @@ function ContentCard({ item, onClick, type }: {
   return (
     <button onClick={onClick}
       className="group relative flex flex-col rounded-xl overflow-hidden bg-[#1a1a2e] border border-white/5 hover:border-white/20 hover:scale-[1.03] transition-all duration-200 text-left">
-      {/* Thumbnail */}
       <div className={`relative overflow-hidden bg-[#0d0d1a] ${type === 'live' ? 'aspect-video' : 'aspect-[2/3]'}`}>
         {img && !imgError ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -179,20 +172,17 @@ function ContentCard({ item, onClick, type }: {
             <span className="text-3xl opacity-20">{type === 'live' ? '📺' : type === 'movies' ? '🎬' : '📺'}</span>
           </div>
         )}
-        {/* Play overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
           <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-2xl bg-white/20 rounded-full w-10 h-10 flex items-center justify-center backdrop-blur-sm">
             ▶
           </span>
         </div>
-        {/* Rating badge */}
         {item.rating && Number(item.rating) > 0 && (
           <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 rounded-md px-1.5 py-0.5 backdrop-blur-sm">
             <span className="text-yellow-400 text-[10px]">★</span>
             <span className="text-white text-[10px] font-semibold">{Number(item.rating).toFixed(1)}</span>
           </div>
         )}
-        {/* Live badge */}
         {type === 'live' && (
           <div className="absolute top-2 right-2 flex items-center gap-1 bg-red-600/90 rounded-md px-1.5 py-0.5">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -200,7 +190,6 @@ function ContentCard({ item, onClick, type }: {
           </div>
         )}
       </div>
-      {/* Info */}
       <div className="p-2.5">
         <p className="text-white text-xs font-semibold truncate">{item.name}</p>
         {(item as XtreamSeries).genre && (
@@ -218,7 +207,6 @@ function ContentCard({ item, onClick, type }: {
 function NoTrialScreen({ onLogin }: { onLogin: () => void }) {
   return (
     <div className="min-h-screen bg-[#070714] flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
-      {/* Background glow */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-[#3b82f6]/10 blur-3xl" />
       </div>
@@ -232,7 +220,6 @@ function NoTrialScreen({ onLogin }: { onLogin: () => void }) {
           15.000+ film, dizi ve 1.500+ canlı kanal. Hemen izlemeye başla.
         </p>
 
-        {/* Stats */}
         <div className="mb-10 grid grid-cols-4 gap-3">
           {[
             { icon: '🎬', value: '15.000+', label: 'Film & Dizi' },
@@ -248,7 +235,6 @@ function NoTrialScreen({ onLogin }: { onLogin: () => void }) {
           ))}
         </div>
 
-        {/* Device icons */}
         <div className="mb-8">
           <p className="text-white/40 text-xs mb-3">Tüm cihazlarında izle</p>
           <div className="flex items-center justify-center gap-6">
@@ -261,7 +247,6 @@ function NoTrialScreen({ onLogin }: { onLogin: () => void }) {
           </div>
         </div>
 
-        {/* CTA */}
         <Link href="/profil"
           className="flex w-full items-center justify-center gap-3 rounded-2xl bg-white py-4 text-base font-black text-black transition-all hover:bg-white/90 hover:scale-[1.02] mb-3">
           <span>▶</span> 3 Saat Ücretsiz Dene
@@ -282,8 +267,7 @@ function NoTrialScreen({ onLogin }: { onLogin: () => void }) {
   );
 }
 
-
-// ─── Home Screen (Ana Sayfa) ──────────────────────────────────────────────────
+// ─── Home Screen ──────────────────────────────────────────────────────────────
 function HomeScreen({ creds, onNavigate }: {
   creds: TrialCreds;
   onNavigate: (tab: ContentType) => void;
@@ -297,7 +281,6 @@ function HomeScreen({ creds, onNavigate }: {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      {/* Hero */}
       <div className="relative px-6 py-16 text-center">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full bg-[#3b82f6]/10 blur-3xl" />
@@ -307,17 +290,14 @@ function HomeScreen({ creds, onNavigate }: {
             {expired ? (
               <><span className="text-amber-400">⌛</span> Test süreniz doldu</>
             ) : (
-              <><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"/><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"/></span>
+              <><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" /></span>
                 Aktif Test — <span className="font-mono font-bold text-emerald-400">{pad(h)} saat {pad(m)} dk kaldı</span>
               </>
             )}
           </div>
-          <h1 className="mb-2 text-3xl sm:text-4xl font-black text-white">
-            Hoş Geldiniz! 👋
-          </h1>
+          <h1 className="mb-2 text-3xl sm:text-4xl font-black text-white">Hoş Geldiniz! 👋</h1>
           <p className="text-white/50 text-sm mb-8">Premium eğlence deneyimine hazır mısınız?</p>
 
-          {/* Stats */}
           <div className="grid grid-cols-4 gap-3 max-w-lg mx-auto mb-10">
             {[
               { icon: '🎬', value: '15.000+', label: 'Film & Dizi' },
@@ -335,7 +315,6 @@ function HomeScreen({ creds, onNavigate }: {
         </div>
       </div>
 
-      {/* Quick access */}
       <div className="px-6 pb-10">
         <h2 className="text-sm font-bold text-white/50 uppercase tracking-widest mb-4">Hızlı Erişim</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -367,7 +346,7 @@ function HomeScreen({ creds, onNavigate }: {
           </div>
         )}
 
-        {/* Credentials */}
+        {/* Bağlantı Bilgileri */}
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
           <p className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-3">Bağlantı Bilgileriniz</p>
           <div className="grid grid-cols-2 gap-2 text-xs">
@@ -397,6 +376,7 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
   const [activeCat, setActiveCat] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState('');
   const [playingSrc, setPlayingSrc] = useState('');
   const [playingTitle, setPlayingTitle] = useState('');
   const [selectedItem, setSelectedItem] = useState<XtreamStream | XtreamSeries | null>(null);
@@ -415,15 +395,15 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
   const countdownStr = `${pad(h)}:${pad(m)}:${pad(s)}`;
   const expired = remaining <= 0;
 
-  const [fetchError, setFetchError] = useState('');
-
+  // ─── FIX: fetchContent artık sadece çağrıldığında çalışır,
+  //          sayfa açılışında otomatik ÇALIŞMAZ ──────────────
   const fetchContent = useCallback(async (type: ContentType) => {
     setLoading(true);
     setItems([]);
     setCategories([]);
     setActiveCat('all');
     setSearch('');
-    setFetchError('');
+    setFetchError(''); // Her yeni istekte hatayı sıfırla
     try {
       const { username, password } = creds;
       const catAction = type === 'live' ? 'get_live_categories' : type === 'movies' ? 'get_vod_categories' : 'get_series_categories';
@@ -462,9 +442,11 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
     }
   }, [creds]);
 
-  useEffect(() => {
-    fetchContent('live');
-  }, [fetchContent]);
+  // ─── FIX: Otomatik fetch KALDIRILDI ───────────────────────
+  // Eskiden burada useEffect ile fetchContent('live') çağrılıyordu.
+  // Bu, ana sayfadayken hata oluşmasına ve browse'a geçince
+  // "Bağlantı hatası" gösterilmesine yol açıyordu.
+  // Artık fetch sadece kullanıcı bir sekmeye tıkladığında başlar.
 
   useEffect(() => {
     let result = items;
@@ -477,8 +459,10 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
     setFilteredItems(result);
   }, [activeCat, search, items]);
 
+  // ─── FIX: handleTabChange artık viewMode'u da ayarlıyor ──
   const handleTabChange = (tab: ContentType) => {
     setActiveTab(tab);
+    setViewMode('browse');  // <-- EKLENDİ: browse moduna geç
     fetchContent(tab);
   };
 
@@ -527,7 +511,7 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
 
           {/* Nav tabs */}
           <nav className="hidden md:flex items-center gap-1 bg-white/5 rounded-2xl p-1">
-            <button onClick={() => { setViewMode('home'); }}
+            <button onClick={() => setViewMode('home')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${viewMode === 'home' ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}>
               🏠 Ana Sayfa
             </button>
@@ -536,7 +520,7 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
               { tab: 'movies' as ContentType, icon: '🎬', label: 'Filmler' },
               { tab: 'series' as ContentType, icon: '📺', label: 'Diziler' },
             ].map(({ tab, icon, label }) => (
-              <button key={tab} onClick={() => { setViewMode('browse'); handleTabChange(tab); }}
+              <button key={tab} onClick={() => handleTabChange(tab)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${viewMode !== 'home' && activeTab === tab ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}>
                 <span>{icon}</span> {label}
               </button>
@@ -571,7 +555,7 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
             { tab: 'series' as ContentType, icon: '📺', label: 'Diziler' },
           ].map(({ tab, icon, label }) => (
             <button key={tab} onClick={() => handleTabChange(tab)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-all ${activeTab === tab ? 'text-white border-b-2 border-[#3b82f6]' : 'text-white/40'}`}>
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-all ${activeTab === tab && viewMode !== 'home' ? 'text-white border-b-2 border-[#3b82f6]' : 'text-white/40'}`}>
               {icon} {label}
             </button>
           ))}
@@ -591,104 +575,104 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
       <div className="flex h-[calc(100vh-56px)] overflow-hidden">
         {/* Home screen */}
         {viewMode === 'home' && (
-          <HomeScreen creds={creds} onNavigate={(tab) => { setViewMode('browse'); handleTabChange(tab); }} />
+          <HomeScreen creds={creds} onNavigate={handleTabChange} />
         )}
 
         {viewMode !== 'home' && (
-        <>
-        {/* Sidebar — categories */}
-        <aside className="hidden lg:flex flex-col w-52 shrink-0 border-r border-white/5 overflow-y-auto py-4">
-          <p className="px-4 text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-2">Kategoriler</p>
-          <button onClick={() => setActiveCat('all')}
-            className={`px-4 py-2 text-sm text-left transition-colors ${activeCat === 'all' ? 'text-white font-semibold bg-white/5' : 'text-white/50 hover:text-white'}`}>
-            Tümü
-          </button>
-          {categories.map(cat => (
-            <button key={cat.category_id} onClick={() => setActiveCat(cat.category_id)}
-              className={`px-4 py-2 text-sm text-left truncate transition-colors ${activeCat === cat.category_id ? 'text-white font-semibold bg-white/5' : 'text-white/50 hover:text-white'}`}>
-              {cat.category_name}
-            </button>
-          ))}
-        </aside>
-
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto">
-          {/* Search + Mobile categories */}
-          <div className="sticky top-0 bg-[#070714]/95 backdrop-blur-md px-4 py-3 border-b border-white/5 z-10">
-            <div className="flex items-center gap-3">
-              <div className="flex-1 flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                <span className="text-white/30 text-sm">🔍</span>
-                <input
-                  type="text"
-                  placeholder={activeTab === 'live' ? 'Kanal ara...' : activeTab === 'movies' ? 'Film ara...' : 'Dizi ara...'}
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="flex-1 bg-transparent text-white text-sm placeholder:text-white/30 outline-none"
-                />
-              </div>
-            </div>
-            {/* Mobile category pills */}
-            <div className="flex gap-2 overflow-x-auto mt-2 pb-1 lg:hidden scrollbar-hide">
+          <>
+            {/* Sidebar — categories */}
+            <aside className="hidden lg:flex flex-col w-52 shrink-0 border-r border-white/5 overflow-y-auto py-4">
+              <p className="px-4 text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-2">Kategoriler</p>
               <button onClick={() => setActiveCat('all')}
-                className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${activeCat === 'all' ? 'border-white bg-white text-black' : 'border-white/20 text-white/60'}`}>
+                className={`px-4 py-2 text-sm text-left transition-colors ${activeCat === 'all' ? 'text-white font-semibold bg-white/5' : 'text-white/50 hover:text-white'}`}>
                 Tümü
               </button>
-              {categories.slice(0, 20).map(cat => (
+              {categories.map(cat => (
                 <button key={cat.category_id} onClick={() => setActiveCat(cat.category_id)}
-                  className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-all whitespace-nowrap ${activeCat === cat.category_id ? 'border-white bg-white text-black' : 'border-white/20 text-white/60'}`}>
+                  className={`px-4 py-2 text-sm text-left truncate transition-colors ${activeCat === cat.category_id ? 'text-white font-semibold bg-white/5' : 'text-white/50 hover:text-white'}`}>
                   {cat.category_name}
                 </button>
               ))}
-            </div>
-          </div>
+            </aside>
 
-          {/* Content grid */}
-          <div className="p-4">
-            {loading ? (
-              <div className="flex items-center justify-center py-24">
-                <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#3b82f6] animate-spin" />
+            {/* Main content */}
+            <main className="flex-1 overflow-y-auto">
+              {/* Search + Mobile categories */}
+              <div className="sticky top-0 bg-[#070714]/95 backdrop-blur-md px-4 py-3 border-b border-white/5 z-10">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                    <span className="text-white/30 text-sm">🔍</span>
+                    <input
+                      type="text"
+                      placeholder={activeTab === 'live' ? 'Kanal ara...' : activeTab === 'movies' ? 'Film ara...' : 'Dizi ara...'}
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      className="flex-1 bg-transparent text-white text-sm placeholder:text-white/30 outline-none"
+                    />
+                  </div>
+                </div>
+                {/* Mobile category pills */}
+                <div className="flex gap-2 overflow-x-auto mt-2 pb-1 lg:hidden scrollbar-hide">
+                  <button onClick={() => setActiveCat('all')}
+                    className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${activeCat === 'all' ? 'border-white bg-white text-black' : 'border-white/20 text-white/60'}`}>
+                    Tümü
+                  </button>
+                  {categories.slice(0, 20).map(cat => (
+                    <button key={cat.category_id} onClick={() => setActiveCat(cat.category_id)}
+                      className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-all whitespace-nowrap ${activeCat === cat.category_id ? 'border-white bg-white text-black' : 'border-white/20 text-white/60'}`}>
+                      {cat.category_name}
+                    </button>
+                  ))}
+                </div>
               </div>
-            ) : fetchError ? (
-              <div className="text-center py-24">
-                <div className="text-4xl mb-3">⚠️</div>
-                <p className="text-white/60 mb-2">Bağlantı hatası</p>
-                <p className="text-white/30 text-sm mb-4">{fetchError}</p>
-                <button onClick={() => fetchContent(activeTab)}
-                  className="rounded-xl bg-white/10 px-5 py-2 text-sm text-white hover:bg-white/20">
-                  Tekrar Dene
-                </button>
+
+              {/* Content grid */}
+              <div className="p-4">
+                {loading ? (
+                  <div className="flex items-center justify-center py-24">
+                    <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#3b82f6] animate-spin" />
+                  </div>
+                ) : fetchError ? (
+                  <div className="text-center py-24">
+                    <div className="text-4xl mb-3">⚠️</div>
+                    <p className="text-white/60 mb-2">Bağlantı hatası</p>
+                    <p className="text-white/30 text-sm mb-4">{fetchError}</p>
+                    <button onClick={() => fetchContent(activeTab)}
+                      className="rounded-xl bg-white/10 px-5 py-2 text-sm text-white hover:bg-white/20">
+                      Tekrar Dene
+                    </button>
+                  </div>
+                ) : filteredItems.length === 0 ? (
+                  <div className="text-center py-24 text-white/30">
+                    <div className="text-4xl mb-3">🔍</div>
+                    <p>Sonuç bulunamadı</p>
+                  </div>
+                ) : (
+                  <div className={`grid gap-3 ${
+                    activeTab === 'live'
+                      ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+                      : 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8'
+                  }`}>
+                    {filteredItems.map((item, i) => (
+                      <ContentCard
+                        key={(item.stream_id || (item as XtreamSeries).series_id || i)}
+                        item={item}
+                        type={activeTab}
+                        onClick={() => handleItemClick(item)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : filteredItems.length === 0 ? (
-              <div className="text-center py-24 text-white/30">
-                <div className="text-4xl mb-3">🔍</div>
-                <p>Sonuç bulunamadı</p>
-              </div>
-            ) : (
-              <div className={`grid gap-3 ${
-                activeTab === 'live'
-                  ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-                  : 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8'
-              }`}>
-                {filteredItems.map((item, i) => (
-                  <ContentCard
-                    key={(item.stream_id || (item as XtreamSeries).series_id || i)}
-                    item={item}
-                    type={activeTab}
-                    onClick={() => handleItemClick(item)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </main>
-        </>
+            </main>
+          </>
         )}
       </div>
     </div>
   );
 }
 
-// ─── Detail Modal (Series / Movie detail) ─────────────────────────────────────
+// ─── Detail Modal ─────────────────────────────────────────────────────────────
 function DetailModal({ item, creds, activeTab, onClose }: {
   item: XtreamStream | XtreamSeries;
   creds: TrialCreds;
@@ -709,7 +693,12 @@ function DetailModal({ item, creds, activeTab, onClose }: {
     fetch('/api/xtream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: creds.username, password: creds.password, action: 'get_series_info', extra: { series_id: String(seriesItem.series_id) } }),
+      body: JSON.stringify({
+        username: creds.username,
+        password: creds.password,
+        action: 'get_series_info',
+        extra: { series_id: String(seriesItem.series_id) },
+      }),
     })
       .then(r => r.json())
       .then(data => {
@@ -745,7 +734,6 @@ function DetailModal({ item, creds, activeTab, onClose }: {
         onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
         <div className="w-full max-w-2xl bg-[#0f0f1a] rounded-t-2xl sm:rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
 
-          {/* Hero */}
           <div className="relative">
             {cover ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -776,7 +764,6 @@ function DetailModal({ item, creds, activeTab, onClose }: {
 
             {plot && <p className="text-sm text-white/60 leading-relaxed mb-5">{plot}</p>}
 
-            {/* Movie play button */}
             {activeTab === 'movies' && (
               <button onClick={playMovie}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-black text-black hover:bg-white/90 mb-4">
@@ -784,7 +771,6 @@ function DetailModal({ item, creds, activeTab, onClose }: {
               </button>
             )}
 
-            {/* Series episodes */}
             {activeTab === 'series' && (
               <div>
                 {loadingEp ? (
@@ -837,7 +823,6 @@ function IzleInner() {
   useEffect(() => {
     if (status === 'loading') return;
 
-    // Check localStorage first
     try {
       const raw = localStorage.getItem('galya_trial_creds');
       if (raw) {
@@ -850,7 +835,6 @@ function IzleInner() {
       }
     } catch { /* */ }
 
-    // Try Redis if logged in
     if (session?.user?.email) {
       fetch('/api/test-talep', {
         method: 'POST',
