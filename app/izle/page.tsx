@@ -54,7 +54,7 @@ type ViewMode = 'home' | 'browse';
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 function streamUrl(username: string, password: string, streamId: number) {
-  return `/api/stream?type=live&u=${username}&p=${password}&id=${streamId}`;
+  return `http://pro4kiptv.xyz:2086/live/${username}/${password}/${streamId}.m3u8`;
 }
 function vodUrl(username: string, password: string, streamId: number) {
   return `/api/stream?type=movie&u=${username}&p=${password}&id=${streamId}`;
