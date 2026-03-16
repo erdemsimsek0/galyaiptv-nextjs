@@ -232,12 +232,12 @@ function createMailer() {
 async function sendOtpMail(email: string, otp: string) {
   const transporter = createMailer();
   await transporter.sendMail({
-    from:    `Galya IPTV <${process.env.EMAIL_USER}>`,
+    from:    `GalyaStream <${process.env.EMAIL_USER}>`,
     to:      email,
-    subject: 'Galya IPTV – Doğrulama Kodunuz',
+    subject: 'GalyaStream – Doğrulama Kodunuz',
     html: `
       <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#07111f;padding:32px;border-radius:16px">
-        <h1 style="color:#ffffff;font-size:22px;margin:0 0 8px">Galya IPTV</h1>
+        <h1 style="color:#ffffff;font-size:22px;margin:0 0 8px">GalyaStream</h1>
         <p style="color:#8b9ab3;font-size:14px;margin:0 0 24px">Ücretsiz test hesabınızı açmak için aşağıdaki kodu girin.</p>
         <div style="background:#1e2d42;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px">
           <p style="color:#8b9ab3;font-size:12px;margin:0 0 8px;text-transform:uppercase;letter-spacing:2px">Doğrulama Kodu</p>
@@ -260,12 +260,12 @@ async function sendTrialMail(
 
   const transporter = createMailer();
   await transporter.sendMail({
-    from:    `Galya IPTV <${process.env.EMAIL_USER}>`,
+    from:    `GalyaStream <${process.env.EMAIL_USER}>`,
     to:      email,
-    subject: 'Galya IPTV – Test Hesabınız Hazır! ✅',
+    subject: 'GalyaStream – Test Hesabınız Hazır! ✅',
     html: `
       <div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;background:#07111f;padding:32px;border-radius:16px">
-        <h1 style="color:#ffffff;font-size:22px;margin:0 0 8px">Galya IPTV – Test Hesabınız</h1>
+        <h1 style="color:#ffffff;font-size:22px;margin:0 0 8px">GalyaStream – Test Hesabınız</h1>
         <p style="color:#8b9ab3;font-size:14px;margin:0 0 24px">Aşağıdaki bilgilerle 3 saat boyunca test edebilirsiniz.</p>
 
         <div style="background:#1e2d42;border-radius:12px;padding:20px;margin-bottom:20px">
@@ -295,7 +295,7 @@ async function sendTrialMail(
         </div>
 
         <p style="color:#374151;font-size:12px;text-align:center;margin:0">
-          © 2026 Galya IPTV. Bu test hesabı 3 saat geçerlidir.
+          © 2026 GalyaStream. Bu test hesabı 3 saat geçerlidir.
         </p>
       </div>
     `,
