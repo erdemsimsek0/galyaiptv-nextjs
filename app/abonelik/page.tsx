@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSession, SessionProvider } from 'next-auth/react';
 
 
-// ─── Fiyatları API'den oku ────────────────────────────────────────────────────
+// ─── Fiyatları API'den okfu ────────────────────────────────────────────────────
 const DEFAULT_PRICES: Record<string, number> = { max: 229.90, sports: 159.90, cinema: 129.90 };
 
 function usePrices() {
