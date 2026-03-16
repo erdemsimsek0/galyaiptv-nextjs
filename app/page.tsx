@@ -26,7 +26,7 @@ function usePrices() {
 // ─── Metadata notu ────────────────────────────────────────────────────────────
 // Bu sayfa 'use client' olduğundan metadata'yı layout.tsx'e ekle:
 // export const metadata = {
-//   title: 'Galya IPTV | Donmayan Premium IPTV – 85.000+ Kanal, 4K Yayın',
+//   title: 'GalyaStream | Donmayan Premium IPTV – 85.000+ Kanal, 4K Yayın',
 //   description: 'Donmayan premium IPTV hizmeti. 85.000+ kanal, 4K yayın kalitesi, Avrupa sunucuları. 3 saatlik ücretsiz test. Tüm cihazlarda çalışır.',
 //   keywords: 'iptv satın al, iptv fiyat, 4k iptv, en iyi iptv, iptv server, donmayan iptv',
 // }
@@ -242,21 +242,21 @@ const faqSchema = {
 };
 const productSchema = {
   '@context': 'https://schema.org', '@type': 'Product',
-  name: 'Galya IPTV Paketleri',
-  image: 'https://galyaiptv.com.tr/og-image.jpg',
+  name: 'GalyaStream Paketleri',
+  image: 'https://www.galyastream.com/og-image.jpg',
   description: 'Donmayan Premium IPTV hizmeti. 85.000+ kanal, 4K yayın kalitesi. Avrupa sunucuları ile kesintisiz yayın.',
-  brand: { '@type': 'Brand', name: 'Galya IPTV' },
+  brand: { '@type': 'Brand', name: 'GalyaStream' },
   aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.9', reviewCount: '1243', bestRating: '5' },
   offers: {
     '@type': 'AggregateOffer', lowPrice: '500', highPrice: '6900',
     priceCurrency: 'TRY', availability: 'https://schema.org/InStock',
-    offerCount: '6', url: 'https://galyaiptv.com.tr/#paketler',
+    offerCount: '6', url: 'https://www.galyastream.com/#paketler',
   },
 };
 const organizationSchema = {
   '@context': 'https://schema.org', '@type': 'Organization',
-  name: 'Galya IPTV', url: 'https://galyaiptv.com.tr/',
-  logo: 'https://galyaiptv.com.tr/logo.png',
+  name: 'GalyaStream', url: 'https://www.galyastream.com/',
+  logo: 'https://www.galyastream.com/logo.png',
   contactPoint: [{ '@type': 'ContactPoint', contactType: 'customer support', url: 'https://wa.me/447441921660', availableLanguage: ['Turkish'] }],
 };
 
@@ -731,7 +731,7 @@ function HomePageInner() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.png"
-              alt="Galya IPTV"
+              alt="GalyaStream"
               className="h-9 w-auto object-contain"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = 'none';
@@ -739,8 +739,8 @@ function HomePageInner() {
                 if (fb) fb.style.display = 'flex';
               }}
             />
-            <span className="hidden items-center gap-1 text-lg font-bold tracking-tight text-white">
-              Galya <span className="text-[#3b82f6]">IPTV</span>
+            <span style={{ display: "none" }} className="items-center gap-1 text-lg font-bold tracking-tight text-white">
+              Galya<span className="text-[#3b82f6]">Stream</span>
             </span>
           </Link>
 
@@ -908,7 +908,7 @@ function HomePageInner() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/platform-mockup.png"
-                alt="Galya IPTV Uygulama Ekranı"
+                alt="GalyaStream Uygulama Ekranı"
                 className="w-full max-w-2xl rounded-2xl object-contain drop-shadow-2xl mx-auto lg:ml-auto lg:mr-0"
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).style.display = 'none';
@@ -1101,7 +1101,7 @@ function HomePageInner() {
         <section id="ozellikler" className="border-t border-[#1e3a5f] px-6 py-20">
           <div className="mx-auto max-w-5xl px-0">
             <div className="mb-12 text-center">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Neden Galya IPTV?</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Neden GalyaStream?</p>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Her Şey Tek Pakette</h2>
             </div>
 
@@ -1237,7 +1237,7 @@ function HomePageInner() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/platform-mockup.png"
-                  alt="Galya IPTV Uygulama Ekranı"
+                  alt="GalyaStream Uygulama Ekranı"
                   className="w-full max-w-xl rounded-2xl object-contain drop-shadow-2xl"
                   onError={(e) => {
                     // Görsel yokken placeholder göster
@@ -1349,7 +1349,7 @@ function HomePageInner() {
                 </div>
 
                 <div className="rounded-xl border border-[#1e3a5f] bg-[#111827] p-5 text-center">
-                  <p className="mb-1 text-sm font-semibold text-white">10.200+ aktif kullanıcı Galya IPTV'yi tercih ediyor</p>
+                  <p className="mb-1 text-sm font-semibold text-white">10.200+ aktif kullanıcı GalyaStream'yi tercih ediyor</p>
                   <p className="mb-4 text-xs text-[#6b7280]">Ücretsiz test ile başlayın, beğenirseniz satın alın</p>
                   <button onClick={() => smartAction()} className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">
                     ⚡ Ücretsiz Test Al
@@ -1398,7 +1398,7 @@ function HomePageInner() {
         <div className="mx-auto max-w-5xl px-0">
           <div className="flex flex-col items-center gap-3 md:flex-row md:justify-between">
             <div>
-              <p className="text-lg font-bold text-white">Galya <span className="text-[#818cf8]">IPTV</span></p>
+              <p className="text-lg font-bold text-white">Galya<span className="text-[#818cf8]">Stream</span></p>
               <p className="mt-1 text-xs text-[#6b7280]">Kesintisiz, kristal netliğinde yayın — her ekranda</p>
             </div>
             <div className="flex items-center gap-2 text-xs text-[#6b7280]">
@@ -1418,7 +1418,7 @@ function HomePageInner() {
               <Link href="/iletisim" className="transition-colors hover:text-white">İletişim</Link>
               <Link href="/blog/iptv-nedir" className="transition-colors hover:text-white">IPTV Nedir?</Link>
             </div>
-            <p className="text-xs text-[#4b5563]">© {new Date().getFullYear()} Galya IPTV. Tüm hakları saklıdır.</p>
+            <p className="text-xs text-[#4b5563]">© {new Date().getFullYear()} GalyaStream. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </footer>
