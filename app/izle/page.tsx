@@ -58,7 +58,8 @@ type ViewMode = 'home' | 'browse' | 'live' | 'movies' | 'series' | 'watch' | 'de
 const SERVER = process.env.NEXT_PUBLIC_XTREAM_SERVER || 'http://pro4kiptv.xyz:2086';
 
 function streamUrl(username: string, password: string, streamId: number, ext = 'ts') {
-  return `/api/stream?type=live&u=${username}&p=${password}&id=${streamId}&ext=${ext}`;
+  // m3u8 formatını önce dene (HLS.js ile daha iyi uyumluluk)
+  return `/api/stream?type=live&u=${username}&p=${password}&id=${streamId}&ext=m3u8`;
 }
 
 function vodUrl(username: string, password: string, streamId: number) {
