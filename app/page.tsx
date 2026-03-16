@@ -9,7 +9,7 @@ import { trackEvent, trackPurchaseIntent, trackTrialStart, trackWhatsAppClick } 
 function LiveChat() {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="fixed bottom-20 right-4 z-50 md:bottom-6 md:right-6">
+    <div className="fixed bottom-4 right-4 z-50 md:bottom-6 md:right-6">
       {isOpen && (
         <div className="mb-4 w-72 rounded-2xl border border-[#1e3a5f] bg-[#111827] p-4 shadow-2xl">
           <div className="mb-3 flex items-center justify-between">
@@ -81,7 +81,7 @@ function SocialProof() {
   const sale = RECENT_SALES[current];
 
   return (
-    <div className="fixed bottom-24 left-4 z-40 max-w-[260px] md:bottom-8 md:left-6"
+    <div className="fixed bottom-4 left-4 z-40 max-w-[260px] md:bottom-6 md:left-6"
       style={{ animation: 'slideInFromBottom 0.4s ease-out' }}>
       <style>{`@keyframes slideInFromBottom{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
       <div className="rounded-xl border border-[#1e3a5f] bg-[#111827]/95 p-3 shadow-lg backdrop-blur">
