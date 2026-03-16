@@ -452,11 +452,203 @@ function IpTab({ data, secret, onRefresh }: { data: ApiResponse; secret: string;
 }
 
 
+
+// ─── Ödeme Bildirimleri + Kullanıcı Yönetimi Sekmesi ─────────────────────────
+function PaymentsTab({ secret }: { secret: string }) {
+  const [notifications, setNotifications] = useState<{
+    email: string; plan: string; amount: string; paymentCode: string;
+    status: string; createdAt: number; createdAtFormatted: string;
+    approvedAt?: number; assignedPlan?: string;
+  }[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [msg, setMsg]           = useState('');
+  const [msgType, setMsgType]   = useState<'ok'|'err'>('ok');
+  const [assigning, setAssigning] = useState<string|null>(null);
+  const [assignForm, setAssignForm] = useState<Record<string, {plan:string;days:string;username:string;password:string}>>({});
+
+  const showMsg = (text: string, type: 'ok'|'err' = 'ok') => {
+    setMsg(text); setMsgType(type); setTimeout(() => setMsg(''), 5000);
+  };
+
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/payments', { headers: { 'x-admin-secret': secret } });
+      const d = await res.json();
+      if (d.success) setNotifications(d.notifications || []);
+      else showMsg(d.error || 'Hata', 'err');
+    } catch { showMsg('Bağlantı hatası', 'err'); }
+    finally { setLoading(false); }
+  }, [secret]);
+
+  useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
+
+  const handleAssign = async (email: string) => {
+    const form = assignForm[email] || { plan: '', days: '', username: '', password: '' };
+    if (!form.plan || !form.days) { showMsg('Plan ve süre gerekli', 'err'); return; }
+    setAssigning(email);
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({
+          action: 'assign_subscription',
+          email,
+          plan: form.plan,
+          durationDays: Number(form.days),
+          username: form.username,
+          password: form.password,
+        }),
+      });
+      const d = await res.json();
+      if (d.success) { showMsg(d.message); fetchNotifications(); setAssigning(null); }
+      else showMsg(d.error || 'Hata', 'err');
+    } catch { showMsg('Bağlantı hatası', 'err'); }
+    finally { setAssigning(null); }
+  };
+
+  const handleReject = async (email: string) => {
+    if (!confirm(`${email} bildirimini reddet?`)) return;
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ action: 'reject_notification', email }),
+      });
+      const d = await res.json();
+      if (d.success) { showMsg('Reddedildi.'); fetchNotifications(); }
+    } catch { showMsg('Hata', 'err'); }
+  };
+
+  const pending   = notifications.filter(n => n.status === 'pending');
+  const approved  = notifications.filter(n => n.status === 'approved');
+  const rejected  = notifications.filter(n => n.status === 'rejected');
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold">💳 Ödeme Bildirimleri</h2>
+        <button onClick={fetchNotifications} className="text-xs bg-[#1f2937] border border-[#374151] text-gray-400 px-3 py-1.5 rounded-lg hover:text-white">
+          ⟳ Yenile
+        </button>
+      </div>
+
+      {msg && <div className={`rounded-xl px-4 py-3 text-sm border ${msgType==='ok'?'bg-green-900/30 text-green-400 border-green-800/50':'bg-red-900/30 text-red-400 border-red-800/50'}`}>{msg}</div>}
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard label="Bekleyen"  value={pending.length}  icon="⏳" color="orange" />
+        <StatCard label="Onaylanan" value={approved.length} icon="✅" color="green" />
+        <StatCard label="Reddedilen" value={rejected.length} icon="❌" color="red" />
+      </div>
+
+      {loading && <div className="text-center py-10 text-gray-400">Yükleniyor...</div>}
+
+      {/* Pending notifications */}
+      {pending.length > 0 && (
+        <div className="bg-[#111827] border border-orange-800/30 rounded-2xl overflow-hidden">
+          <div className="border-b border-[#1f2937] px-5 py-3 bg-orange-900/10">
+            <h3 className="text-sm font-bold text-orange-400">⏳ Bekleyen Bildirimler ({pending.length})</h3>
+          </div>
+          <div className="divide-y divide-[#1f2937]">
+            {pending.map(n => (
+              <div key={n.email} className="p-5 space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-semibold text-white">{n.email}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{n.createdAtFormatted}</p>
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {n.plan && <Badge variant="purple">{n.plan}</Badge>}
+                      {n.amount && <Badge variant="green">₺{n.amount}</Badge>}
+                      {n.paymentCode && <Badge variant="yellow">Kod: {n.paymentCode}</Badge>}
+                    </div>
+                  </div>
+                  <button onClick={() => handleReject(n.email)}
+                    className="text-xs bg-red-900/30 text-red-400 border border-red-800/40 px-3 py-1.5 rounded-lg hover:bg-red-900/50">
+                    Reddet
+                  </button>
+                </div>
+
+                {/* Assign form */}
+                <div className="rounded-xl bg-[#0f172a] border border-[#1f2937] p-4 space-y-3">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Abonelik Tanımla</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] text-gray-500 mb-1 block">Plan</label>
+                      <select value={assignForm[n.email]?.plan || ''}
+                        onChange={e => setAssignForm(p => ({ ...p, [n.email]: { ...p[n.email], plan: e.target.value } }))}
+                        className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-lg px-3 py-2 text-xs outline-none focus:border-[#7c3aed]">
+                        <option value="" className="bg-[#0f172a]">Seç...</option>
+                        <option value="GalyaStream Max" className="bg-[#0f172a]">GalyaStream Max</option>
+                        <option value="GalyaStream Sports" className="bg-[#0f172a]">GalyaStream Sports</option>
+                        <option value="GalyaStream Cinema" className="bg-[#0f172a]">GalyaStream Cinema</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 mb-1 block">Süre (gün)</label>
+                      <input type="number" placeholder="30" min="1"
+                        value={assignForm[n.email]?.days || ''}
+                        onChange={e => setAssignForm(p => ({ ...p, [n.email]: { ...p[n.email], days: e.target.value } }))}
+                        className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-lg px-3 py-2 text-xs outline-none focus:border-[#7c3aed]" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 mb-1 block">Kullanıcı Adı (opsiyonel)</label>
+                      <input type="text" placeholder="username"
+                        value={assignForm[n.email]?.username || ''}
+                        onChange={e => setAssignForm(p => ({ ...p, [n.email]: { ...p[n.email], username: e.target.value } }))}
+                        className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-lg px-3 py-2 text-xs outline-none focus:border-[#7c3aed] font-mono" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 mb-1 block">Şifre (opsiyonel)</label>
+                      <input type="text" placeholder="password"
+                        value={assignForm[n.email]?.password || ''}
+                        onChange={e => setAssignForm(p => ({ ...p, [n.email]: { ...p[n.email], password: e.target.value } }))}
+                        className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-lg px-3 py-2 text-xs outline-none focus:border-[#7c3aed] font-mono" />
+                    </div>
+                  </div>
+                  <button onClick={() => handleAssign(n.email)} disabled={assigning === n.email}
+                    className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-sm transition-colors">
+                    {assigning === n.email ? 'Tanımlanıyor...' : '✓ Aboneliği Onayla & Aktif Et'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Approved */}
+      {approved.length > 0 && (
+        <div className="bg-[#111827] border border-[#1f2937] rounded-2xl overflow-hidden">
+          <div className="border-b border-[#1f2937] px-5 py-3">
+            <h3 className="text-sm font-bold text-green-400">✅ Onaylanan Bildirimler ({approved.length})</h3>
+          </div>
+          <div className="divide-y divide-[#1f2937]">
+            {approved.map(n => (
+              <div key={n.email} className="px-5 py-3 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm text-white">{n.email}</p>
+                  <p className="text-xs text-gray-500">{n.createdAtFormatted} · {n.assignedPlan}</p>
+                </div>
+                <Badge variant="green">Onaylı</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!loading && notifications.length === 0 && (
+        <div className="text-center py-16 text-gray-500">Henüz ödeme bildirimi yok.</div>
+      )}
+    </div>
+  );
+}
+
 // ─── Fiyat Yönetimi Sekmesi ───────────────────────────────────────────────────
 const PLAN_LABELS: Record<string, { name: string; color: string; emoji: string }> = {
-  max:    { name: 'Montana Max',    color: '#ef4444', emoji: '👑' },
-  sports: { name: 'Montana Sports', color: '#22c55e', emoji: '⚽' },
-  cinema: { name: 'Montana Cinema', color: '#f59e0b', emoji: '🎬' },
+  max:    { name: 'GalyaStream Max',    color: '#ef4444', emoji: '👑' },
+  sports: { name: 'GalyaStream Sports', color: '#22c55e', emoji: '⚽' },
+  cinema: { name: 'GalyaStream Cinema', color: '#f59e0b', emoji: '🎬' },
 };
 const DEFAULT_PRICES_ADMIN: Record<string, number> = { max: 229.90, sports: 159.90, cinema: 129.90 };
 
@@ -655,7 +847,7 @@ export default function AdminPage() {
   const [data,      setData]      = useState<ApiResponse | null>(null);
   const [error,     setError]     = useState('');
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState<'trials'|'ips'|'payment'|'prices'>('trials');
+  const [activeTab, setActiveTab] = useState<'trials'|'ips'|'payment'|'prices'|'payments'>('trials');
 
   const fetchData = useCallback(async (s: string) => {
     setLoading(true); setError('');
@@ -690,7 +882,7 @@ export default function AdminPage() {
       <div className="min-h-screen bg-[#0b0b0f] flex items-center justify-center p-4">
         <div className="w-full max-w-sm bg-[#111827] border border-[#7c3aed] rounded-2xl p-8">
           <h1 className="text-2xl font-bold text-white mb-1 text-center">Admin Paneli</h1>
-          <p className="text-gray-400 text-sm text-center mb-6">Galya IPTV</p>
+          <p className="text-gray-400 text-sm text-center mb-6">GalyaStream</p>
           <form onSubmit={handleLogin} className="space-y-4">
             <input type="password" placeholder="Admin şifresi" value={secret}
               onChange={e => setSecret(e.target.value)}
@@ -741,6 +933,9 @@ export default function AdminPage() {
           <Tab active={activeTab === 'payment'} onClick={() => setActiveTab('payment')}>
             💳 IBAN Yönetimi
           </Tab>
+          <Tab active={activeTab === 'payments'} onClick={() => setActiveTab('payments')}>
+            💳 Ödemeler {data ? '' : ''}
+          </Tab>
           <Tab active={activeTab === 'prices'} onClick={() => setActiveTab('prices')}>
             💰 Fiyat Yönetimi
           </Tab>
@@ -764,6 +959,10 @@ export default function AdminPage() {
 
         {activeTab === 'payment' && (
           <PaymentTab secret={secret} />
+        )}
+
+        {activeTab === 'payments' && (
+          <PaymentsTab secret={secret} />
         )}
 
         {activeTab === 'prices' && (
