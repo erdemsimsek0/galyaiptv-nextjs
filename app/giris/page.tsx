@@ -35,10 +35,17 @@ export default function GirisPage() {
 
       <div className="relative w-full max-w-sm">
         <div className="mb-8 flex justify-center">
-          <Link href="/">
+          <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Galya IPTV" className="h-10 w-auto"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <img src="/logo.png" alt="GalyaStream" className="h-10 w-auto"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                const next = e.currentTarget.nextElementSibling as HTMLElement;
+                if (next) next.style.display = 'inline';
+              }} />
+            <span style={{ display: 'none' }} className="text-xl font-black text-white">
+              Galya<span className="text-[#3b82f6]">Stream</span>
+            </span>
           </Link>
         </div>
 
@@ -61,7 +68,7 @@ export default function GirisPage() {
             <>
               <div className="mb-7 text-center">
                 <h1 className="text-2xl font-black text-white">Hoş Geldiniz</h1>
-                <p className="mt-1.5 text-sm text-[#6b7280]">Galya IPTV hesabınıza giriş yapın</p>
+                <p className="mt-1.5 text-sm text-[#6b7280]">GalyaStream hesabınıza giriş yapın</p>
               </div>
 
               {/* Google */}
