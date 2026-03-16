@@ -1530,19 +1530,6 @@ function HomePageInner() {
         </div>
       </footer>
 
-      {/* ─── Mobil Sticky CTA ───────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#1e3a5f] bg-[#030712]/95 px-3 py-2 backdrop-blur-md md:hidden">
-        <div className="flex gap-2">
-          {isLoggedIn && trialActive ? (
-            <Link href="/profil" className="flex flex-1 items-center justify-center rounded-lg bg-emerald-600 py-2 text-xs font-semibold text-white">✅ Testiniz Aktif</Link>
-          ) : isLoggedIn && trialExpired ? (
-            <Link href="/abonelik" className="flex flex-1 items-center justify-center rounded-lg bg-amber-500 py-2 text-xs font-semibold text-white">👑 Premium&apos;a Geç</Link>
-          ) : (
-            <button onClick={() => isLoggedIn ? null : openAuth()} className="flex-1 rounded-lg bg-[#6366f1] py-2 text-xs font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-colors hover:bg-[#4f46e5]">⚡ Ücretsiz Test Al</button>
-          )}
-          <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex flex-1 items-center justify-center rounded-lg bg-[#25d366] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1ebe5d]">💬 WhatsApp</a>
-        </div>
-      </div>
 
       {/* ─── Desktop Sticky CTA ─────────────────────────────────────────────── */}
       <div className="fixed bottom-6 right-6 z-40 hidden lg:flex flex-col gap-2 items-end">
