@@ -29,9 +29,20 @@ export async function POST(req: NextRequest) {
     try { data = JSON.parse(text); }
     catch { return NextResponse.json({ error: 'Parse hatası', sample: text.slice(0, 300) }, { status: 502 }); }
 
-    return NextResponse.json(data, { headers: { 'Cache-Control': 'public, s-maxage=60' } });
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60',
+        // HTTP sunuculara fetch yapılabilmesi için
+        'Access-Control-Allow-Origin': '*',
+      }
+    });
   } catch (e: unknown) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+    const msg = e instanceof Error ? e.message : String(e);
+    // Timeout hatasını daha açıklayıcı yap
+    if (msg.includes('abort') || msg.includes('signal')) {
+      return NextResponse.json({ error: 'Sunucu yanıt vermedi (timeout). Lütfen tekrar deneyin.' }, { status: 504 });
+    }
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
@@ -41,7 +52,7 @@ export async function GET(req: NextRequest) {
   if (!u || !p || !action)
     return NextResponse.json({ error: 'u, p, action gerekli' }, { status: 400 });
 
-  const extra = Object.fromEntries([...s.entries()].filter(([k]) => !['u','p','action'].includes(k)));
+  const extra = Object.fromEntries([...s.entries()].filter(([k]) => !['u', 'p', 'action'].includes(k)));
   const params = new URLSearchParams({ username: u, password: p, action, ...extra });
   const url = `${XTREAM_SERVER}/player_api.php?${params.toString()}`;
 
@@ -60,6 +71,10 @@ export async function GET(req: NextRequest) {
     catch { return NextResponse.json({ error: 'Parse hatası', sample: text.slice(0, 300) }, { status: 502 }); }
     return NextResponse.json(data, { headers: { 'Cache-Control': 'public, s-maxage=60' } });
   } catch (e: unknown) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes('abort') || msg.includes('signal')) {
+      return NextResponse.json({ error: 'Sunucu yanıt vermedi (timeout). Lütfen tekrar deneyin.' }, { status: 504 });
+    }
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
