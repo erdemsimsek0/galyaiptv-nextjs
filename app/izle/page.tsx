@@ -80,6 +80,11 @@ function VideoPlayer({ src, title, onClose }: { src: string; title: string; onCl
     setLoading(true);
 
     const loadHls = async () => {
+      // /api/stream proxy URL'leri direkt video src olarak kullan
+      if (src.includes('/api/stream')) {
+        video.src = src;
+        return;
+      }
       if (src.includes('.m3u8') || src.includes('/live/')) {
         try {
           const Hls = (await import('hls.js')).default;
@@ -583,15 +588,15 @@ function PlayerApp({ creds }: { creds: TrialCreds }) {
         {viewMode !== 'home' && (
           <>
             {/* Sidebar — categories */}
-            <aside className="hidden lg:flex flex-col w-52 shrink-0 border-r border-white/5 overflow-y-auto py-4">
-              <p className="px-4 text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-2">Kategoriler</p>
+            <aside className="hidden lg:flex flex-col w-56 shrink-0 border-r border-white/5 overflow-y-auto py-4">
+              <p className="px-3 text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-2">Kategoriler</p>
               <button onClick={() => setActiveCat('all')}
-                className={`px-4 py-2 text-sm text-left transition-colors ${activeCat === 'all' ? 'text-white font-semibold bg-white/5' : 'text-white/50 hover:text-white'}`}>
+                className={`px-3 py-2 text-xs text-left transition-colors rounded-lg mx-1 ${activeCat === 'all' ? 'text-white font-semibold bg-white/10' : 'text-white/60 hover:text-white hover:bg-white/5'}`}>
                 Tümü
               </button>
               {categories.map(cat => (
                 <button key={cat.category_id} onClick={() => setActiveCat(cat.category_id)}
-                  className={`px-4 py-2 text-sm text-left truncate transition-colors ${activeCat === cat.category_id ? 'text-white font-semibold bg-white/5' : 'text-white/50 hover:text-white'}`}>
+                  className={`px-3 py-2 text-xs text-left leading-snug transition-colors rounded-lg mx-1 break-words ${activeCat === cat.category_id ? 'text-white font-semibold bg-white/10' : 'text-white/60 hover:text-white hover:bg-white/5'}`}>
                   {cat.category_name}
                 </button>
               ))}
