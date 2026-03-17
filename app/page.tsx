@@ -1044,8 +1044,7 @@ function HomePageInner() {
           <div className="mx-auto max-w-5xl px-0">
             <div className="mb-8 text-center">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Abonelik Paketleri</p>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Sizin İçin Doğru Paket</h2>
-              <p className="mt-3 text-sm text-[#9ca3af]">Süreye göre seçin · Uzun süre seç, daha fazla tasarruf et</p>
+              <p className="mt-3 text-sm leading-relaxed text-[#9ca3af] max-w-2xl mx-auto">Uygun IPTV fiyatlarıyla tüm dünyadan binlerce kanal, film ve diziyi tek yerde toplayın. İstediğiniz platformda anında izleyin.</p>
             </div>
 
             {/* ── Süre Seçici ──────────────────────────────────────────────────── */}
@@ -1088,11 +1087,21 @@ function HomePageInner() {
                 const waText = `${pkg.waMsg} (${dur.label} paket, ₺${formatTL(totalPrice)})`;
 
                 return (
-                  <div key={pkg.id} className={`relative flex flex-col rounded-2xl border transition-all ${
+                  <div
+                    key={pkg.id}
+                    onClick={() => {
+                      trackPurchaseIntent(pkg.name, totalPrice, dur.label);
+                      if (!isLoggedIn) {
+                        openAuth('register');
+                        return;
+                      }
+                      window.location.href = `/odeme?paket=${encodeURIComponent(pkg.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${totalPrice.toFixed(2)}&orijinal=${originalTotal.toFixed(2)}&indirim=${dur.discount}`;
+                    }}
+                    className={`relative flex flex-col rounded-2xl border transition-all cursor-pointer ${
                     pkg.popular
-                      ? 'border-[#3b82f6]/80 bg-[#0c1628] shadow-2xl shadow-[#3b82f6]/20'
-                      : 'border-[#1e2d42] bg-[#0a1020] hover:border-[#3b82f6]/30'
-                  }`} style={{ padding: '28px 24px 24px' }}>
+                      ? 'border-[#3b82f6]/80 bg-[#0c1628] shadow-2xl shadow-[#3b82f6]/20 hover:shadow-[#3b82f6]/30 hover:scale-[1.02]'
+                      : 'border-[#1e2d42] bg-[#0a1020] hover:border-[#3b82f6]/50 hover:scale-[1.01]'
+                  }`} style={{ padding: '20px 24px 20px' }}>
 
                     {/* EN POPÜLER rozeti */}
                     {pkg.popular && (
@@ -1102,12 +1111,12 @@ function HomePageInner() {
                     )}
 
                     {/* ── LOGO ── */}
-                    <div className="mb-4 flex items-center justify-center" style={{ height: '96px' }}>
+                    <div className="mb-3 flex items-center justify-center" style={{ height: '64px' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={pkg.logo}
                         alt={pkg.logoAlt}
-                        style={{ width: '100%', maxWidth: '260px', height: '96px', objectFit: 'contain' }}
+                        style={{ width: '100%', maxWidth: '180px', height: '64px', objectFit: 'contain' }}
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).style.display = 'none';
                           const fb = e.currentTarget.nextElementSibling as HTMLElement;
@@ -1115,16 +1124,16 @@ function HomePageInner() {
                         }}
                       />
                       {/* Fallback: logo yokken */}
-                      <div className="hidden w-full h-24 items-center justify-center">
-                        <span className="text-2xl font-extrabold tracking-tight text-white">{pkg.name}</span>
+                      <div className="hidden w-full h-16 items-center justify-center">
+                        <span className="text-xl font-extrabold tracking-tight text-white">{pkg.name}</span>
                       </div>
                     </div>
 
                     {/* ── Açıklama ── */}
-                    <p className="mb-4 text-center text-[13px] leading-relaxed text-[#8b9ab3]">{pkg.desc}</p>
+                    <p className="mb-3 text-center text-[13px] leading-relaxed text-[#8b9ab3]">{pkg.desc}</p>
 
                     {/* ── Fiyat bloğu — görseldeki düzen ── */}
-                    <div className="mb-4 text-center">
+                    <div className="mb-3 text-center">
                       {/* İndirim rozeti (sadece indirimli durumlarda) */}
                       {dur.discount > 0 && (
                         <div className="mb-2 flex justify-center">
@@ -1151,10 +1160,10 @@ function HomePageInner() {
                     </div>
 
                     {/* ── Ayırıcı ── */}
-                    <div className="mb-4 h-px bg-[#1a2d44]" />
+                    <div className="mb-3 h-px bg-[#1a2d44]" />
 
                     {/* ── Özellikler ── */}
-                    <ul className="mb-5 space-y-2">
+                    <ul className="mb-4 space-y-1.5">
                       {pkg.features.map((f) => (
                         <li key={f.text} className="flex items-center gap-2.5 text-[13px]">
                           <svg className="h-[18px] w-[18px] shrink-0 text-[#3b82f6]" viewBox="0 0 20 20" fill="currentColor">
@@ -1165,9 +1174,10 @@ function HomePageInner() {
                       ))}
                     </ul>
 
-                    {/* ── CTA Butonu — Giriş kontrolü sonrası ödeme sayfasına yönlendir ── */}
+                    {/* ── CTA Butonu — Kart tıklanabilir, buton da aynı yere yönlendirir ── */}
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         trackPurchaseIntent(pkg.name, totalPrice, dur.label);
                         if (!isLoggedIn) {
                           openAuth('register');
@@ -1188,6 +1198,7 @@ function HomePageInner() {
                       href={`${WHATSAPP_BASE}?text=${encodeURIComponent(waText)}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#1e2d42] py-2.5 text-xs font-medium text-[#25d366] transition-all hover:border-[#25d366]/30 hover:bg-[#25d366]/5"
                     >
                       💬 WhatsApp ile Satın Al
