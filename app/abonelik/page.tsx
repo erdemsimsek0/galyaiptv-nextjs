@@ -27,9 +27,9 @@ const DURATIONS: Dur[] = [
 ];
 
 const DEVICES = [
-  { n: 2 as const, label: '2 Cihaz', sub: 'Arkadaş', badge: '★ ÖNERİLEN', badgeCls: 'bg-amber-500', mul: 1.30 },
+  { n: 2 as const, label: '2 Cihaz', sub: 'Arkadaş', badge: '★ ÖNERİLEN', badgeCls: 'bg-amber-500', mul: 1.60 },
   { n: 1 as const, label: '1 Cihaz', sub: 'Bireysel', badge: null, mul: 1.0 },
-  { n: 3 as const, label: '3 Cihaz', sub: 'Aile',    badge: null, mul: 1.60 },
+  { n: 3 as const, label: '3 Cihaz', sub: 'Aile',    badge: null, mul: 2.20 },
 ];
 
 interface Plan {
@@ -68,8 +68,10 @@ function calcTotal(base: number, months: number, disc: number, mul: number) {
 }
 
 function PlanCard({ plan }: { plan: Plan }) {
-  const [open, setOpen] = useState(plan.popular);
-  const [selDur, setSelDur] = useState<DurKey>('12ay');
+  // Tüm kartlar kapalı başlar (popular olsa da)
+  const [open, setOpen] = useState(false);
+  // Varsayılan: 6 ay ve 2 cihaz
+  const [selDur, setSelDur] = useState<DurKey>('6ay');
   const [selDev, setSelDev] = useState<1 | 2 | 3>(2);
 
   const dur  = DURATIONS.find(d => d.key === selDur)!;
