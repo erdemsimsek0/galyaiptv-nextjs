@@ -77,6 +77,30 @@ function useCountdown(startedAt: number | null): { display: string; expired: boo
   return { display: `${pad(h)}:${pad(m)}:${pad(s)}`, expired: false };
 }
 
+// ── Abonelik verisi ──────────────────────────────────────────────────────────
+interface Subscription {
+  plan: string;
+  durationDays: number;
+  username: string;
+  password: string;
+  assignedAt: number;
+  expiresAt: number;
+  remainingDays: number;
+  expiresFormatted: string;
+}
+
+function useSubscription(email: string | null | undefined): Subscription | null {
+  const [sub, setSub] = useState<Subscription | null>(null);
+  useEffect(() => {
+    if (!email) return;
+    fetch(`/api/subscription?email=${encodeURIComponent(email)}`)
+      .then(r => r.json())
+      .then(data => { if (data.success) setSub(data.subscription); })
+      .catch(() => {});
+  }, [email]);
+  return sub;
+}
+
 function CopyBtn({ value }: { value: string }) {
   const [ok, setOk] = useState(false);
   return (
@@ -126,6 +150,7 @@ function ProfilInner() {
   const userEmail = session?.user?.email ?? null;
   const creds   = useTrialCreds(userEmail);
   const { display: countdown, expired } = useCountdown(creds?.startedAt ?? null);
+  const subscription = useSubscription(userEmail);
 
   // ── Tüm state'ler — erken return'lerden ÖNCE ──────────────────────────────
   const [signingOut, setSigningOut] = useState(false);
@@ -300,10 +325,20 @@ function ProfilInner() {
               </span>
               <span className="hidden md:inline text-white">{name}</span>
             </div>
-            <Link href="/abonelik"
-              className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-amber-600">
-              Premium&apos;a Geç
-            </Link>
+            {subscription ? (
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/30 px-3 py-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"/>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"/>
+                </span>
+                <span className="text-xs font-bold text-emerald-400">{subscription.plan} · {subscription.remainingDays} gün</span>
+              </div>
+            ) : (
+              <Link href="/abonelik"
+                className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-amber-600">
+                Premium&apos;a Geç
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -356,6 +391,68 @@ function ProfilInner() {
             </div>
           )}
         </div>
+
+        {/* ── Abonelik Durumu ───────────────────────────────────────────────── */}
+        {subscription && (
+          <div className="rounded-2xl border border-emerald-500/30 bg-[#071a10] overflow-hidden">
+            <div className="border-b border-emerald-500/20 px-5 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"/>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"/>
+                </span>
+                <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">Aktif Abonelik</p>
+              </div>
+              <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-bold text-emerald-400">
+                {subscription.plan}
+              </span>
+            </div>
+
+            {/* Kalan süre */}
+            <div className="px-5 py-4 border-b border-emerald-500/10">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-[#6b7280]">Kalan Süre</span>
+                <span className="text-2xl font-black text-white">{subscription.remainingDays} <span className="text-sm font-semibold text-[#6b7280]">gün</span></span>
+              </div>
+              {/* Progress bar */}
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#1e2d42]">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all"
+                  style={{ width: `${Math.min(100, (subscription.remainingDays / subscription.durationDays) * 100)}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-right text-[10px] text-[#4b5563]">Bitiş: {subscription.expiresFormatted}</p>
+            </div>
+
+            {/* Kullanıcı adı / şifre */}
+            {subscription.username && (
+              <>
+                {[
+                  { label: 'Kullanıcı Adı', value: subscription.username },
+                  { label: 'Şifre',         value: subscription.password },
+                  { label: 'Server URL',    value: 'http://pro4kiptv.xyz:2086' },
+                ].map(row => (
+                  <div key={row.label} className="flex items-center justify-between border-b border-emerald-500/10 px-5 py-3 last:border-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6b7280]">{row.label}</p>
+                      <p className="mt-0.5 truncate font-mono text-sm font-semibold text-white">{row.value}</p>
+                    </div>
+                    <CopyBtn value={row.value} />
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Uzat butonu — %25 indirim rozeti */}
+            <div className="px-5 py-3 bg-emerald-950/30">
+              <Link href="/abonelik"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white transition-all hover:bg-emerald-700">
+                🔄 Aboneliği Uzat
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-black">%25 İNDİRİM</span>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* ── Hızlı İşlemler ──────────────────────────────────────────────── */}
         <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] overflow-hidden">
