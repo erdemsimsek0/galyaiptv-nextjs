@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { Suspense } from 'react';
-import QRCode from 'qrcode';
 
 interface PaymentInfo {
   bankName:      string;
@@ -13,8 +12,8 @@ interface PaymentInfo {
   iban:          string;
   accountNo?:    string;
   branch?:       string;
-  note?:         string;       // Admin panelinden gelen uyarı notu
-  paymentCode?:  string;       // Açıklamaya yazılacak kod
+  note?:         string;
+  paymentCode?:  string;
 }
 
 // ─── Kopyala Butonu ──────────────────────────────────────────────────────────
@@ -171,7 +170,6 @@ function OdemeInner() {
   const [accepted, setAccepted] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [success, setSuccess] = useState(false);
-  const qrRef = useRef<HTMLCanvasElement>(null);
 
   const paket    = searchParams.get('paket')    || 'Premium';
   const sure     = searchParams.get('sure')     || '';
@@ -197,37 +195,6 @@ function OdemeInner() {
       .catch(() => setError('Ödeme bilgisi yüklenemedi.'))
       .finally(() => setLoading(false));
   }, []);
-
-  // IBAN → QR — EPC/BCD standardı (Türk bankaların okuduğu format)
-  useEffect(() => {
-    if (paymentInfo?.iban && qrRef.current && accepted) {
-      const iban   = paymentInfo.iban.replace(/\s/g, '');
-      const name   = (paymentInfo.accountHolder || '').slice(0, 70);
-      const amount = totalNum > 0 ? `TRY${totalNum.toFixed(2)}` : '';
-      const ref    = paymentInfo.paymentCode ? paymentInfo.paymentCode.replace(/\D/g, '') : '';
-      // EPC QR standardı — satır satır sabit format
-      const epcPayload = [
-        'BCD',   // Servis kodu
-        '002',   // Versiyon
-        '1',     // Karakter seti (UTF-8)
-        'SCT',   // Kimlik
-        '',      // BIC (boş bırakılabilir)
-        name,    // Alıcı adı
-        iban,    // IBAN
-        amount,  // Tutar (TRY)
-        '',      // Amaç kodu
-        ref,     // Referans / açıklama kodu
-        '',      // İşlem açıklaması (serbest)
-      ].join('\n');
-
-      QRCode.toCanvas(qrRef.current, epcPayload, {
-        width: 128,
-        margin: 1,
-        errorCorrectionLevel: 'M',
-        color: { dark: '#000000', light: '#ffffff' },
-      });
-    }
-  }, [paymentInfo, accepted, totalNum]);
 
   if (success) {
     return (
@@ -312,7 +279,6 @@ function OdemeInner() {
                 <span className="text-sm font-bold text-amber-400">Ödeme Yaparken Dikkat Edin</span>
               </div>
 
-              {/* Admin panelinden gelen note — yoksa varsayılan maddeler */}
               <div className="px-5 py-4">
                 {paymentInfo.note ? (
                   <p className="text-sm leading-relaxed text-amber-200/80">{paymentInfo.note}</p>
@@ -355,12 +321,9 @@ function OdemeInner() {
           {/* AŞAMA 2: Banka bilgileri (onay sonrası açılır) */}
           {paymentInfo && accepted && (
             <>
-              {/* Banka Kartı + QR */}
-              <div className="flex overflow-hidden rounded-2xl border border-[#131f30] bg-[#0a1320]">
-                <div className="flex w-36 shrink-0 items-center justify-center bg-white p-3">
-                  <canvas ref={qrRef} />
-                </div>
-                <div className="flex flex-1 flex-col gap-2.5 p-4">
+              {/* Banka Bilgileri */}
+              <div className="overflow-hidden rounded-2xl border border-[#131f30] bg-[#0a1320]">
+                <div className="flex flex-col gap-2.5 p-4">
                   {/* Banka adı */}
                   <div className="flex items-center justify-between border-b border-[#131f30] pb-2.5">
                     <span className="text-xs text-[#5a6a80]">Banka</span>
@@ -392,10 +355,10 @@ function OdemeInner() {
                       <CopyBtn value={paymentInfo.accountNo} />
                     </div>
                   )}
-                  {/* Açıklamaya Yazılacak Kod — sadece rakamlar gösterilir */}
+                  {/* Açıklamaya Yazılacak Kod */}
                   {(paymentInfo.paymentCode || paymentInfo.note) && (() => {
                     const rawCode  = (paymentInfo.paymentCode || paymentInfo.note || '');
-                    const numOnly  = rawCode.replace(/\D/g, '');          // harfleri sil
+                    const numOnly  = rawCode.replace(/\D/g, '');
                     const copyVal  = numOnly;
                     return (
                       <div className="flex items-center justify-between rounded-xl border border-[#131f30] bg-[#0d1525] px-3 py-2.5">
@@ -439,7 +402,7 @@ function OdemeInner() {
             <p className="text-base font-bold">Sipariş Özeti</p>
           </div>
 
-          {/* Plan satırı (tıklanabilir özet) */}
+          {/* Plan satırı */}
           <div className="flex items-center justify-between border-b border-[#131f30] px-5 py-3.5">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <svg className="h-4 w-4 text-[#4a5a70]" viewBox="0 0 20 20" fill="currentColor">
