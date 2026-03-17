@@ -1,9 +1,8 @@
-// app/api/admin/route.ts
-// v2 — test sonlandırma, IP sıfırlama, email sıfırlama, detaylı kayıtlar
+// app/api/payments/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL!;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN!;
+const REDIS_URL    = process.env.UPSTASH_REDIS_REST_URL!;
+const REDIS_TOKEN  = process.env.UPSTASH_REDIS_REST_TOKEN!;
 const ADMIN_SECRET = process.env.ADMIN_SECRET!;
 
 // ─── Redis helpers ────────────────────────────────────────────────────────────
@@ -23,85 +22,50 @@ async function redisKeys(pattern: string): Promise<string[]> {
 async function redisGet(key: string): Promise<string | null> {
   return (await redis(['GET', key])) as string | null;
 }
-async function redisTTL(key: string): Promise<number> {
-  return (await redis(['TTL', key])) as number;
+async function redisSet(key: string, value: string, ttlSeconds: number) {
+  await redis(['SET', key, value, 'EX', ttlSeconds]);
 }
-async function redisDel(key: string) { await redis(['DEL', key]); }
-async function redisSet(key: string, value: string, ttl: number) {
-  await redis(['SET', key, value, 'EX', ttl]);
+async function redisDel(key: string) {
+  await redis(['DEL', key]);
 }
 
-function isAuthorized(req: NextRequest) {
+function isAdmin(req: NextRequest) {
   return req.headers.get('x-admin-secret') === ADMIN_SECRET;
 }
 
-// ─── GET — tüm kayıtları getir ────────────────────────────────────────────────
+// ─── GET — admin: tüm bildirimleri listele ────────────────────────────────────
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req))
+  if (!isAdmin(req))
     return NextResponse.json({ success: false, error: 'Yetkisiz erişim.' }, { status: 401 });
 
   try {
-    const emailKeys = await redisKeys('trial:email:*');
-    const ipKeys    = await redisKeys('trial:ip:*');
+    const keys = await redisKeys('payment:notification:*');
+    const notifications = [];
 
-    const records = [];
-    const packageStats: Record<string, number> = {};
-
-    for (const key of emailKeys) {
+    for (const key of keys) {
       const val = await redisGet(key);
-      const ttl = await redisTTL(key);
       if (!val) continue;
       const record = JSON.parse(val);
-      const pkg = record.selectedPackage || 'Belirtilmedi';
-      packageStats[pkg] = (packageStats[pkg] || 0) + 1;
-
-      // Test süresi: 3 saat (10800 saniye). createdAt'tan hesapla
-      const trialTTL = 3 * 60 * 60 * 1000; // 3 saat ms
-      const elapsed  = Date.now() - (record.createdAt || 0);
-      const trialExpired = elapsed > trialTTL;
-      const trialRemainingMs = Math.max(0, trialTTL - elapsed);
-      const trialHoursLeft = (trialRemainingMs / 3600000).toFixed(1);
-
-      records.push({
-        key,
-        email:              record.email,
-        ip:                 record.ip || 'bilinmiyor',
-        selectedPackage:    pkg,
-        username:           record.username || '-',
-        password:           record.password || '-',
-        createdAt:          record.createdAt,
+      notifications.push({
+        ...record,
         createdAtFormatted: new Date(record.createdAt).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }),
-        ttlSeconds:         ttl,
-        daysLeft:           Math.ceil(ttl / 86400),
-        trialExpired,
-        trialHoursLeft:     trialExpired ? '0' : trialHoursLeft,
-        trialStatus:        trialExpired ? 'expired' : 'active',
       });
     }
 
-    // IP kayıtlarını ayrı tut (sadece hangi IP'lerin kayıtlı olduğunu görmek için)
-    const ipRecords: { ip: string; email: string; daysLeft: number }[] = [];
-    for (const key of ipKeys) {
-      const val = await redisGet(key);
-      const ttl = await redisTTL(key);
-      if (!val) continue;
-      const record = JSON.parse(val);
-      ipRecords.push({
-        ip: key.replace('trial:ip:', ''),
-        email: record.email || '-',
-        daysLeft: Math.ceil(ttl / 86400),
-      });
-    }
+    // En yeni önce
+    notifications.sort((a, b) => b.createdAt - a.createdAt);
 
-    records.sort((a, b) => b.createdAt - a.createdAt);
+    const pending  = notifications.filter(n => n.status === 'pending').length;
+    const approved = notifications.filter(n => n.status === 'approved').length;
+    const rejected = notifications.filter(n => n.status === 'rejected').length;
 
     return NextResponse.json({
       success: true,
-      totalEmails: emailKeys.length,
-      totalIPs:    ipKeys.length,
-      packageStats,
-      records,
-      ipRecords,
+      total: notifications.length,
+      pending,
+      approved,
+      rejected,
+      notifications,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Sunucu hatası.';
@@ -109,120 +73,129 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// ─── DELETE — çeşitli sıfırlama işlemleri ────────────────────────────────────
-export async function DELETE(req: NextRequest) {
-  if (!isAuthorized(req))
-    return NextResponse.json({ success: false, error: 'Yetkisiz erişim.' }, { status: 401 });
-
+// ─── POST ─────────────────────────────────────────────────────────────────────
+// İki farklı kullanım:
+//   1. Kullanıcıdan FormData (ödeme sayfası): email, plan, duration, devices, amount, senderName, receipt?
+//   2. Adminden JSON: action = 'assign_subscription' | 'reject_notification'
+export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { action, email, ip } = body as { action?: string; email?: string; ip?: string };
+    const contentType = req.headers.get('content-type') || '';
 
-    // ── email limiti sıfırla (email + ilgili IP kayıtları) ───────────────────
-    if (action === 'reset_email' || (!action && email)) {
-      if (!email)
-        return NextResponse.json({ success: false, error: 'Email gerekli.' }, { status: 400 });
+    // ── Admin aksiyonları (JSON) ──────────────────────────────────────────────
+    if (contentType.includes('application/json')) {
+      if (!isAdmin(req))
+        return NextResponse.json({ success: false, error: 'Yetkisiz erişim.' }, { status: 401 });
 
-      await redisDel(`trial:email:${email}`);
+      const body = await req.json() as {
+        action?: string;
+        email?: string;
+        plan?: string;
+        durationDays?: number;
+        username?: string;
+        password?: string;
+      };
 
-      // Bu email'e ait tüm IP kayıtlarını da sil
-      const ipKeys = await redisKeys('trial:ip:*');
-      for (const key of ipKeys) {
+      // Abonelik onayla ve aktif et
+      if (body.action === 'assign_subscription') {
+        if (!body.email || !body.plan || !body.durationDays)
+          return NextResponse.json({ success: false, error: 'Email, plan ve süre gerekli.' }, { status: 400 });
+
+        const key = `payment:notification:${body.email}`;
         const val = await redisGet(key);
-        if (!val) continue;
-        if (JSON.parse(val).email === email) await redisDel(key);
+        if (!val)
+          return NextResponse.json({ success: false, error: 'Bildirim bulunamadı.' }, { status: 404 });
+
+        const record = JSON.parse(val);
+        record.status      = 'approved';
+        record.approvedAt  = Date.now();
+        record.assignedPlan = body.plan;
+        if (body.username) record.assignedUsername = body.username;
+        if (body.password) record.assignedPassword = body.password;
+
+        // 90 günlük TTL ile kaydet (arşiv için)
+        await redisSet(key, JSON.stringify(record), 90 * 86400);
+
+        return NextResponse.json({
+          success: true,
+          message: `${body.email} için ${body.plan} aboneliği onaylandı.`,
+        });
       }
 
-      // Rate limit kayıtlarını da temizle
-      await redisDel(`resend:${email}`);
+      // Bildirimi reddet
+      if (body.action === 'reject_notification') {
+        if (!body.email)
+          return NextResponse.json({ success: false, error: 'Email gerekli.' }, { status: 400 });
 
-      return NextResponse.json({ success: true, message: `${email} için tüm limitler sıfırlandı.` });
-    }
-
-    // ── sadece IP sıfırla ─────────────────────────────────────────────────────
-    if (action === 'reset_ip') {
-      if (!ip)
-        return NextResponse.json({ success: false, error: 'IP gerekli.' }, { status: 400 });
-
-      await redisDel(`trial:ip:${ip}`);
-      await redisDel(`rate:otp:${ip}`);
-
-      return NextResponse.json({ success: true, message: `${ip} IP limiti sıfırlandı.` });
-    }
-
-    // ── testi sonlandır (kullanıcıyı sil ama IP'yi tut) ──────────────────────
-    if (action === 'terminate_trial') {
-      if (!email)
-        return NextResponse.json({ success: false, error: 'Email gerekli.' }, { status: 400 });
-
-      // Email kaydını sil
-      await redisDel(`trial:email:${email}`);
-      await redisDel(`resend:${email}`);
-
-      // Not: IP kaydını tutuyoruz ki aynı IP tekrar test alamasın
-      return NextResponse.json({ success: true, message: `${email} test hesabı sonlandırıldı.` });
-    }
-
-    // ── email + IP tamamen sıfırla (tam temizleme) ────────────────────────────
-    if (action === 'reset_full') {
-      if (!email)
-        return NextResponse.json({ success: false, error: 'Email gerekli.' }, { status: 400 });
-
-      await redisDel(`trial:email:${email}`);
-      await redisDel(`resend:${email}`);
-
-      const ipKeys = await redisKeys('trial:ip:*');
-      for (const key of ipKeys) {
+        const key = `payment:notification:${body.email}`;
         const val = await redisGet(key);
-        if (!val) continue;
-        const parsed = JSON.parse(val);
-        if (parsed.email === email) {
-          const ipAddr = key.replace('trial:ip:', '');
-          await redisDel(key);
-          await redisDel(`rate:otp:${ipAddr}`);
+        if (val) {
+          const record = JSON.parse(val);
+          record.status     = 'rejected';
+          record.rejectedAt = Date.now();
+          await redisSet(key, JSON.stringify(record), 30 * 86400);
         }
+
+        return NextResponse.json({ success: true, message: 'Bildirim reddedildi.' });
       }
 
-      return NextResponse.json({ success: true, message: `${email} için tüm kayıtlar silindi (IP dahil).` });
+      return NextResponse.json({ success: false, error: 'Geçersiz aksiyon.' }, { status: 400 });
     }
 
-    return NextResponse.json({ success: false, error: 'Geçersiz aksiyon.' }, { status: 400 });
+    // ── Kullanıcı bildirimi (FormData — ödeme sayfasından) ────────────────────
+    if (contentType.includes('multipart/form-data') || contentType.includes('application/x-www-form-urlencoded')) {
+      const formData  = await req.formData();
+      const email     = (formData.get('email')      as string) || '';
+      const plan      = (formData.get('plan')       as string) || '';
+      const duration  = (formData.get('duration')   as string) || '';
+      const devices   = (formData.get('devices')    as string) || '';
+      const amount    = (formData.get('amount')     as string) || '';
+      const senderName = (formData.get('senderName') as string) || '';
+
+      if (!email)
+        return NextResponse.json({ success: false, error: 'Email gerekli.' }, { status: 400 });
+
+      // Mükerrer bildirimi engelle: aynı email için bekleyen varsa güncelle
+      const key = `payment:notification:${email}`;
+
+      const record = {
+        email,
+        plan,
+        duration,
+        devices,
+        amount,
+        senderName,
+        status:    'pending',
+        createdAt: Date.now(),
+        // Dekont dosyası: şimdilik sadece var/yok bilgisi kaydediyoruz
+        // (Dosya depolama için Vercel Blob veya benzeri entegrasyon gerekir)
+        hasReceipt: formData.has('receipt') && (formData.get('receipt') as File)?.size > 0,
+      };
+
+      // 7 günlük TTL
+      await redisSet(key, JSON.stringify(record), 7 * 86400);
+
+      return NextResponse.json({ success: true, message: 'Ödeme bildirimi alındı.' });
+    }
+
+    return NextResponse.json({ success: false, error: 'Desteklenmeyen içerik türü.' }, { status: 415 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Sunucu hatası.';
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 
-// ─── PATCH — test süresini uzat veya paket güncelle ──────────────────────────
-export async function PATCH(req: NextRequest) {
-  if (!isAuthorized(req))
+// ─── DELETE — bildirimi tamamen sil ──────────────────────────────────────────
+export async function DELETE(req: NextRequest) {
+  if (!isAdmin(req))
     return NextResponse.json({ success: false, error: 'Yetkisiz erişim.' }, { status: 401 });
 
   try {
-    const { email, extraHours, newPackage } = await req.json() as {
-      email?: string;
-      extraHours?: number;
-      newPackage?: string;
-    };
-
+    const { email } = await req.json() as { email?: string };
     if (!email)
       return NextResponse.json({ success: false, error: 'Email gerekli.' }, { status: 400 });
 
-    const key = `trial:email:${email}`;
-    const val = await redisGet(key);
-    if (!val)
-      return NextResponse.json({ success: false, error: 'Kayıt bulunamadı.' }, { status: 404 });
-
-    const record = JSON.parse(val);
-
-    if (newPackage) record.selectedPackage = newPackage;
-
-    const currentTTL = await redisTTL(key);
-    const newTTL = currentTTL + (extraHours ? extraHours * 3600 : 0);
-
-    await redisSet(key, JSON.stringify(record), Math.max(newTTL, 3600));
-
-    return NextResponse.json({ success: true, message: `${email} güncellendi.` });
+    await redisDel(`payment:notification:${email}`);
+    return NextResponse.json({ success: true, message: `${email} bildirimi silindi.` });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Sunucu hatası.';
     return NextResponse.json({ success: false, error: message }, { status: 500 });
