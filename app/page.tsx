@@ -222,9 +222,11 @@ function AnimatedPrice({ target, monthly, popular }: { target: number; monthly: 
 const categoryPackages = [
   {
     id: 'spor',
-    // Logo dosyası: /public/paket-logoları/logo-sports.png
     logo: '/paket-logoları/logo-sports.png',
     logoAlt: 'GalyaStream Sports',
+    labelText: 'Sports',
+    labelColor: '#22c55e',
+    labelGlow: 'rgba(34,197,94,0.25)',
     name: 'GalyaStream Sports',
     desc: 'Tüm spor yayınları ve TV kanalları — maçlar, turnuvalar tek yerde.',
     basePrice: 159.90,
@@ -241,9 +243,11 @@ const categoryPackages = [
   },
   {
     id: 'max',
-    // Logo dosyası: /public/paket-logoları/logo-max.png
     logo: '/paket-logoları/logo-max.png',
     logoAlt: 'GalyaStream Max',
+    labelText: 'Max',
+    labelColor: '#ef4444',
+    labelGlow: 'rgba(239,68,68,0.25)',
     name: 'GalyaStream Max',
     desc: 'Tüm içeriklere sınırsız erişim — film, dizi, spor ve TV kanalları bir arada.',
     basePrice: 229.90,
@@ -260,9 +264,11 @@ const categoryPackages = [
   },
   {
     id: 'cinema',
-    // Logo dosyası: /public/paket-logoları/logo-cinema.png
     logo: '/paket-logoları/logo-cinema.png',
     logoAlt: 'GalyaStream Cinema',
+    labelText: 'Cinema',
+    labelColor: '#f97316',
+    labelGlow: 'rgba(249,115,22,0.25)',
     name: 'GalyaStream Cinema',
     desc: '15.000+ film ve dizi seçkisi — en popüler ve sevilen yapımlar bir arada.',
     basePrice: 129.90,
@@ -917,38 +923,7 @@ function HomePageInner() {
               {[{ href: '/#paketler', label: 'Paketler' }, { href: '/#ozellikler', label: 'Özellikler' }, { href: '/#platformlar', label: 'Platformlar' }, { href: '/#yorumlar', label: 'Yorumlar' }, { href: '/#sss', label: 'S.S.S' }, { href: '/kurulum-rehberi', label: 'Kurulum Rehberi' }, { href: '/blog', label: 'Blog' }].map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-[#9ca3af] transition-colors hover:bg-[#1e3a5f]/30 hover:text-white">{item.label}</Link>
               ))}
-              {isLoggedIn ? (
-                <>
-                  <div className="my-2 h-px bg-[#1e3a5f]" />
-                  <Link
-                    href="/profil"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[#9ca3af] transition-colors hover:bg-[#1e3a5f]/30 hover:text-white"
-                  >
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1e3a5f] text-xs font-bold text-[#3b82f6]">
-                      {session?.user?.name?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || 'U'}
-                    </span>
-                    Profilim
-                  </Link>
-                  {trialExpired && (
-                    <Link href="/abonelik" onClick={() => setMobileMenuOpen(false)} className="mt-1 rounded-xl bg-amber-500 py-3 text-center text-sm font-bold text-white">
-                      👑 Premium&apos;a Geç
-                    </Link>
-                  )}
-                  {trialActive && (
-                    <Link href="/profil" onClick={() => setMobileMenuOpen(false)} className="mt-1 rounded-xl bg-emerald-600 py-3 text-center text-sm font-bold text-white">
-                      ✅ Test Aktif
-                    </Link>
-                  )}
-                  {!trialActive && !trialExpired && (
-                    <Link href="/profil" onClick={() => setMobileMenuOpen(false)} className="mt-1 rounded-xl bg-[#3b82f6] py-3 text-center text-sm font-bold text-white">
-                      ⚡ Testi Başlat
-                    </Link>
-                  )}
-                </>
-              ) : (
-                <button onClick={() => { setMobileMenuOpen(false); openAuth(); }} className="mt-2 rounded-xl bg-[#3b82f6] py-3 text-sm font-bold text-white">Kayıt Ol</button>
-              )}
+              <button onClick={() => { setMobileMenuOpen(false); openAuth(); }} className="mt-2 rounded-xl bg-[#3b82f6] py-3 text-sm font-bold text-white">Kayıt Ol</button>
             </div>
           </div>
         )}
@@ -1126,7 +1101,7 @@ function HomePageInner() {
                         openAuth('register');
                         return;
                       }
-                      window.location.href = `/abonelik?paket=${encodeURIComponent(pkg.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${totalPrice.toFixed(2)}&orijinal=${originalTotal.toFixed(2)}&indirim=${dur.discount}`;
+                      window.location.href = `/odeme?paket=${encodeURIComponent(pkg.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${totalPrice.toFixed(2)}&orijinal=${originalTotal.toFixed(2)}&indirim=${dur.discount}`;
                     }}
                     className={`relative flex flex-col rounded-2xl border transition-all cursor-pointer ${
                     pkg.popular
@@ -1141,23 +1116,23 @@ function HomePageInner() {
                       </div>
                     )}
 
-                    {/* ── LOGO ── */}
-                    <div className="mb-3 flex items-center justify-center" style={{ height: '64px' }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={pkg.logo}
-                        alt={pkg.logoAlt}
-                        style={{ width: '100%', maxWidth: '180px', height: '64px', objectFit: 'contain' }}
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = 'none';
-                          const fb = e.currentTarget.nextElementSibling as HTMLElement;
-                          if (fb) fb.style.display = 'flex';
+                    {/* ── PAKET ADI (logo yerine stilize metin) ── */}
+                    <div className="mb-4 flex items-center justify-center" style={{ height: '64px' }}>
+                      <span
+                        style={{
+                          color: pkg.labelColor,
+                          textShadow: `0 0 32px ${pkg.labelGlow}, 0 0 8px ${pkg.labelGlow}`,
+                          fontFamily: "'Georgia', 'Times New Roman', serif",
+                          fontSize: '2.6rem',
+                          fontWeight: 800,
+                          letterSpacing: '-0.02em',
+                          fontStyle: 'italic',
+                          lineHeight: 1,
+                          userSelect: 'none',
                         }}
-                      />
-                      {/* Fallback: logo yokken */}
-                      <div className="hidden w-full h-16 items-center justify-center">
-                        <span className="text-xl font-extrabold tracking-tight text-white">{pkg.name}</span>
-                      </div>
+                      >
+                        {pkg.labelText}
+                      </span>
                     </div>
 
                     {/* ── Açıklama ── */}
