@@ -398,31 +398,13 @@ function OdemeInner() {
                     const numOnly  = rawCode.replace(/\D/g, '');          // harfleri sil
                     const copyVal  = numOnly;
                     return (
-                      <div className="rounded-xl border border-blue-500/30 bg-blue-950/25 px-3 py-3">
-                        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-blue-400/70">
-                          Açıklama Kodu
-                        </p>
-                        <div className="flex items-center justify-between gap-3">
-                          {/* Rakam blokları — her rakam ayrı hücre */}
-                          <div className="flex flex-wrap gap-1.5">
-                            {numOnly.split('').map((ch, i) => (
-                              <span
-                                key={i}
-                                style={{
-                                  fontFamily: '"Courier New", Courier, monospace',
-                                  fontVariantNumeric: 'tabular-nums',
-                                }}
-                                className="flex h-8 w-7 items-center justify-center rounded-md border border-blue-500/25 bg-[#060f22] text-base font-black text-white"
-                              >
-                                {ch}
-                              </span>
-                            ))}
-                          </div>
-                          <CopyBtn value={copyVal} />
+                      <div className="flex items-center justify-between rounded-xl border border-[#131f30] bg-[#0d1525] px-3 py-2.5">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a5a70]">Açıklama Kodu</p>
+                          <p className="font-mono text-sm font-bold">{numOnly}</p>
+                          <p className="mt-0.5 text-[10px] text-[#4a5a70]">⚠ Havale/EFT açıklama kısmına bu kodu yazınız.</p>
                         </div>
-                        <p className="mt-2 text-[10px] text-blue-400/50">
-                          ⚠ Havale/EFT açıklama kısmına bu kodu yazınız.
-                        </p>
+                        <CopyBtn value={copyVal} />
                       </div>
                     );
                   })()}
