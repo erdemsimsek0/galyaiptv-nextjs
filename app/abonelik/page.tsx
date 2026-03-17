@@ -17,6 +17,21 @@ function usePrices() {
   return prices;
 }
 
+// Aktif abonelik kontrolü — uzatma indirimi için
+function useSubscription(email: string | null | undefined): boolean {
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    if (!email) return;
+    fetch(`/api/subscription?email=${encodeURIComponent(email)}`)
+      .then(r => r.json())
+      .then(d => { if (d.success) setActive(true); })
+      .catch(() => {});
+  }, [email]);
+  return active;
+}
+
+const SUBSCRIBER_EXTRA = 25; // Uzatmaya özel ek indirim (%)
+
 type DurKey = '3ay' | '6ay' | '12ay';
 interface Dur { key: DurKey; label: string; months: number; discount: number; badge?: string; badgeCls?: string }
 
@@ -67,19 +82,23 @@ function calcTotal(base: number, months: number, disc: number, mul: number) {
   return Math.round(base * (1 - disc / 100) * months * mul * 100) / 100;
 }
 
-function PlanCard({ plan }: { plan: Plan }) {
-  // Tüm kartlar kapalı başlar (popular olsa  da)
+function PlanCard({ plan, isSubscriber }: { plan: Plan; isSubscriber: boolean }) {
   const [open, setOpen] = useState(false);
-  // Varsayılan: 6 ay ve 2 cihaz
   const [selDur, setSelDur] = useState<DurKey>('6ay');
   const [selDev, setSelDev] = useState<1 | 2 | 3>(2);
 
   const dur  = DURATIONS.find(d => d.key === selDur)!;
   const dev  = DEVICES.find(d => d.n === selDev)!;
-  const total = calcTotal(plan.basePrice, dur.months, dur.discount, dev.mul);
-  const origTotal = Math.round(plan.basePrice * dur.months * dev.mul * 100) / 100;
 
-  const odemeUrl = `/odeme?paket=${encodeURIComponent(plan.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${total.toFixed(2)}&orijinal=${(plan.basePrice * dur.months).toFixed(2)}&indirim=${dur.discount}&cihaz=${selDev}`;
+  // Abone ise %25 ek indirim
+  const effectiveDiscount = isSubscriber ? Math.min(100, dur.discount + SUBSCRIBER_EXTRA) : dur.discount;
+
+  const total       = calcTotal(plan.basePrice, dur.months, effectiveDiscount, dev.mul);
+  const normalTotal = calcTotal(plan.basePrice, dur.months, dur.discount, dev.mul);
+  const origTotal   = Math.round(plan.basePrice * dur.months * dev.mul * 100) / 100;
+
+  const aboneIndirim = isSubscriber ? (normalTotal - total).toFixed(2) : '0';
+  const odemeUrl = `/odeme?paket=${encodeURIComponent(plan.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${total.toFixed(2)}&orijinal=${origTotal.toFixed(2)}&indirim=${effectiveDiscount}&cihaz=${selDev}${isSubscriber ? '&abone=1&abone_indirim=' + aboneIndirim : ''}`;
 
   return (
     <div
@@ -141,7 +160,8 @@ function PlanCard({ plan }: { plan: Plan }) {
             </div>
             <div className="grid grid-cols-3 gap-2">
               {DURATIONS.map(d => {
-                const t = calcTotal(plan.basePrice, d.months, d.discount, 1);
+                const effDisc = isSubscriber ? Math.min(100, d.discount + SUBSCRIBER_EXTRA) : d.discount;
+                const t = calcTotal(plan.basePrice, d.months, effDisc, 1);
                 const orig = Math.round(plan.basePrice * d.months * 100) / 100;
                 const isSel = selDur === d.key;
                 return (
@@ -150,13 +170,17 @@ function PlanCard({ plan }: { plan: Plan }) {
                     onClick={() => setSelDur(d.key)}
                     className={`relative rounded-[13px] border p-3 text-left transition-all ${isSel ? plan.selCls : 'border-[#131f30] bg-[#070f1c] hover:border-[#1e3a5f]'}`}
                   >
-                    {d.badge && (
+                    {isSubscriber ? (
+                      <span className="absolute -top-2.5 left-2 rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-black text-white">
+                        %{effDisc} İND.
+                      </span>
+                    ) : d.badge && (
                       <span className={`absolute -top-2.5 left-2 rounded-full px-2 py-0.5 text-[9px] font-black text-white ${d.badgeCls}`}>
                         {d.badge}
                       </span>
                     )}
-                    <p className={`text-xs font-bold text-white ${d.badge ? 'mt-2' : 'mt-0.5'}`}>{d.label}</p>
-                    {d.discount > 0 && <p className="text-[10px] text-[#2a3a4e] line-through">₺{fmt(orig)}</p>}
+                    <p className={`text-xs font-bold text-white ${(isSubscriber || d.badge) ? 'mt-2' : 'mt-0.5'}`}>{d.label}</p>
+                    {effDisc > 0 && <p className="text-[10px] text-[#2a3a4e] line-through">₺{fmt(orig)}</p>}
                     <p className="text-base font-black text-white">₺{fmt(t)}</p>
                     <p className="text-[10px] text-[#4a5a70]">{d.months} ay toplam</p>
                   </button>
@@ -197,12 +221,21 @@ function PlanCard({ plan }: { plan: Plan }) {
           </div>
 
           {/* Summary */}
+          {isSubscriber && (
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/30 px-3 py-2">
+              <span className="text-emerald-400 text-sm">🔄</span>
+              <p className="text-xs font-bold text-emerald-400">Uzatmaya özel %25 ek indirim uygulandı!</p>
+            </div>
+          )}
           <div className="rounded-2xl border border-[#131f30] bg-[#070f1c] p-4">
             <div className="mb-3 flex items-start justify-between">
               <p className="text-xs text-[#5a6a80]">{plan.name} · {dur.label} · {selDev} Cihaz</p>
               <div className="text-right">
-                {dur.discount > 0 && (
+                {effectiveDiscount > 0 && (
                   <p className="text-[11px] text-[#2a3a4e] line-through">₺{fmt(origTotal)}</p>
+                )}
+                {isSubscriber && (
+                  <p className="text-[10px] text-emerald-400">-₺{fmt(normalTotal - total)} abone indirimi</p>
                 )}
                 <p className="text-2xl font-black text-white">₺{fmt(total)}</p>
               </div>
@@ -253,8 +286,8 @@ function AbonelikHeader() {
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1e3a5f] text-xs font-bold text-[#3b82f6]">{name[0]?.toUpperCase() || 'U'}</span>
                 <span className="hidden md:inline">Profilim</span>
               </Link>
-              <Link href="/abonelik" className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600">
-                <span className="hidden sm:inline">Premium&apos;a </span>Geç
+              <Link href="/abonelik" className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700">
+                🔄 Uzat
               </Link>
             </>
           ) : (
@@ -271,14 +304,24 @@ function AbonelikHeader() {
 
 function AbonelikInner() {
   const prices = usePrices();
+  const { data: session } = useSession();
+  const isSubscriber = useSubscription(session?.user?.email);
   return (
     <div className="min-h-screen bg-[#060d18] text-white">
       <AbonelikHeader />
-      <div className="border-b border-amber-500/20 bg-amber-500/10 px-4 py-2.5 text-center">
-        <p className="text-xs font-semibold text-amber-400 sm:text-sm">
-          👑 Deneme süreniz sınırlı — şimdi premium&apos;a geçerek tüm içeriklere sınırsız erişim kazanın!
-        </p>
-      </div>
+      {isSubscriber ? (
+        <div className="border-b border-emerald-500/20 bg-emerald-500/10 px-4 py-2.5 text-center">
+          <p className="text-xs font-semibold text-emerald-400 sm:text-sm">
+            🔄 Aktif aboneliğiniz var — tüm paketlerde uzatmaya özel <strong>%25 indirim</strong> sizin için uygulandı!
+          </p>
+        </div>
+      ) : (
+        <div className="border-b border-amber-500/20 bg-amber-500/10 px-4 py-2.5 text-center">
+          <p className="text-xs font-semibold text-amber-400 sm:text-sm">
+            👑 Deneme süreniz sınırlı — şimdi premium&apos;a geçerek tüm içeriklere sınırsız erişim kazanın!
+          </p>
+        </div>
+      )}
       <main className="mx-auto max-w-3xl px-3 py-8 sm:px-4 sm:py-12">
         {/* Hero */}
         <div className="mb-10 text-center">
@@ -308,7 +351,7 @@ function AbonelikInner() {
         {/* Plans */}
         <div className="space-y-3">
           {PLANS.map(plan => (
-            <PlanCard key={plan.id} plan={{ ...plan, basePrice: prices[plan.id] ?? plan.basePrice }} />
+            <PlanCard key={plan.id} plan={{ ...plan, basePrice: prices[plan.id] ?? plan.basePrice }} isSubscriber={isSubscriber} />
           ))}
         </div>
 
