@@ -21,7 +21,6 @@ async function redisSet(key: string, value: string, ttlSeconds?: number) {
   if (ttlSeconds) {
     await redis(['SET', key, value, 'EX', ttlSeconds]);
   } else {
-    // TTL yok — kalıcı
     await redis(['SET', key, value]);
   }
 }
@@ -154,13 +153,12 @@ async function checkIpReputation(ip: string): Promise<{ blocked: boolean; reason
   }
 }
 
-// IP kaydı — kalıcı (TTL YOK), sadece admin sıfırlayabilir
 async function recordTrialIp(ip: string, email: string) {
   if (ip === 'unknown' || ip.startsWith('127.') || ip.startsWith('192.168.') || ip.startsWith('10.')) return;
   await redis(['SET', `trial:ip:${ip}`, JSON.stringify({ email, createdAt: Date.now() })]);
 }
 
-const TRIAL_TTL = 7 * 24 * 60 * 60; // Email kaydı 7 gün
+const TRIAL_TTL = 7 * 24 * 60 * 60;
 
 async function findExistingTrialByEmail(email: string): Promise<TrialRecord | null> {
   const byEmail = await redisGet(`trial:email:${email}`);
@@ -179,9 +177,7 @@ async function recordTrial(
   email: string, ip: string, selectedPackage: string, username: string, password: string,
 ) {
   const record: TrialRecord = { email, ip, createdAt: Date.now(), selectedPackage, username, password };
-  // Email kaydı 7 gün
   await redisSet(`trial:email:${email}`, JSON.stringify(record), TRIAL_TTL);
-  // IP kaydı KALıCı
   await recordTrialIp(ip, email);
 }
 
@@ -204,6 +200,7 @@ function createMailer() {
   });
 }
 
+// ─── OTP Mail ────────────────────────────────────────────────────────────────
 async function sendOtpMail(email: string, otp: string) {
   const transporter = createMailer();
   await transporter.sendMail({
@@ -211,19 +208,68 @@ async function sendOtpMail(email: string, otp: string) {
     to: email,
     subject: 'GalyaStream – Doğrulama Kodunuz',
     html: `
-      <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#07111f;padding:32px;border-radius:16px">
-        <h1 style="color:#ffffff;font-size:22px;margin:0 0 8px">GalyaStream</h1>
-        <p style="color:#8b9ab3;font-size:14px;margin:0 0 24px">Ücretsiz test hesabınızı açmak için aşağıdaki kodu girin.</p>
-        <div style="background:#1e2d42;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px">
-          <p style="color:#8b9ab3;font-size:12px;margin:0 0 8px;text-transform:uppercase;letter-spacing:2px">Doğrulama Kodu</p>
-          <p style="color:#ffffff;font-size:36px;font-weight:900;letter-spacing:8px;margin:0;font-family:monospace">${otp}</p>
-        </div>
-        <p style="color:#374151;font-size:12px;margin:0">Bu kod 10 dakika geçerlidir.</p>
-      </div>
+<!DOCTYPE html>
+<html lang="tr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#060d18;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#060d18;padding:40px 16px">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px">
+
+        <tr><td align="center" style="padding-bottom:28px">
+          <span style="font-size:22px;font-weight:900;color:#ffffff;letter-spacing:-0.5px">Galya<span style="color:#3b82f6">Stream</span></span>
+        </td></tr>
+
+        <tr><td style="background:#0a1525;border:1px solid #1e2d42;border-radius:20px;overflow:hidden">
+          <tr><td style="height:4px;background:linear-gradient(90deg,#3b82f6,#6366f1)"></td></tr>
+          <tr><td style="padding:32px 32px 28px">
+
+            <table cellpadding="0" cellspacing="0" style="margin-bottom:20px">
+              <tr><td style="background:#1e3a5f;border-radius:14px;width:52px;height:52px;text-align:center;vertical-align:middle">
+                <span style="font-size:24px;line-height:52px">🔑</span>
+              </td></tr>
+            </table>
+
+            <h1 style="margin:0 0 8px;font-size:21px;font-weight:800;color:#ffffff;letter-spacing:-0.3px">Doğrulama Kodunuz</h1>
+            <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#6b7280">
+              Ücretsiz test hesabınızı açmak için aşağıdaki kodu girin. Kod <strong style="color:#8b9ab3">10 dakika</strong> geçerlidir.
+            </p>
+
+            <table width="100%" cellpadding="0" cellspacing="0"
+              style="background:#0d1a2d;border:1px solid #1e3a5f;border-radius:14px;padding:24px;margin-bottom:24px;text-align:center">
+              <tr><td>
+                <p style="color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:2px;margin:0 0 12px">Doğrulama Kodu</p>
+                <p style="color:#ffffff;font-size:38px;font-weight:900;letter-spacing:10px;margin:0;font-family:monospace">${otp}</p>
+              </td></tr>
+            </table>
+
+            <p style="margin:0;font-size:12px;color:#374151">Bu kodu kimseyle paylaşmayın. GalyaStream ekibi sizden hiçbir zaman kod istemez.</p>
+
+          </td></tr>
+          <tr><td style="background:#070f1c;border-top:1px solid #131f30;padding:14px 32px">
+            <p style="margin:0;font-size:12px;color:#374151;line-height:1.5">⚠️ Bu kodu siz talep etmediyseniz görmezden gelebilirsiniz.</p>
+          </td></tr>
+        </td></tr>
+
+        <tr><td align="center" style="padding-top:24px">
+          <p style="margin:0 0 4px;font-size:12px;color:#1f2937">© 2025 GalyaStream — Donmayan IPTV</p>
+          <p style="margin:0;font-size:11px;color:#111827">
+            <a href="https://www.galyastream.com" style="color:#374151;text-decoration:none">galyastream.com</a>
+            &nbsp;·&nbsp;
+            <a href="https://wa.me/447441921660" style="color:#374151;text-decoration:none">Destek</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
     `,
   });
 }
 
+// ─── Test Bilgileri Mail ──────────────────────────────────────────────────────
 async function sendTrialMail(email: string, username: string, password: string) {
   const SERVER = 'http://pro4kiptv.xyz:2086';
   const m3u = `${SERVER}/get.php?username=${username}&password=${password}&type=m3u&output=ts`;
@@ -234,34 +280,106 @@ async function sendTrialMail(email: string, username: string, password: string) 
     to: email,
     subject: 'GalyaStream – Test Hesabınız Hazır! ✅',
     html: `
-      <div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;background:#07111f;padding:32px;border-radius:16px">
-        <h1 style="color:#ffffff;font-size:22px;margin:0 0 8px">GalyaStream – Test Hesabınız</h1>
-        <p style="color:#8b9ab3;font-size:14px;margin:0 0 24px">Aşağıdaki bilgilerle 3 saat boyunca test edebilirsiniz.</p>
-        <div style="background:#1e2d42;border-radius:12px;padding:20px;margin-bottom:20px">
-          <div style="margin-bottom:12px">
-            <p style="color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Sunucu URL</p>
-            <p style="color:#3b82f6;font-size:14px;font-family:monospace;margin:0">${SERVER}</p>
-          </div>
-          <div style="margin-bottom:12px">
-            <p style="color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Kullanıcı Adı</p>
-            <p style="color:#ffffff;font-size:16px;font-weight:700;font-family:monospace;margin:0">${username}</p>
-          </div>
-          <div style="margin-bottom:12px">
-            <p style="color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Şifre</p>
-            <p style="color:#ffffff;font-size:16px;font-weight:700;font-family:monospace;margin:0">${password}</p>
-          </div>
-          <div>
-            <p style="color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">M3U Linki</p>
-            <p style="color:#8b9ab3;font-size:11px;font-family:monospace;word-break:break-all;margin:0">${m3u}</p>
-          </div>
-        </div>
-        <div style="text-align:center;margin-bottom:20px">
-          <a href="${whatsappUrl}" style="display:inline-block;background:#25d366;color:#fff;font-size:15px;font-weight:700;padding:14px 28px;border-radius:100px;text-decoration:none">
-            💬 WhatsApp ile Satın Al
-          </a>
-        </div>
-        <p style="color:#374151;font-size:12px;text-align:center;margin:0">© 2026 GalyaStream. Bu test hesabı 3 saat geçerlidir.</p>
-      </div>
+<!DOCTYPE html>
+<html lang="tr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#060d18;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#060d18;padding:40px 16px">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px">
+
+        <!-- Marka -->
+        <tr><td align="center" style="padding-bottom:28px">
+          <span style="font-size:22px;font-weight:900;color:#ffffff;letter-spacing:-0.5px">Galya<span style="color:#3b82f6">Stream</span></span>
+        </td></tr>
+
+        <!-- Ana kart -->
+        <tr><td style="background:#0a1525;border:1px solid #1e2d42;border-radius:20px;overflow:hidden">
+          <tr><td style="height:4px;background:linear-gradient(90deg,#3b82f6,#6366f1)"></td></tr>
+          <tr><td style="padding:32px 32px 28px">
+
+            <!-- İkon -->
+            <table cellpadding="0" cellspacing="0" style="margin-bottom:20px">
+              <tr><td style="background:#071a10;border-radius:14px;width:52px;height:52px;text-align:center;vertical-align:middle">
+                <span style="font-size:24px;line-height:52px">✅</span>
+              </td></tr>
+            </table>
+
+            <!-- Başlık -->
+            <h1 style="margin:0 0 8px;font-size:21px;font-weight:800;color:#ffffff;letter-spacing:-0.3px">Test Hesabınız Hazır!</h1>
+            <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#6b7280">
+              Aşağıdaki bilgilerle <strong style="color:#8b9ab3">3 saat</strong> boyunca tüm içeriklere erişebilirsiniz.
+            </p>
+
+            <!-- Bilgiler kutusu -->
+            <table width="100%" cellpadding="0" cellspacing="0"
+              style="background:#0d1a2d;border:1px solid #1e3a5f;border-radius:14px;margin-bottom:24px">
+              <tr><td style="padding:18px 20px 14px">
+                <p style="color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px">Sunucu URL</p>
+                <p style="color:#3b82f6;font-size:14px;font-family:monospace;margin:0">${SERVER}</p>
+              </td></tr>
+              <tr><td style="padding:14px 20px;border-top:1px solid #1e2d42">
+                <p style="color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px">Kullanıcı Adı</p>
+                <p style="color:#ffffff;font-size:16px;font-weight:700;font-family:monospace;margin:0">${username}</p>
+              </td></tr>
+              <tr><td style="padding:14px 20px;border-top:1px solid #1e2d42">
+                <p style="color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px">Şifre</p>
+                <p style="color:#ffffff;font-size:16px;font-weight:700;font-family:monospace;margin:0">${password}</p>
+              </td></tr>
+              <tr><td style="padding:14px 20px 18px;border-top:1px solid #1e2d42">
+                <p style="color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 4px">M3U Linki</p>
+                <p style="color:#8b9ab3;font-size:11px;font-family:monospace;word-break:break-all;margin:0">${m3u}</p>
+              </td></tr>
+            </table>
+
+            <!-- Butonlar -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <!-- Web sitesi butonu -->
+              <tr><td style="padding-bottom:10px">
+                <a href="https://www.galyastream.com/abonelik"
+                  style="display:block;background:#3b82f6;color:#ffffff;font-weight:700;font-size:14px;padding:14px;border-radius:12px;text-decoration:none;text-align:center">
+                  👑 Web Sitesi Üzerinden Satın Al
+                </a>
+              </td></tr>
+              <!-- WhatsApp butonu -->
+              <tr><td style="padding-bottom:10px">
+                <a href="${whatsappUrl}"
+                  style="display:block;background:#25d366;color:#ffffff;font-weight:700;font-size:14px;padding:14px;border-radius:100px;text-decoration:none;text-align:center">
+                  💬 WhatsApp ile Satın Al
+                </a>
+              </td></tr>
+              <!-- Kurulum rehberi butonu -->
+              <tr><td>
+                <a href="https://www.galyastream.com/kurulum-rehberi"
+                  style="display:block;background:transparent;color:#8b9ab3;font-weight:600;font-size:13px;padding:12px;border-radius:12px;text-decoration:none;text-align:center;border:1px solid #1e2d42">
+                  📺 Kurulum Rehberi →
+                </a>
+              </td></tr>
+            </table>
+
+          </td></tr>
+          <tr><td style="background:#070f1c;border-top:1px solid #131f30;padding:14px 32px">
+            <p style="margin:0;font-size:12px;color:#374151;line-height:1.5">
+              ⚠️ Bu test hesabı 3 saat geçerlidir. Süre dolmadan abonelik satın alarak kesintisiz erişmeye devam edebilirsiniz.
+            </p>
+          </td></tr>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td align="center" style="padding-top:24px">
+          <p style="margin:0 0 4px;font-size:12px;color:#1f2937">© 2025 GalyaStream — Donmayan IPTV</p>
+          <p style="margin:0;font-size:11px;color:#111827">
+            <a href="https://www.galyastream.com" style="color:#374151;text-decoration:none">galyastream.com</a>
+            &nbsp;·&nbsp;
+            <a href="https://wa.me/447441921660" style="color:#374151;text-decoration:none">Destek</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
     `,
   });
 }
@@ -309,7 +427,6 @@ export async function POST(req: NextRequest) {
       if (ipCheck.blocked)
         return NextResponse.json({ success: false, error: ipCheck.reason }, { status: 403 });
 
-      // Email veya IP'de kayıt var mı?
       const existingByEmail = await findExistingTrialByEmail(email);
       if (existingByEmail) {
         const daysLeft = Math.ceil((TRIAL_TTL * 1000 - (Date.now() - existingByEmail.createdAt)) / 86400000);
@@ -387,7 +504,6 @@ export async function POST(req: NextRequest) {
 
     // ── create_direct ─────────────────────────────────────────────────────────
     if (action === 'create_direct') {
-      // Email'de kayıt varsa mevcut bilgileri döndür
       const byEmail = await findExistingTrialByEmail(email);
       if (byEmail) {
         return NextResponse.json({
@@ -399,10 +515,8 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // IP'de kalıcı kayıt varsa engelle
       const byIp = await findExistingTrialByIp(ip);
       if (byIp) {
-        // Aynı emailse zaten yukarıda yakalandı — farklı email, aynı IP → engelle
         return NextResponse.json({
           success: false,
           ipBlocked: true,
@@ -410,12 +524,10 @@ export async function POST(req: NextRequest) {
         }, { status: 429 });
       }
 
-      // VPN kontrolü
       const ipCheck = await checkIpReputation(ip);
       if (ipCheck.blocked)
         return NextResponse.json({ success: false, error: ipCheck.reason }, { status: 403 });
 
-      // Yeni test oluştur
       const creds = await createTrialUser();
       await recordTrial(email, ip, selectedPackage || 'Belirtilmedi', creds.username, creds.password);
       await sendTrialMail(email, creds.username, creds.password);
