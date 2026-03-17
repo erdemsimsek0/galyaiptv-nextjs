@@ -167,6 +167,7 @@ function OdemeInner() {
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [checked, setChecked] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -310,17 +311,18 @@ function OdemeInner() {
 
               {/* Onay */}
               <div className="border-t border-amber-500/20 px-5 py-4">
-                <label className="mb-4 flex cursor-pointer items-start gap-3" onClick={() => setAccepted(v => !v)}>
-                  <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${accepted ? 'border-amber-400 bg-amber-400/20' : 'border-amber-500/50'}`}>
-                    {accepted && (
+                <div className="mb-4 flex cursor-pointer items-start gap-3" onClick={() => setChecked(v => !v)}>
+                  <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${checked ? 'border-amber-400 bg-amber-400/20' : 'border-amber-500/50'}`}>
+                    {checked && (
                       <svg className="h-3 w-3 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd"/></svg>
                     )}
                   </div>
                   <span className="text-sm text-amber-300/80">Okudum, onaylıyorum. Ödeme talimatlarına uyacağım.</span>
-                </label>
+                </div>
                 <button
+                  disabled={!checked}
                   onClick={() => setAccepted(true)}
-                  className="w-full rounded-xl bg-amber-500 py-3 text-sm font-black text-[#1a0800] transition-opacity hover:opacity-90 active:scale-[.98]"
+                  className="w-full rounded-xl bg-amber-500 py-3 text-sm font-black text-[#1a0800] transition-all hover:opacity-90 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Okudum, Devam Et →
                 </button>
@@ -368,26 +370,18 @@ function OdemeInner() {
                       <CopyBtn value={paymentInfo.accountNo} />
                     </div>
                   )}
+                  {/* Açıklamaya Yazılacak Kod — admin note alanından çekilir */}
+                  {paymentInfo.note && (
+                    <div className="flex items-center justify-between rounded-xl border border-blue-500/20 bg-blue-950/20 px-3 py-2.5">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400/60">Açıklama Kodu</p>
+                        <p className="font-mono text-sm font-black tracking-widest text-white">{paymentInfo.note}</p>
+                      </div>
+                      <CopyBtn value={paymentInfo.note} />
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {/* Açıklamaya Yazılacak Kod */}
-              {paymentInfo.paymentCode && (
-                <div className="rounded-2xl border border-blue-500/20 bg-blue-950/20 p-4">
-                  <p className="mb-3 text-xs font-bold uppercase tracking-wider text-blue-400">
-                    Açıklamaya Yazılacak Kod
-                  </p>
-                  <div className="flex items-center justify-between rounded-xl border border-blue-500/20 bg-[#060e1a] px-4 py-3">
-                    <span className="font-mono text-xl font-black tracking-widest text-white">
-                      {paymentInfo.paymentCode}
-                    </span>
-                    <CopyBtn value={paymentInfo.paymentCode} label="Kopyala" />
-                  </div>
-                  <p className="mt-2 text-[11px] text-blue-300/40">
-                    Bu kodu havale/EFT açıklamasına eksiksiz yazınız.
-                  </p>
-                </div>
-              )}
 
               {/* Ödemeyi Gönderdim */}
               <button
