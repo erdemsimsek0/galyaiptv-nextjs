@@ -1097,11 +1097,7 @@ function HomePageInner() {
                     key={pkg.id}
                     onClick={() => {
                       trackPurchaseIntent(pkg.name, totalPrice, dur.label);
-                      if (!isLoggedIn) {
-                        openAuth('register');
-                        return;
-                      }
-                      window.location.href = `/odeme?paket=${encodeURIComponent(pkg.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${totalPrice.toFixed(2)}&orijinal=${originalTotal.toFixed(2)}&indirim=${dur.discount}`;
+                      window.location.href = '/abonelik';
                     }}
                     className={`relative flex flex-col rounded-2xl border transition-all cursor-pointer ${
                     pkg.popular
@@ -1185,11 +1181,7 @@ function HomePageInner() {
                       onClick={(e) => {
                         e.stopPropagation();
                         trackPurchaseIntent(pkg.name, totalPrice, dur.label);
-                        if (!isLoggedIn) {
-                          openAuth('register');
-                          return;
-                        }
-                        window.location.href = `/odeme?paket=${encodeURIComponent(pkg.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${totalPrice.toFixed(2)}&orijinal=${originalTotal.toFixed(2)}&indirim=${dur.discount}`;
+                        window.location.href = '/abonelik';
                       }}
                       className={`flex w-full items-center justify-center rounded-xl py-3.5 text-[15px] font-bold transition-all ${
                         pkg.popular
