@@ -68,7 +68,7 @@ function calcTotal(base: number, months: number, disc: number, mul: number) {
 }
 
 function PlanCard({ plan }: { plan: Plan }) {
-  // Tüm kartlar kapalı başlar (popular olsa da)
+  // Tüm kartlar kapalı başlar (popular olsa  da)
   const [open, setOpen] = useState(false);
   // Varsayılan: 6 ay ve 2 cihaz
   const [selDur, setSelDur] = useState<DurKey>('6ay');
