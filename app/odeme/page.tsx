@@ -198,14 +198,36 @@ function OdemeInner() {
       .finally(() => setLoading(false));
   }, []);
 
-  // IBAN → QR (onay sonrası)
+  // IBAN → QR — EPC/BCD standardı (Türk bankaların okuduğu format)
   useEffect(() => {
     if (paymentInfo?.iban && qrRef.current && accepted) {
-      QRCode.toCanvas(qrRef.current, `IBAN:${paymentInfo.iban.replace(/\s/g, '')}`, {
-        width: 120, margin: 1, color: { dark: '#000000', light: '#ffffff' },
+      const iban   = paymentInfo.iban.replace(/\s/g, '');
+      const name   = (paymentInfo.accountHolder || '').slice(0, 70);
+      const amount = totalNum > 0 ? `TRY${totalNum.toFixed(2)}` : '';
+      const ref    = paymentInfo.paymentCode ? paymentInfo.paymentCode.replace(/\D/g, '') : '';
+      // EPC QR standardı — satır satır sabit format
+      const epcPayload = [
+        'BCD',   // Servis kodu
+        '002',   // Versiyon
+        '1',     // Karakter seti (UTF-8)
+        'SCT',   // Kimlik
+        '',      // BIC (boş bırakılabilir)
+        name,    // Alıcı adı
+        iban,    // IBAN
+        amount,  // Tutar (TRY)
+        '',      // Amaç kodu
+        ref,     // Referans / açıklama kodu
+        '',      // İşlem açıklaması (serbest)
+      ].join('\n');
+
+      QRCode.toCanvas(qrRef.current, epcPayload, {
+        width: 128,
+        margin: 1,
+        errorCorrectionLevel: 'M',
+        color: { dark: '#000000', light: '#ffffff' },
       });
     }
-  }, [paymentInfo, accepted]);
+  }, [paymentInfo, accepted, totalNum]);
 
   if (success) {
     return (
@@ -370,16 +392,40 @@ function OdemeInner() {
                       <CopyBtn value={paymentInfo.accountNo} />
                     </div>
                   )}
-                  {/* Açıklamaya Yazılacak Kod — admin note alanından çekilir */}
-                  {paymentInfo.note && (
-                    <div className="flex items-center justify-between rounded-xl border border-blue-500/20 bg-blue-950/20 px-3 py-2.5">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400/60">Açıklama Kodu</p>
-                        <p className="font-mono text-sm font-black tracking-widest text-white">{paymentInfo.note}</p>
+                  {/* Açıklamaya Yazılacak Kod — sadece rakamlar gösterilir */}
+                  {(paymentInfo.paymentCode || paymentInfo.note) && (() => {
+                    const rawCode  = (paymentInfo.paymentCode || paymentInfo.note || '');
+                    const numOnly  = rawCode.replace(/\D/g, '');          // harfleri sil
+                    const copyVal  = numOnly;
+                    return (
+                      <div className="rounded-xl border border-blue-500/30 bg-blue-950/25 px-3 py-3">
+                        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-blue-400/70">
+                          Açıklama Kodu
+                        </p>
+                        <div className="flex items-center justify-between gap-3">
+                          {/* Rakam blokları — her rakam ayrı hücre */}
+                          <div className="flex flex-wrap gap-1.5">
+                            {numOnly.split('').map((ch, i) => (
+                              <span
+                                key={i}
+                                style={{
+                                  fontFamily: '"Courier New", Courier, monospace',
+                                  fontVariantNumeric: 'tabular-nums',
+                                }}
+                                className="flex h-8 w-7 items-center justify-center rounded-md border border-blue-500/25 bg-[#060f22] text-base font-black text-white"
+                              >
+                                {ch}
+                              </span>
+                            ))}
+                          </div>
+                          <CopyBtn value={copyVal} />
+                        </div>
+                        <p className="mt-2 text-[10px] text-blue-400/50">
+                          ⚠ Havale/EFT açıklama kısmına bu kodu yazınız.
+                        </p>
                       </div>
-                      <CopyBtn value={paymentInfo.note} />
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               </div>
 
