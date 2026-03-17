@@ -369,8 +369,8 @@ function ProfilInner() {
             </div>
           </div>
 
-          {creds && (
-            <div className={`mt-4 rounded-xl border px-4 py-3 ${expired ? 'border-[#1e2d42] bg-[#060e1a]' : 'border-emerald-500/30 bg-emerald-950/20'}`}>
+          {creds && !subscription && (
+            <div className={`mt-4 rounded-xl border px-4 py-3 ${expired ? 'border-red-500/40 bg-red-950/20' : 'border-emerald-500/30 bg-emerald-950/20'}`}>
               <div className="flex items-center gap-2 mb-2">
                 {!expired && (
                   <span className="relative flex h-2 w-2">
@@ -378,8 +378,9 @@ function ProfilInner() {
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"/>
                   </span>
                 )}
-                <span className="text-xs font-semibold text-white">
-                  {expired ? '⌛ Test Süresi Doldu' : '✅ Aktif Test Hesabı'}
+                {expired && <span className="text-red-400 text-sm">⛔</span>}
+                <span className={`text-xs font-semibold ${expired ? 'text-red-400' : 'text-white'}`}>
+                  {expired ? 'Test Süresi Doldu' : '✅ Aktif Test Hesabı'}
                 </span>
               </div>
               {!expired && (
@@ -387,6 +388,9 @@ function ProfilInner() {
                   <span className="text-[11px] text-[#6b7280]">Kalan süre</span>
                   <span className="font-mono text-xl font-black text-emerald-400 tracking-widest sm:text-2xl">{countdown}</span>
                 </div>
+              )}
+              {expired && (
+                <p className="text-[11px] text-red-400/70">Abonelik satın alarak izlemeye devam edin.</p>
               )}
             </div>
           )}
@@ -475,7 +479,7 @@ function ProfilInner() {
             </div>
             <span className="text-[#4b5563]">›</span>
           </Link>
-          {!creds && (
+          {!creds && !subscription && (
             <button onClick={openTrialModal} className="flex w-full items-center gap-4 px-5 py-4 transition-colors hover:bg-[#0d1a2a]">
               <span className="text-xl">⚡</span>
               <div className="flex-1 min-w-0 text-left">
@@ -487,39 +491,68 @@ function ProfilInner() {
           )}
         </div>
 
-        {/* ── Test Bilgileri ─────────────────────────────────────────────── */}
-        {creds && (
-          <div className={`rounded-2xl border overflow-hidden ${expired ? 'border-[#1e2d42] bg-[#0a1525]' : 'border-emerald-500/30 bg-[#071a10]'}`}>
-            <div className={`border-b px-5 py-3 flex items-center justify-between ${expired ? 'border-[#1e2d42]' : 'border-emerald-500/20'}`}>
+        {/* ── Test Bilgileri — sadece abonelik yoksa göster ─────────────── */}
+        {creds && !subscription && (
+          <div className={`rounded-2xl border overflow-hidden ${
+            expired
+              ? 'border-red-500/50 bg-[#1a0808]'
+              : 'border-emerald-500/30 bg-[#071a10]'
+          }`}>
+            <div className={`border-b px-5 py-3 flex items-center justify-between ${
+              expired ? 'border-red-500/20' : 'border-emerald-500/20'
+            }`}>
               <div className="flex items-center gap-2">
-                {!expired && <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"/><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"/></span>}
-                <p className={`text-xs font-bold uppercase tracking-widest ${expired ? 'text-[#4b5563]' : 'text-emerald-400'}`}>
+                {!expired && (
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"/>
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"/>
+                  </span>
+                )}
+                {expired && <span className="text-red-500 text-sm">⛔</span>}
+                <p className={`text-xs font-bold uppercase tracking-widest ${
+                  expired ? 'text-red-400' : 'text-emerald-400'
+                }`}>
                   {expired ? 'Test Süresi Doldu' : 'Test Bilgileri'}
                 </p>
               </div>
-              <Link href="/kurulum-rehberi" className="text-xs text-[#3b82f6] hover:underline">
-                Kurulum Rehberi →
-              </Link>
+              {!expired && (
+                <Link href="/kurulum-rehberi" className="text-xs text-[#3b82f6] hover:underline">
+                  Kurulum Rehberi →
+                </Link>
+              )}
             </div>
-            {[
-              { label: 'Kullanıcı Adı', value: creds.username },
-              { label: 'Şifre',         value: creds.password },
-              { label: 'Server URL',    value: SERVER },
-              { label: 'M3U URL',       value: m3u },
-            ].map(row => (
-              <div key={row.label} className={`flex items-center justify-between border-b px-5 py-3 last:border-0 ${expired ? 'border-[#1e2d42]' : 'border-emerald-500/10'}`}>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6b7280]">{row.label}</p>
-                  <p className={`mt-0.5 truncate font-mono text-sm font-semibold ${expired ? 'text-[#6b7280]' : 'text-white'}`}>{row.value}</p>
+
+            {/* Bilgiler — sadece süresi dolmamışsa göster */}
+            {!expired ? (
+              <>
+                {[
+                  { label: 'Kullanıcı Adı', value: creds.username },
+                  { label: 'Şifre',         value: creds.password },
+                  { label: 'Server URL',    value: SERVER },
+                  { label: 'M3U URL',       value: m3u },
+                ].map(row => (
+                  <div key={row.label} className="flex items-center justify-between border-b border-emerald-500/10 px-5 py-3 last:border-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6b7280]">{row.label}</p>
+                      <p className="mt-0.5 truncate font-mono text-sm font-semibold text-white">{row.value}</p>
+                    </div>
+                    <CopyBtn value={row.value} />
+                  </div>
+                ))}
+                <div className="px-5 py-3 bg-emerald-950/30">
+                  <Link href="/abonelik"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white transition-all hover:bg-emerald-700">
+                    👑 Premium&apos;a Geç →
+                  </Link>
                 </div>
-                <CopyBtn value={row.value} />
-              </div>
-            ))}
-            {!expired && (
-              <div className="px-5 py-3 bg-emerald-950/30">
+              </>
+            ) : (
+              /* Süresi doldu — sadece abonelik çağrısı */
+              <div className="px-5 py-5 text-center space-y-3">
+                <p className="text-sm text-red-400/80">3 saatlik test süreniz sona erdi.</p>
                 <Link href="/abonelik"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white transition-all hover:bg-emerald-700">
-                  👑 Premium&apos;a Geç →
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-3 text-sm font-bold text-white transition-all hover:bg-red-700">
+                  👑 Abonelik Satın Al →
                 </Link>
               </div>
             )}
