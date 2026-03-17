@@ -917,7 +917,38 @@ function HomePageInner() {
               {[{ href: '/#paketler', label: 'Paketler' }, { href: '/#ozellikler', label: 'Özellikler' }, { href: '/#platformlar', label: 'Platformlar' }, { href: '/#yorumlar', label: 'Yorumlar' }, { href: '/#sss', label: 'S.S.S' }, { href: '/kurulum-rehberi', label: 'Kurulum Rehberi' }, { href: '/blog', label: 'Blog' }].map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-[#9ca3af] transition-colors hover:bg-[#1e3a5f]/30 hover:text-white">{item.label}</Link>
               ))}
-              <button onClick={() => { setMobileMenuOpen(false); openAuth(); }} className="mt-2 rounded-xl bg-[#3b82f6] py-3 text-sm font-bold text-white">Kayıt Ol</button>
+              {isLoggedIn ? (
+                <>
+                  <div className="my-2 h-px bg-[#1e3a5f]" />
+                  <Link
+                    href="/profil"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[#9ca3af] transition-colors hover:bg-[#1e3a5f]/30 hover:text-white"
+                  >
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1e3a5f] text-xs font-bold text-[#3b82f6]">
+                      {session?.user?.name?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || 'U'}
+                    </span>
+                    Profilim
+                  </Link>
+                  {trialExpired && (
+                    <Link href="/abonelik" onClick={() => setMobileMenuOpen(false)} className="mt-1 rounded-xl bg-amber-500 py-3 text-center text-sm font-bold text-white">
+                      👑 Premium&apos;a Geç
+                    </Link>
+                  )}
+                  {trialActive && (
+                    <Link href="/profil" onClick={() => setMobileMenuOpen(false)} className="mt-1 rounded-xl bg-emerald-600 py-3 text-center text-sm font-bold text-white">
+                      ✅ Test Aktif
+                    </Link>
+                  )}
+                  {!trialActive && !trialExpired && (
+                    <Link href="/profil" onClick={() => setMobileMenuOpen(false)} className="mt-1 rounded-xl bg-[#3b82f6] py-3 text-center text-sm font-bold text-white">
+                      ⚡ Testi Başlat
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <button onClick={() => { setMobileMenuOpen(false); openAuth(); }} className="mt-2 rounded-xl bg-[#3b82f6] py-3 text-sm font-bold text-white">Kayıt Ol</button>
+              )}
             </div>
           </div>
         )}
@@ -1095,7 +1126,7 @@ function HomePageInner() {
                         openAuth('register');
                         return;
                       }
-                      window.location.href = `/odeme?paket=${encodeURIComponent(pkg.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${totalPrice.toFixed(2)}&orijinal=${originalTotal.toFixed(2)}&indirim=${dur.discount}`;
+                      window.location.href = `/abonelik?paket=${encodeURIComponent(pkg.name)}&sure=${encodeURIComponent(dur.label)}&toplam=${totalPrice.toFixed(2)}&orijinal=${originalTotal.toFixed(2)}&indirim=${dur.discount}`;
                     }}
                     className={`relative flex flex-col rounded-2xl border transition-all cursor-pointer ${
                     pkg.popular
