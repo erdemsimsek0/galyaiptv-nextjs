@@ -121,9 +121,9 @@ function usePrices() {
 // ─── Metadata notu ────────────────────────────────────────────────────────────
 // Bu sayfa 'use client' olduğundan metadata'yı layout.tsx'e ekle:
 // export const metadata = {
-//   title: 'GalyaStream | Donmayan Premium IPTV – 85.000+ Kanal, 4K Yayın',
-//   description: 'Donmayan premium IPTV hizmeti. 85.000+ kanal, 4K yayın kalitesi, Avrupa sunucuları. 3 saatlik ücretsiz test. Tüm cihazlarda çalışır.',
-//   keywords: 'iptv satın al, iptv fiyat, 4k iptv, en iyi iptv, iptv server, donmayan iptv',
+//   title: 'IPTV Satın Al | GalyaStream – Donmayan IPTV, 85.000+ Kanal, 4K',
+//   description: 'Türkiye\'nin en güvenilir donmayan IPTV hizmeti. Hemen IPTV al, 3 saat ücretsiz dene. 85.000+ kanal, 4K yayın, Avrupa sunucuları. Smart TV, telefon, tablet uyumlu.',
+//   keywords: 'iptv satın al, iptv al, donmayan iptv, iptv fiyat, 4k iptv, en iyi iptv, iptv server',
 // }
 
 const WHATSAPP_URL = 'https://wa.me/447441921660?text=Merhaba%2C%20sat%C4%B1n%20almak%20istiyorum.';
@@ -228,7 +228,7 @@ const categoryPackages = [
     labelColor: '#22c55e',
     labelGlow: 'rgba(34,197,94,0.25)',
     name: 'GalyaStream Sports',
-    desc: 'Tüm spor yayınları ve TV kanalları — maçlar, turnuvalar tek yerde.',
+    desc: 'Donmayan IPTV ile tüm spor yayınları ve TV kanalları — maçlar, turnuvalar tek yerde.',
     basePrice: 159.90,
     features: [
       { bold: true,  text: 'Canlı Spor Kanalları ve Maç Yayınları' },
@@ -238,7 +238,7 @@ const categoryPackages = [
       { bold: false, text: 'Smart TV ve Tüm Cihazlarla Uyumlu' },
     ],
     popular: false,
-    ctaLabel: 'Spora Başla',
+    ctaLabel: 'IPTV Satın Al – Sports',
     waMsg: 'Sports paketi hakkında bilgi almak istiyorum.',
   },
   {
@@ -249,7 +249,7 @@ const categoryPackages = [
     labelColor: '#ef4444',
     labelGlow: 'rgba(239,68,68,0.25)',
     name: 'GalyaStream Max',
-    desc: 'Tüm içeriklere sınırsız erişim — film, dizi, spor ve TV kanalları bir arada.',
+    desc: 'IPTV satın al, tüm içeriklere anında eriş — film, dizi, spor ve TV kanalları bir arada.',
     basePrice: 229.90,
     features: [
       { bold: true,  text: 'TV + Spor + Film + Dizi Tek Pakette' },
@@ -259,7 +259,7 @@ const categoryPackages = [
       { bold: false, text: 'Tüm Cihazlarda Kesintisiz İzleme' },
     ],
     popular: true,
-    ctaLabel: 'En Popüleri Seç',
+    ctaLabel: 'Hemen IPTV Satın Al',
     waMsg: 'Max paketi hakkında bilgi almak istiyorum.',
   },
   {
@@ -270,7 +270,7 @@ const categoryPackages = [
     labelColor: '#f97316',
     labelGlow: 'rgba(249,115,22,0.25)',
     name: 'GalyaStream Cinema',
-    desc: '15.000+ film ve dizi seçkisi — en popüler ve sevilen yapımlar bir arada.',
+    desc: 'IPTV al, 15.000+ film ve dizi seçkisine eriş — en popüler ve sevilen yapımlar bir arada.',
     basePrice: 129.90,
     features: [
       { bold: true,  text: '15.000+ Film ve Dizi Arşivi' },
@@ -280,7 +280,7 @@ const categoryPackages = [
       { bold: false, text: 'Telefon, Tablet ve Smart TV Uyumlu' },
     ],
     popular: false,
-    ctaLabel: 'İzlemeye Başla',
+    ctaLabel: 'IPTV Al – Cinema',
     waMsg: 'Cinema paketi hakkında bilgi almak istiyorum.',
   },
 ];
@@ -326,11 +326,11 @@ const reviews = [
 ];
 
 const faqs = [
-  { q: 'Ücretsiz test nasıl çalışır?', a: 'E-posta adresinizi doğruladıktan sonra 3 saatlik test hesabınız anında açılır. Kredi kartı bilgisi gerekmez, tüm içeriklere erişebilirsiniz.' },
-  { q: 'Ücret iadesi politikanız nedir?', a: 'Herhangi bir sorun yaşarsanız destek hattımız çözüm garantisi verir. WhatsApp üzerinden 7/24 yardım sağlıyoruz.' },
-  { q: 'Smart TV\'de çalışır mı?', a: 'Evet, Samsung, LG, Vestel ve Sony Smart TV\'lerde doğrudan çalışır. Kurulum kılavuzu satın alma sonrası WhatsApp\'tan gönderilir.' },
-  { q: 'Kurulum ne kadar sürer?', a: '5 dakika yeterlidir. Eğer zorlanırsanız destek ekibimiz WhatsApp üzerinden adım adım yardımcı olur, gerekirse uzaktan kurulum yapılır.' },
-  { q: 'Donma sorunu yaşar mıyım?', a: 'Avrupa tabanlı sunucularımızla %99.9 kesintisiz yayın garantisi veriyoruz. 10 Mbps internet bağlantısı yeterlidir.' },
+  { q: 'IPTV satın almak için ne yapmalıyım?', a: 'GalyaStream\'den IPTV satın almak çok kolay: önce 3 saatlik ücretsiz testi deneyin, kaliteyi beğenirseniz WhatsApp üzerinden paketinizi seçip ödeme yapın. Ödeme onaylanır onaylanmaz hesabınız dakikalar içinde aktif olur.' },
+  { q: 'Donmayan IPTV nasıl mümkün oluyor?', a: 'Avrupa\'da konumlandırılmış özel sunucularımız ve CDN altyapımız sayesinde %99,9 kesintisiz yayın sağlıyoruz. 10 Mbps internet bağlantısı yeterli; yüksek yük anlarda bile donma yaşanmaz.' },
+  { q: 'Ücretsiz test nasıl çalışır?', a: 'E-posta adresinizi doğruladıktan sonra 3 saatlik test hesabınız anında açılır. Kredi kartı bilgisi gerekmez, tüm içeriklere erişebilirsiniz. Beğenirseniz kolayca IPTV satın alabilirsiniz.' },
+  { q: 'Smart TV\'de çalışır mı?', a: 'Evet, Samsung, LG, Vestel ve Sony Smart TV\'lerde doğrudan çalışır. IPTV aldıktan sonra kurulum kılavuzu WhatsApp\'tan gönderilir, ortalama 5 dakikada kurulumu tamamlarsınız.' },
+  { q: 'Hangi cihazlarda IPTV kullanabilirim?', a: 'Smart TV, Android TV, Fire TV Stick, iPhone, Android telefon, tablet, Windows ve Mac bilgisayarlar dahil her cihazda sorunsuz çalışır. Tek hesabınızla aynı anda 1 cihazda kullanabilirsiniz.' },
   { q: 'Ödeme sonrası ne zaman başlıyor?', a: 'WhatsApp üzerinden ödeme onaylandıktan hemen sonra hesabınız aktif edilir, beklemenize gerek yoktur.' },
   { q: 'Kaç cihazda kullanabilirim?', a: 'Standart paketlerde 1 bağlantı, Süresiz pakette 2 bağlantı dahildir. Ek bağlantı için WhatsApp\'tan iletişime geçebilirsiniz.' },
   { q: 'IPTV için ne kadar internet hızı gerekir?', a: 'Full HD yayın için minimum 10 Mbps, 4K yayın için minimum 25 Mbps önerilir. Stabil bir bağlantı hız kadar önemlidir.' },
@@ -343,9 +343,9 @@ const faqSchema = {
 };
 const productSchema = {
   '@context': 'https://schema.org', '@type': 'Product',
-  name: 'GalyaStream Paketleri',
+  name: 'GalyaStream IPTV Paketleri',
   image: 'https://www.galyastream.com/og-image.jpg',
-  description: 'Donmayan Premium IPTV hizmeti. 85.000+ kanal, 4K yayın kalitesi. Avrupa sunucuları ile kesintisiz yayın.',
+  description: 'IPTV satın al, donmayan premium yayın deneyimi yaşa. 85.000+ kanal, 4K yayın kalitesi, Avrupa sunucuları ile kesintisiz IPTV.',
   brand: { '@type': 'Brand', name: 'GalyaStream' },
   aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.9', reviewCount: '1243', bestRating: '5' },
   offers: {
@@ -957,20 +957,20 @@ function HomePageInner() {
 
               {/* Ana başlık */}
               <h1 className="mb-5 text-3xl font-black leading-[1.05] tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-                65.000+ İçerikli<br />
-                <span className="text-[#3b82f6]">Premium IPTV</span>
+                Donmayan IPTV&apos;yi<br />
+                <span className="text-[#3b82f6]">Hemen Satın Al</span>
               </h1>
 
               {/* Alt metin */}
               <p className="mb-6 max-w-lg text-base leading-relaxed text-[#8b9ab3]">
-                Avrupa local sunucularla kesintisiz yayın. 65.000+ içerik, tüm
-                cihazlarda çalışır.{' '}
-                <strong className="text-white">3 Saat Ücretsiz Dene — Kurulum 5 dakika.</strong>
+                Avrupa sunucularıyla gerçekten donmayan IPTV deneyimi. 65.000+ kanal ve içerik, tüm
+                cihazlarda anında çalışır.{' '}
+                <strong className="text-white">3 Saat Ücretsiz Dene — IPTV al, kurulum 5 dakika.</strong>
               </p>
 
               {/* Özellik rozetleri — görseldeki mavi bordered pill'ler */}
               <div className="mb-6 flex flex-wrap gap-2">
-                {['Kesintisiz Yayın', '4K HDR', 'VPN Gerekmez', 'Smart TV Direkt Çalışır'].map((b) => (
+                {['Donmayan Yayın', '4K HDR', 'VPN Gerekmez', 'Smart TV Direkt Çalışır'].map((b) => (
                   <span key={b} className="flex items-center gap-1.5 rounded-full border border-[#1e3a5f] bg-[#0d1a2a] px-3.5 py-1.5 text-sm font-medium text-[#9ca3af]">
                     <span className="text-[#3b82f6] font-bold">✓</span> {b}
                   </span>
@@ -1003,7 +1003,7 @@ function HomePageInner() {
                 )}
                 <Link href="/#paketler"
                   className="flex items-center justify-center rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-7 py-3.5 text-base font-semibold text-white transition-all hover:border-[#3b82f6]/40 hover:bg-[#162035]">
-                  Paketleri Gör
+                  IPTV Paketlerini Gör
                 </Link>
               </div>
             </div>
@@ -1013,7 +1013,7 @@ function HomePageInner() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/platform-mockup.png"
-                alt="GalyaStream Uygulama Ekranı"
+                alt="GalyaStream Donmayan IPTV – 65.000+ Kanal, 4K Yayın Kalitesi"
                 className="w-full max-w-2xl rounded-2xl object-contain drop-shadow-2xl mx-auto lg:ml-auto lg:mr-0"
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).style.display = 'none';
@@ -1037,7 +1037,7 @@ function HomePageInner() {
         {/* ─── Güven rozetleri şeridi ──────────────────────────────────────────── */}
         <div className="border-y border-[#1e2d42] bg-[#0a1525] px-6 py-4">
           <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-10">
-            {[{ icon: '🔒', label: 'SSL Güvenli' }, { icon: '💬', label: 'WhatsApp Destek' }, { icon: '🆓', label: '3 Saat Ücretsiz Test' }, { icon: '⚡', label: 'Anında Kurulum' }, { icon: '🌍', label: '40+ Ülke Kanalı' }, { icon: '🎬', label: '4K HDR Yayın' }].map((b) => (
+            {[{ icon: '🔒', label: 'SSL Güvenli' }, { icon: '💬', label: 'WhatsApp Destek' }, { icon: '🆓', label: '3 Saat Ücretsiz Test' }, { icon: '⚡', label: 'Anında Kurulum' }, { icon: '🌍', label: '40+ Ülke Kanalı' }, { icon: '🎬', label: 'Donmayan 4K Yayın' }].map((b) => (
               <div key={b.label} className="flex items-center gap-2 text-xs text-[#4b5a6e]">
                 <span className="text-base">{b.icon}</span><span>{b.label}</span>
               </div>
@@ -1050,7 +1050,8 @@ function HomePageInner() {
           <div className="mx-auto max-w-5xl px-0">
             <div className="mb-8 text-center">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Abonelik Paketleri</p>
-              <p className="mt-3 text-sm leading-relaxed text-[#9ca3af] max-w-2xl mx-auto">Uygun IPTV fiyatlarıyla tüm dünyadan binlerce kanal, film ve diziyi tek yerde toplayın. İstediğiniz platformda anında izleyin.</p>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl mb-3">IPTV Al, Anında İzlemeye Başla</h2>
+              <p className="mt-3 text-sm leading-relaxed text-[#9ca3af] max-w-2xl mx-auto">Donmayan IPTV hizmetimizle tüm dünyadan binlerce kanal, film ve diziyi tek yerde toplayın. İstediğiniz paketi satın alın, dakikalar içinde kurulum tamamlansın.</p>
             </div>
 
             {/* ── Süre Seçici ──────────────────────────────────────────────────── */}
@@ -1260,7 +1261,7 @@ function HomePageInner() {
 
             <div className="mt-8 text-center">
               <button onClick={() => smartAction()} className="rounded-xl bg-[#1e1b4b] border border-[#3730a3] px-8 py-3.5 font-semibold text-[#818cf8] transition-all hover:bg-[#312e81] hover:text-white">
-                ⚡ Ücretsiz Test İle Dene
+                ⚡ Ücretsiz Test Al – IPTV'yi Dene
               </button>
             </div>
           </div>
@@ -1274,11 +1275,11 @@ function HomePageInner() {
               {/* Sol: Başlık + cihaz grid */}
               <div className="lg:w-[45%] shrink-0">
                 <h2 className="mb-4 text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl">
-                  Anında Aç, <span className="text-[#3b82f6]">Her</span><br />
+                  IPTV Al, <span className="text-[#3b82f6]">Her</span><br />
                   Ekranda <span className="text-[#3b82f6]">İzle</span>
                 </h2>
                 <p className="mb-8 text-sm leading-relaxed text-[#9ca3af] max-w-md">
-                  Tek hesabınla televizyonda başla, telefonda devam et.
+                  Donmayan IPTV hizmetimizi tek hesapla televizyonunda başlat, telefonda devam et.
                   Kurulum gerektirmez, cihaz sınırı yok — nerede olursan
                   ol, aynı kalitede izlemeye devam et.
                 </p>
@@ -1352,7 +1353,7 @@ function HomePageInner() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/platform-mockup.png"
-                  alt="GalyaStream Uygulama Ekranı"
+                  alt="GalyaStream IPTV Uygulaması – Smart TV, Telefon ve Tabletlerde Donmayan Yayın"
                   className="w-full max-w-xl rounded-2xl object-contain drop-shadow-2xl"
                   onError={(e) => {
                     // Görsel yokken placeholder göster
@@ -1384,7 +1385,7 @@ function HomePageInner() {
           <div className="mx-auto max-w-6xl">
             <div className="mb-10 text-center">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Müşteri Yorumları</p>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Kullanıcılarımız Ne Diyor?</h2>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">IPTV Satın Alanlar Ne Diyor?</h2>
               <div className="mt-3 flex items-center justify-center gap-2">
                 <Stars count={5} />
                 <span className="text-sm text-[#9ca3af]">10.200+ kullanıcı · Ortalama <strong className="text-white">4.9</strong>/5</span>
@@ -1412,7 +1413,7 @@ function HomePageInner() {
             <div className="mt-10 text-center">
               <p className="mb-4 text-sm text-[#9ca3af]">Siz de denemek ister misiniz?</p>
               <button onClick={() => smartAction()} className="rounded-xl bg-[#6366f1] px-8 py-3.5 font-semibold text-white shadow-lg shadow-[#6366f1]/20 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
-                Ücretsiz Test Al →
+                Ücretsiz Test Al, Sonra IPTV Satın Al →
               </button>
             </div>
           </div>
@@ -1423,7 +1424,7 @@ function HomePageInner() {
           <div className="mx-auto max-w-5xl px-0">
             <div className="mb-10 text-center">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#818cf8]">Sıkça Sorulan Sorular</p>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Aklınızdaki Sorular</h2>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">IPTV Hakkında Sıkça Sorulanlar</h2>
             </div>
 
             <div className="grid gap-8 lg:grid-cols-2">
@@ -1467,7 +1468,7 @@ function HomePageInner() {
                   <p className="mb-1 text-sm font-semibold text-white">10.200+ aktif kullanıcı GalyaStream'yi tercih ediyor</p>
                   <p className="mb-4 text-xs text-[#6b7280]">Ücretsiz test ile başlayın, beğenirseniz satın alın</p>
                   <button onClick={() => smartAction()} className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">
-                    ⚡ Ücretsiz Test Al
+                    ⚡ Ücretsiz Dene, Sonra IPTV Al
                   </button>
                   <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-[#1e3a5f] py-2.5 text-sm text-[#25d366] transition-colors hover:border-[#25d366]/40">
                     💬 WhatsApp&apos;a Yaz
@@ -1485,11 +1486,11 @@ function HomePageInner() {
               <span className="h-1.5 w-1.5 rounded-full bg-[#818cf8] animate-pulse" />
               Hâlâ kararsız mısınız? Önce 3 saat ücretsiz deneyin.
             </div>
-            <h2 className="mb-3 text-2xl font-bold tracking-tight md:text-4xl">Bugün Başlayın</h2>
-            <p className="mb-2 text-sm text-[#9ca3af]">Ücretsiz test ile kaliteyi görün, sonra karar verin.</p>
+            <h2 className="mb-3 text-2xl font-bold tracking-tight md:text-4xl">Hemen IPTV Satın Al</h2>
+            <p className="mb-2 text-sm text-[#9ca3af]">Donmayan IPTV'yi 3 saat ücretsiz dene, kaliteyi gör — sonra karar ver.</p>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-[#6b7280]">
-              <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> Sorun çözme garantisi</span>
+              <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> Donmayan yayın garantisi</span>
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> 5 dakika kurulum</span>
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> 7/24 Türkçe destek</span>
               <span className="flex items-center gap-1.5"><span className="text-emerald-400 font-bold">✓</span> Anında aktivasyon</span>
@@ -1497,7 +1498,7 @@ function HomePageInner() {
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <button onClick={() => smartAction()} className="rounded-xl bg-[#6366f1] px-10 py-4 font-semibold text-white shadow-xl shadow-[#6366f1]/25 transition-all hover:bg-[#4f46e5] hover:scale-[1.02]">
-                ⚡ Ücretsiz Test Al
+                ⚡ Ücretsiz Dene →
               </button>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackWhatsAppClick('footer_cta')} className="flex items-center justify-center gap-2 rounded-xl bg-[#25d366] px-8 py-4 font-semibold text-white transition-all hover:bg-[#1ebe5d]">
                 💬 WhatsApp ile İletişim
