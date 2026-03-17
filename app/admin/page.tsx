@@ -456,7 +456,7 @@ function IpTab({ data, secret, onRefresh }: { data: ApiResponse; secret: string;
 // ─── Ödeme Bildirimleri + Kullanıcı Yönetimi Sekmesi ─────────────────────────
 function PaymentsTab({ secret }: { secret: string }) {
   const [notifications, setNotifications] = useState<{
-    email: string; plan: string; amount: string; paymentCode: string;
+    email: string; plan: string; duration?: string; devices?: string; amount: string; senderName?: string; paymentCode?: string; hasReceipt?: boolean;
     status: string; createdAt: number; createdAtFormatted: string;
     approvedAt?: number; assignedPlan?: string;
   }[]>([]);
@@ -553,18 +553,21 @@ function PaymentsTab({ secret }: { secret: string }) {
           <div className="divide-y divide-[#1f2937]">
             {pending.map(n => (
               <div key={n.email} className="p-5 space-y-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
                     <p className="font-semibold text-white">{n.email}</p>
+                    {n.senderName && <p className="text-xs text-gray-300 mt-0.5">👤 {n.senderName}</p>}
                     <p className="text-xs text-gray-400 mt-0.5">{n.createdAtFormatted}</p>
                     <div className="flex gap-2 mt-2 flex-wrap">
                       {n.plan && <Badge variant="purple">{n.plan}</Badge>}
+                      {n.duration && <Badge variant="gray">{n.duration}</Badge>}
+                      {n.devices && <Badge variant="gray">{n.devices} Cihaz</Badge>}
                       {n.amount && <Badge variant="green">₺{n.amount}</Badge>}
-                      {n.paymentCode && <Badge variant="yellow">Kod: {n.paymentCode}</Badge>}
+                      {n.hasReceipt && <Badge variant="green">📎 Dekont Var</Badge>}
                     </div>
                   </div>
                   <button onClick={() => handleReject(n.email)}
-                    className="text-xs bg-red-900/30 text-red-400 border border-red-800/40 px-3 py-1.5 rounded-lg hover:bg-red-900/50">
+                    className="text-xs bg-red-900/30 text-red-400 border border-red-800/40 px-3 py-1.5 rounded-lg hover:bg-red-900/50 shrink-0">
                     Reddet
                   </button>
                 </div>
