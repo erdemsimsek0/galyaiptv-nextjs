@@ -135,16 +135,110 @@ async function sendVerificationRequest(params: {
     from:    `GalyaStream <${process.env.EMAIL_USER}>`,
     subject: 'GalyaStream – Giriş Bağlantınız',
     html: `
-      <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#07111f;padding:32px;border-radius:16px">
-        <h1 style="color:#ffffff;font-size:22px;margin:0 0 8px">GalyaStream</h1>
-        <p style="color:#8b9ab3;font-size:14px;margin:0 0 24px">Aşağıdaki butona tıklayarak giriş yapabilirsiniz.</p>
-        <a href="${url}" style="display:inline-block;background:#3b82f6;color:#fff;font-weight:700;font-size:15px;padding:14px 28px;border-radius:12px;text-decoration:none">
-          Giriş Yap →
-        </a>
-        <p style="color:#374151;font-size:12px;margin:24px 0 0">
-          Bu bağlantı 10 dakika geçerlidir. Siz talep etmediyseniz bu e-postayı yok sayabilirsiniz.
-        </p>
-      </div>
+<!DOCTYPE html>
+<html lang="tr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#060d18;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#060d18;padding:40px 16px">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px">
+
+          <!-- Logo / Marka -->
+          <tr>
+            <td align="center" style="padding-bottom:28px">
+              <span style="font-size:24px;font-weight:900;color:#ffffff;letter-spacing:-0.5px">
+                Galya<span style="color:#3b82f6">Stream</span>
+              </span>
+            </td>
+          </tr>
+
+          <!-- Ana kart -->
+          <tr>
+            <td style="background:#0a1525;border:1px solid #1e2d42;border-radius:20px;overflow:hidden">
+
+              <!-- Üst renkli şerit -->
+              <tr>
+                <td style="height:4px;background:linear-gradient(90deg,#3b82f6,#6366f1)"></td>
+              </tr>
+
+              <!-- İçerik -->
+              <tr>
+                <td style="padding:36px 36px 32px">
+
+                  <!-- İkon -->
+                  <table cellpadding="0" cellspacing="0" style="margin-bottom:24px">
+                    <tr>
+                      <td style="background:#1e3a5f;border-radius:14px;width:52px;height:52px;text-align:center;vertical-align:middle">
+                        <span style="font-size:24px;line-height:52px">🔐</span>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Başlık -->
+                  <h1 style="margin:0 0 10px;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.3px">
+                    Giriş Bağlantınız Hazır
+                  </h1>
+                  <p style="margin:0 0 28px;font-size:14px;line-height:1.6;color:#6b7280">
+                    Aşağıdaki butona tıklayarak GalyaStream hesabınıza güvenli şekilde giriş yapabilirsiniz.
+                    Bu bağlantı <strong style="color:#8b9ab3">10 dakika</strong> geçerlidir.
+                  </p>
+
+                  <!-- Buton -->
+                  <table cellpadding="0" cellspacing="0" style="margin-bottom:28px">
+                    <tr>
+                      <td style="background:#3b82f6;border-radius:12px">
+                        <a href="${url}"
+                          style="display:inline-block;padding:15px 32px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.1px">
+                          Giriş Yap &rarr;
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Alternatif link -->
+                  <p style="margin:0 0 4px;font-size:11px;color:#374151">
+                    Buton çalışmıyorsa bu bağlantıyı tarayıcınıza yapıştırın:
+                  </p>
+                  <p style="margin:0;font-size:11px;word-break:break-all">
+                    <a href="${url}" style="color:#3b82f6;text-decoration:none">${url}</a>
+                  </p>
+
+                </td>
+              </tr>
+
+              <!-- Uyarı bölümü -->
+              <tr>
+                <td style="background:#070f1c;border-top:1px solid #131f30;padding:16px 36px">
+                  <p style="margin:0;font-size:12px;color:#374151;line-height:1.5">
+                    ⚠️ Bu giriş talebini siz oluşturmadıysanız bu e-postayı görmezden gelebilirsiniz. Hesabınız güvendedir.
+                  </p>
+                </td>
+              </tr>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top:24px">
+              <p style="margin:0 0 6px;font-size:12px;color:#1f2937">
+                © 2025 GalyaStream — Donmayan IPTV
+              </p>
+              <p style="margin:0;font-size:11px;color:#111827">
+                <a href="https://www.galyastream.com" style="color:#374151;text-decoration:none">galyastream.com</a>
+                &nbsp;·&nbsp;
+                <a href="https://wa.me/447441921660" style="color:#374151;text-decoration:none">Destek</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
     `,
   });
 
