@@ -228,7 +228,7 @@ function TrialsTab({ data, secret, onRefresh }: { data: ApiResponse; secret: str
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Toplam Test"  value={data.totalEmails} icon="🧪" color="purple" />
+        <StatCard label="Toplam Test"  value={data.totalEmails ?? 0} icon="🧪" color="purple" />
         <StatCard label="Son 24 Saat"  value={today24h}         icon="📅" color="blue" />
         <StatCard label="Test Aktif"   value={activeCount}      icon="✅" color="green" />
         <StatCard label="Test Bitmiş"  value={expiredCount}     icon="⌛" color="orange" />
@@ -1092,10 +1092,10 @@ export default function AdminPage() {
         {/* Sekmeler */}
         <div className="flex flex-wrap gap-3">
           <Tab active={activeTab === 'trials'} onClick={() => setActiveTab('trials')}>
-            🧪 Test Talepleri {data ? `(${data.totalEmails})` : ''}
+            🧪 Test Talepleri {data ? `(${data.totalEmails ?? 0})` : ''}
           </Tab>
           <Tab active={activeTab === 'ips'} onClick={() => setActiveTab('ips')}>
-            🌐 IP Kayıtları {data ? `(${data.totalIPs})` : ''}
+            🌐 IP Kayıtları {data ? `(${data.totalIPs ?? 0})` : ''}
           </Tab>
           <Tab active={activeTab === 'payment'} onClick={() => setActiveTab('payment')}>
             💳 IBAN Yönetimi
