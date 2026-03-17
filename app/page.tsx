@@ -118,6 +118,29 @@ function usePrices() {
   return prices;
 }
 
+// ─── Kullanıcının aboneliğini getir ───────────────────────────────────────────
+interface Subscription {
+  plan: string;
+  durationDays: number;
+  username: string;
+  password: string;
+  remainingDays: number;
+  expiresAt: number;
+  expiresFormatted: string;
+}
+
+function useSubscription(email: string | null | undefined): Subscription | null {
+  const [sub, setSub] = useState<Subscription | null>(null);
+  useEffect(() => {
+    if (!email) return;
+    fetch(`/api/subscription?email=${encodeURIComponent(email)}`)
+      .then(r => r.json())
+      .then(data => { if (data.success) setSub(data.subscription); })
+      .catch(() => {});
+  }, [email]);
+  return sub;
+}
+
 // ─── Metadata notu ────────────────────────────────────────────────────────────
 // Bu sayfa 'use client' olduğundan metadata'yı layout.tsx'e ekle:
 // export const metadata = {
@@ -614,6 +637,10 @@ function HomePageInner() {
   const prices = usePrices();
   const isLoggedIn = status === 'authenticated';
   const authLoading = status === 'loading';
+  const subscription = useSubscription(isLoggedIn ? session?.user?.email : null);
+  const isSubscriber = subscription !== null;
+  // Aboneler için %25 ek indirim
+  const SUBSCRIBER_EXTRA_DISCOUNT = 25;
   const [globalTrialCreds, setGlobalTrialCreds] = useState<{ username: string; password: string; startedAt: number } | null>(null);
   const [trialCreating, setTrialCreating] = useState(false);
   const [trialCreatingProgress, setTrialCreatingProgress] = useState(0);
@@ -883,7 +910,15 @@ function HomePageInner() {
                   </span>
                   Profilim
                 </Link>
-                {trialActive ? (
+                {subscription ? (
+                  <Link href="/profil" className="flex items-center gap-2 rounded-xl bg-emerald-600/20 border border-emerald-500/40 px-4 py-2 text-sm font-bold text-emerald-400 transition-all hover:bg-emerald-600/30">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"/>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"/>
+                    </span>
+                    {subscription.plan} · {subscription.remainingDays}g
+                  </Link>
+                ) : trialActive ? (
                   <Link href="/profil" className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-emerald-600/30 transition-all hover:bg-emerald-700">
                     ✅ Test Aktif
                   </Link>
@@ -931,8 +966,17 @@ function HomePageInner() {
 
       <main className="bg-[#07111f] text-white">
 
-        {/* ── Trial countdown banner ─────────────────────────────────────── */}
-        {isLoggedIn && (trialActive || trialExpired) && (
+        {/* ── Abonelik / Trial banner ────────────────────────────────────── */}
+        {isLoggedIn && subscription && (
+          <div className="w-full bg-emerald-500/10 border-b border-emerald-500/20 px-3 py-2 text-center sm:px-4 sm:py-2.5">
+            <p className="text-xs font-semibold text-emerald-400 sm:text-sm">
+              ✅ {subscription.plan} aboneliğiniz aktif —{' '}
+              <span className="font-mono text-white">{subscription.remainingDays} gün</span> kaldı ·{' '}
+              <a href="/profil" className="underline hover:text-emerald-300">Profilime Git →</a>
+            </p>
+          </div>
+        )}
+        {isLoggedIn && !subscription && (trialActive || trialExpired) && (
           <TrialBanner active={trialActive} startedAt={globalTrialCreds?.startedAt ?? 0} />
         )}
 
@@ -1088,9 +1132,17 @@ function HomePageInner() {
                 // prices key mapping: 'spor'→'sports', 'max'→'max', 'cinema'→'cinema'
                 const priceKey = pkg.id === 'spor' ? 'sports' : pkg.id;
                 const liveBasePrice = prices[priceKey] ?? pkg.basePrice;
-                const totalPrice  = calcTotalPrice(liveBasePrice, dur.months, dur.discount);
-                const monthlyPrice = totalPrice / dur.months;
+
+                // Aboneler için %25 ekstra indirim
+                const effectiveDiscount = isSubscriber
+                  ? Math.min(100, dur.discount + SUBSCRIBER_EXTRA_DISCOUNT)
+                  : dur.discount;
+
+                const totalPrice    = calcTotalPrice(liveBasePrice, dur.months, effectiveDiscount);
+                const monthlyPrice  = totalPrice / dur.months;
                 const originalTotal = liveBasePrice * dur.months;
+                // Aboneye gösterilen normal fiyat (indirim yokmuş gibi)
+                const normalTotal   = calcTotalPrice(liveBasePrice, dur.months, dur.discount);
                 const waText = `${pkg.waMsg} (${dur.label} paket, ₺${formatTL(totalPrice)})`;
 
                 return (
@@ -1106,8 +1158,15 @@ function HomePageInner() {
                       : 'border-[#1e2d42] bg-[#0a1020] hover:border-[#3b82f6]/50 hover:scale-[1.01]'
                   }`} style={{ padding: '20px 24px 20px' }}>
 
-                    {/* EN POPÜLER rozeti */}
-                    {pkg.popular && (
+                    {/* Abone rozeti — EN POPÜLER'in üstünde */}
+                    {isSubscriber && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 px-4 py-1.5 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-500/30">
+                        🔄 Uzatmaya Özel %25 İndirim
+                      </div>
+                    )}
+
+                    {/* EN POPÜLER rozeti — abone değilse göster */}
+                    {pkg.popular && !isSubscriber && (
                       <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#3b82f6] px-5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-lg">
                         EN POPÜLER
                       </div>
@@ -1137,22 +1196,33 @@ function HomePageInner() {
 
                     {/* ── Fiyat bloğu — görseldeki düzen ── */}
                     <div className="mb-3 text-center">
-                      {/* İndirim rozeti (sadece indirimli durumlarda) */}
-                      {dur.discount > 0 && (
-                        <div className="mb-2 flex justify-center">
-                          <span className="rounded-full bg-[#166534] px-3 py-0.5 text-xs font-bold text-[#4ade80]">
-                            %{dur.discount} İndirim
-                          </span>
+                      {/* İndirim rozeti */}
+                      {effectiveDiscount > 0 && (
+                        <div className="mb-2 flex justify-center gap-2">
+                          {isSubscriber ? (
+                            <span className="rounded-full bg-emerald-950 border border-emerald-500/40 px-3 py-0.5 text-xs font-bold text-emerald-400">
+                              %{effectiveDiscount} İndirim (Abone)
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-[#166534] px-3 py-0.5 text-xs font-bold text-[#4ade80]">
+                              %{dur.discount} İndirim
+                            </span>
+                          )}
                         </div>
                       )}
 
-                      {/* Üstü çizili orijinal + aylık — tek satır, küçük */}
-                      {dur.discount > 0 && (
+                      {/* Üstü çizili normal fiyat */}
+                      {isSubscriber ? (
+                        <p className="mb-1 text-[12px] text-[#4b5563]">
+                          <span className="line-through">₺{formatTL(normalTotal)}</span>
+                          <span className="ml-2 line-through text-[#4b5563]">(₺{formatTL(normalTotal / dur.months)}/Ay)</span>
+                        </p>
+                      ) : dur.discount > 0 ? (
                         <p className="mb-1 text-[12px] text-[#4b5563]">
                           <span className="line-through">₺{formatTL(originalTotal)}</span>
                           <span className="ml-2 line-through text-[#4b5563]">(₺{formatTL(pkg.basePrice)}/Ay)</span>
                         </p>
-                      )}
+                      ) : null}
 
                       {/* Büyük toplam + aylık yanında */}
                       <AnimatedPrice
