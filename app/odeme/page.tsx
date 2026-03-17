@@ -171,11 +171,13 @@ function OdemeInner() {
   const [showModal, setShowModal] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const paket    = searchParams.get('paket')    || 'Premium';
-  const sure     = searchParams.get('sure')     || '';
-  const toplam   = searchParams.get('toplam')   || '0';
-  const original = searchParams.get('orijinal') || '';
-  const cihaz    = searchParams.get('cihaz')    || '1';
+  const paket        = searchParams.get('paket')         || 'Premium';
+  const sure         = searchParams.get('sure')          || '';
+  const toplam       = searchParams.get('toplam')        || '0';
+  const original     = searchParams.get('orijinal')      || '';
+  const cihaz        = searchParams.get('cihaz')         || '1';
+  const isAbone      = searchParams.get('abone')         === '1';
+  const aboneIndirim = parseFloat(searchParams.get('abone_indirim') || '0');
 
   const userEmail = session?.user?.email || '';
   const userName  = session?.user?.name  || '';
@@ -432,10 +434,24 @@ function OdemeInner() {
 
           {/* Fiyat */}
           <div className="flex flex-col gap-3 border-b border-[#131f30] px-5 py-4">
+            {isAbone && (
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/30 px-3 py-2">
+                <span className="text-emerald-400 text-sm">🔄</span>
+                <p className="text-xs font-bold text-emerald-400">Uzatmaya özel %25 indirim uygulandı</p>
+              </div>
+            )}
             {original && (
               <div className="flex justify-between text-sm">
                 <span className="text-[#5a6a80]">Ara Toplam</span>
                 <span className="font-semibold">₺{fmt(origNum)}</span>
+              </div>
+            )}
+            {isAbone && aboneIndirim > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="flex items-center gap-1.5 text-emerald-400">
+                  🔄 Abone İndirimi (%25)
+                </span>
+                <span className="font-semibold text-emerald-400">-₺{fmt(aboneIndirim)}</span>
               </div>
             )}
             {savedNum > 0 && (
