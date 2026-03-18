@@ -26,7 +26,7 @@ const nextConfig = {
     return [
       {
         source: '/araclar', // Eski adresiniz (path)
-        destination: 'https://www.hedef-site.com', // Gitmesini istediğiniz tam adres
+        destination: 'https://www.galyastream.com/', // Gitmesini istediğiniz tam adres
         permanent: true, // true yaparsanız 308 (Kalıcı), false yaparsanız 307 (Geçici) yönlendirme yapar
       },
     ];
