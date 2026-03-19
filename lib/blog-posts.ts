@@ -1430,6 +1430,834 @@ Doğru IPTV aboneliğini seçmek bir kez verilen önemli bir karardır. Galya IP
 [Paketleri İncele →](https://galyaiptv.com.tr/#paketler)
     `,
   },
+
+  {
+    slug: 'fire-tv-stick-iptv-kurulumu',
+    title: "Fire TV Stick'e IPTV Nasıl Kurulur? Hızlı Kurulum Rehberi",
+    description:
+      "Amazon Fire TV Stick üzerinde IPTV kurulumu nasıl yapılır? Downloader, IPTV Smarters ve TiviMate ile adım adım kurulum rehberi.",
+    date: '2026-03-19',
+    category: 'Kurulum',
+    content: `
+## Fire TV Stick'e IPTV Kurmak Zor mu?
+
+Hayır. Fire TV Stick, IPTV kullanımı için en pratik cihazlardan biridir. Uygun bir player uygulaması, stabil internet bağlantısı ve servisinizden gelen giriş bilgileriyle birkaç dakika içinde yayına başlayabilirsiniz.
+
+## Kurulum İçin Gerekenler
+
+- Fire TV Stick cihazı
+- Amazon hesabı
+- En az 15 Mbps internet bağlantısı
+- IPTV servisinizden alınan Xtream Codes veya M3U bilgileri
+
+## En Kolay Yöntem: IPTV Smarters Pro
+
+1. Fire TV Stick ana ekranında **Find > Search** bölümüne girin.
+2. **Downloader** uygulamasını yükleyin.
+3. Ayarlar bölümünden geliştirici seçeneklerinde bilinmeyen kaynakları etkinleştirin.
+4. Downloader içine IPTV player uygulamasının resmi indirme bağlantısını girin.
+5. Uygulama yüklendikten sonra açın ve **Xtream Codes API** ile giriş yapın.
+
+## TiviMate Kullanılır mı?
+
+Evet. Özellikle canlı TV arayüzü, favoriler, kategori yönetimi ve EPG görünümü açısından TiviMate çok başarılıdır. Kumanda ile rahat kullanım isteyenler için iyi bir seçimdir.
+
+## Performans İçin İpuçları
+
+- Mümkünse 5 GHz Wi‑Fi kullanın.
+- Cihaz depolamasını gereksiz uygulamalardan temizleyin.
+- Arka planda çalışan fazla uygulamaları kapatın.
+- Uzun süreli kullanımda cihazı yeniden başlatın.
+
+## Sık Görülen Hatalar
+
+**Uygulama açılmıyor:** Eski APK sürümü yüklü olabilir.
+
+**Yayın donuyor:** İnternet hızı, Wi‑Fi gücü veya servis yoğunluğu kontrol edilmelidir.
+
+**EPG görünmüyor:** Sağlayıcınızdan doğru EPG URL'si alınmalıdır.
+
+## Sonuç
+
+Fire TV Stick, uygun fiyatlı ve hızlı bir IPTV çözümüdür. Kurulumu doğru yaptığınızda hem canlı TV hem de film/dizi arşivini akıcı şekilde kullanabilirsiniz.
+    `,
+  },
+  {
+    slug: 'apple-tv-iptv-kurulumu',
+    title: "Apple TV IPTV Kurulumu: tvOS İçin Adım Adım Rehber",
+    description:
+      "Apple TV üzerinde IPTV nasıl kurulur? tvOS uyumlu player uygulamaları, M3U ve Xtream girişleriyle eksiksiz Apple TV IPTV rehberi.",
+    date: '2026-03-18',
+    category: 'Kurulum',
+    content: `
+## Apple TV'de IPTV Kullanılır mı?
+
+Evet. Apple TV, güçlü donanımı ve akıcı arayüzü sayesinde IPTV için oldukça iyi bir seçenektir. Özellikle yüksek bitrate'li yayınlarda ve modern arayüz isteyen kullanıcılar için ideal olabilir.
+
+## Hangi Uygulamalar Kullanılır?
+
+Apple TV'de IPTV için en sık tercih edilen uygulamalar şunlardır:
+
+- IPTV Smarters
+- GSE Smart IPTV
+- Snappier IPTV tarzı tvOS uyumlu uygulamalar
+- Bazı servislerin kendi özel uygulamaları
+
+## Kurulum Adımları
+
+1. Apple TV ana ekranından **App Store**'u açın.
+2. Güvenilir bir IPTV player uygulaması indirin.
+3. Uygulamayı açtıktan sonra giriş yöntemi seçin.
+4. Elinizde **Xtream Codes** varsa sunucu URL'si, kullanıcı adı ve şifre girin.
+5. **M3U** kullanıyorsanız playlist bağlantısını yapıştırın.
+
+## Xtream Codes mi, M3U mu?
+
+Apple TV'de her iki yöntem de çalışabilir. Ancak kullanıcı deneyimi açısından Xtream Codes çoğu zaman daha düzenli kategori yapısı ve daha kolay giriş sunduğu için tercih edilir.
+
+## Apple TV İçin Öneriler
+
+- Kablolu bağlantı kullanabiliyorsanız tercih edin.
+- 4K yayın izliyorsanız televizyon ve HDMI zincirinizin uyumlu olduğundan emin olun.
+- Uygulama izinlerini güncel tutun.
+
+## En Sık Sorulan Sorular
+
+### Apple TV'de ücretsiz uygulama var mı?
+Evet, bazı uygulamalar ücretsiz temel kullanım sunar; bazıları ise premium özellikleri ücretli açar.
+
+### Kumanda ile kullanım rahat mı?
+Genellikle evet. Apple TV'nin uzaktan kumandasıyla kanal geçişi ve kategori dolaşımı oldukça pratiktir.
+
+## Sonuç
+
+Apple TV, premium kullanım deneyimi isteyen IPTV kullanıcıları için güçlü bir alternatiftir. Doğru uygulama ve doğru giriş yöntemiyle kurulum birkaç dakika içinde tamamlanır.
+    `,
+  },
+  {
+    slug: 'android-tv-box-iptv-kurulumu',
+    title: 'Android TV Box IPTV Kurulumu: Başlangıçtan İzlemeye Kadar Tüm Adımlar',
+    description:
+      'Android TV Box cihazlarda IPTV kurulumu nasıl yapılır? TiviMate, Smarters ve M3U/Xtream giriş yöntemleriyle pratik rehber.',
+    date: '2026-03-17',
+    category: 'Kurulum',
+    content: `
+## Android TV Box Neden IPTV İçin Popüler?
+
+Android TV Box cihazlar, uygulama özgürlüğü ve geniş format desteği sayesinde IPTV kullanıcılarının en çok tercih ettiği çözümlerden biridir. Uygun fiyatlı modellerden güçlü 4K kutulara kadar birçok seçenek bulunur.
+
+## Kurulum İçin İhtiyacınız Olanlar
+
+- Android TV Box cihazı
+- Google Play erişimi
+- IPTV giriş bilgileriniz
+- Stabil internet bağlantısı
+
+## Hangi Uygulamalar Tercih Edilmeli?
+
+- **TiviMate:** Televizyon deneyimine en yakın arayüzlerden biri
+- **IPTV Smarters Pro:** Kurulumu kolay ve yaygın
+- **Perfect Player:** Hafif yapı isteyen kullanıcılar için
+
+## Adım Adım Kurulum
+
+1. Google Play Store'u açın.
+2. Seçtiğiniz IPTV player'ı indirin.
+3. Uygulamayı açıp giriş tipi belirleyin.
+4. Xtream Codes, M3U veya portal bilgilerini ekleyin.
+5. Kategoriler yüklenince canlı TV, film ve dizileri test edin.
+
+## Donma Yaşanmaması İçin
+
+- Mümkünse Ethernet bağlantısı kullanın.
+- Kutunun aşırı ısınmadığından emin olun.
+- Düşük RAM'li cihazlarda fazla uygulama tutmayın.
+- EPG yükleme sırasında cihazı zorlamayın.
+
+## Hangi Kullanıcıya Uygun?
+
+Android TV Box, Smart TV uygulama desteği zayıf olan kullanıcılar için özellikle iyidir. Eski televizyonları akıllı IPTV ekranına dönüştürmek için de ideal çözümdür.
+
+## Sonuç
+
+Android TV Box ile IPTV kurulumu esnek, hızlı ve ekonomiktir. Doğru uygulama seçimi ve iyi internet bağlantısıyla oldukça stabil sonuç alınabilir.
+    `,
+  },
+  {
+    slug: 'windows-pc-iptv-kurulumu',
+    title: "Windows Bilgisayarda IPTV Nasıl İzlenir? VLC ve Player Seçenekleri",
+    description:
+      "Windows PC'de IPTV kurmak isteyenler için VLC, IPTV Smarters ve diğer player seçenekleriyle kurulum ve kullanım rehberi.",
+    date: '2026-03-16',
+    category: 'Kurulum',
+    content: `
+## Bilgisayarda IPTV İzlemek Mantıklı mı?
+
+Evet. Özellikle çalışma masasında maç, haber veya dizi takip etmek isteyen kullanıcılar için bilgisayarda IPTV kullanımı oldukça pratiktir. Ayrıca test yayını kontrol etmek için de iyi bir yöntemdir.
+
+## En Sık Kullanılan Uygulamalar
+
+- VLC Media Player
+- IPTV Smarters Windows sürümü
+- MyIPTV Player
+- Web tabanlı panel çözümleri
+
+## VLC ile Hızlı Başlangıç
+
+1. VLC'yi resmi sitesinden indirin.
+2. **Media > Open Network Stream** menüsüne girin.
+3. IPTV servisinizden gelen M3U URL'sini yapıştırın.
+4. Yayınları açın.
+
+Bu yöntem hızlıdır fakat kategori yönetimi ve EPG tarafında sınırlı olabilir.
+
+## IPTV Smarters ile Kurulum
+
+Xtream Codes desteği sayesinde daha düzenli kullanım sunar. Kullanıcı adı, şifre ve sunucu bilgilerini girerek canlı TV, film ve dizi kategorilerine daha kolay erişebilirsiniz.
+
+## Bilgisayarda Daha İyi Performans İçin
+
+- Wi‑Fi yerine kablolu bağlantı tercih edin.
+- Donanım hızlandırma ayarlarını kontrol edin.
+- Arka planda bant genişliği kullanan indirme işlemlerini kapatın.
+
+## Kimler İçin Uygun?
+
+- Ofiste veya evde ikinci ekran kullananlar
+- Test yayını almak isteyenler
+- Büyük arşivleri klavye/fare ile düzenlemek isteyenler
+
+## Sonuç
+
+Windows bilgisayarda IPTV izlemek hem hızlı kurulur hem de sorun tespiti için faydalıdır. Özellikle M3U testlerinde bilgisayar kullanımı oldukça pratiktir.
+    `,
+  },
+  {
+    slug: 'm3u-calismiyor-cozumleri',
+    title: 'M3U Link Çalışmıyor mu? En Sık 9 Sorun ve Çözümü',
+    description:
+      'M3U link açılmıyor, kanal listesi gelmiyor veya playlist boş görünüyor mu? En yaygın M3U sorunları ve pratik çözümler bu rehberde.',
+    date: '2026-03-15',
+    category: 'Sorun Giderme',
+    content: `
+## M3U Link Neden Çalışmaz?
+
+M3U linkleri IPTV kullanımının en temel bileşenlerinden biridir. Ancak yanlış URL, süresi dolmuş erişim, IP kısıtı veya player uyumsuzluğu gibi nedenlerle liste açılmayabilir.
+
+## En Yaygın Sorunlar
+
+### 1. URL eksik veya hatalı kopyalandı
+Bağlantı sonundaki tek bir karakter hatası bile listenin açılmamasına neden olabilir.
+
+### 2. Süresi dolmuş abonelik
+Bazı kullanıcılar teknik hata sanır; oysa abonelik süresi bitmiş olabilir.
+
+### 3. IP kısıtlaması
+Servis farklı IP veya farklı ülkeden girişleri sınırlıyor olabilir.
+
+### 4. Uygulama M3U formatını doğru işlemiyor
+Eski veya uyumsuz player sürümleri bazen listeleri yükleyemez.
+
+### 5. EPG URL'si bozuk
+Canlı TV açılıyor ama rehber gelmiyorsa ayrı EPG problemi olabilir.
+
+## Hızlı Çözüm Adımları
+
+- Linki yeniden kopyalayın.
+- Mümkünse önce VLC üzerinde test edin.
+- Farklı player deneyin.
+- Sağlayıcıdan linkin aktif olup olmadığını doğrulatın.
+- VPN kullanıyorsanız kapatıp tekrar deneyin.
+
+## Hangi Test En Faydalı?
+
+Önce bağlantıyı bilgisayarda VLC ile test etmek, sorunun player'dan mı yoksa linkten mi kaynaklandığını hızlıca anlamanızı sağlar.
+
+## Sonuç
+
+M3U sorunlarının büyük bölümü yanlış giriş veya erişim kaynaklıdır. Sistematik kontrol yapıldığında problem kısa sürede bulunabilir.
+    `,
+  },
+  {
+    slug: 'xtream-codes-giris-hatasi',
+    title: 'Xtream Codes Giriş Hatası: Kullanıcı Adı, Şifre ve Sunucu Sorunları',
+    description:
+      'Xtream Codes login başarısız mı oluyor? Kullanıcı adı, şifre, portal URL ve uygulama uyumsuzluğu kaynaklı hataların çözüm rehberi.',
+    date: '2026-03-14',
+    category: 'Sorun Giderme',
+    content: `
+## Xtream Codes Hatası Nedir?
+
+Xtream Codes ile giriş yapan kullanıcılar bazen "login failed", "authorization error" veya "invalid credentials" gibi uyarılar görür. Bu uyarılar çoğu zaman erişim bilgilerinden veya sunucu adresinden kaynaklanır.
+
+## Kontrol Edilmesi Gerekenler
+
+- Kullanıcı adı doğru mu?
+- Şifrede boşluk veya kopyalama hatası var mı?
+- Sunucu URL'si http/https farkıyla yanlış mı girildi?
+- Port numarası eksik mi?
+
+## Sık Yapılan Hata
+
+Kullanıcılar genellikle tam portal adresi yerine sadece domain yazar. Oysa bazı servislerde port bilgisi zorunludur. Ayrıca `/` karakteri ve protokol kısmı da önemlidir.
+
+## Player Kaynaklı Sorunlar
+
+Bazı uygulamalar eski sürümse Xtream girişlerini düzgün işleyemeyebilir. Uygulamayı güncellemek veya alternatif player ile denemek çoğu zaman çözüm sağlar.
+
+## Sunucu Taraflı Olasılıklar
+
+- Geçici bakım
+- Yoğunluk nedeniyle gecikme
+- Bölgesel engel veya firewall sorunu
+
+## Ne Yapmalısınız?
+
+1. Bilgileri sıfırdan girin.
+2. Aynı hesabı başka cihazda test edin.
+3. Servis sağlayıcıya ekran görüntüsü gönderin.
+4. Mümkünse M3U alternatifini deneyin.
+
+## Sonuç
+
+Xtream Codes sorunlarında panik yapmadan giriş bilgilerini, sunucu yapısını ve uygulama sürümünü kontrol etmek en doğru yaklaşımdır.
+    `,
+  },
+  {
+    slug: 'iptv-ses-var-goruntu-yok',
+    title: 'IPTV Ses Var Görüntü Yok Sorunu Nasıl Çözülür?',
+    description:
+      'IPTV yayınında ses geliyor ama görüntü yoksa sebep codec, çözünürlük, player veya cihaz uyumsuzluğu olabilir. Adım adım çözüm rehberi.',
+    date: '2026-03-13',
+    category: 'Sorun Giderme',
+    content: `
+## Ses Gelip Görüntü Gelmemesi Ne Anlama Gelir?
+
+Bu durum genellikle kanal akışının tamamen bozulduğunu değil, cihazın video codec'ini çözemediğini gösterir. Yani yayın geliyor ama görüntü tarafı işlenemiyor olabilir.
+
+## Olası Sebepler
+
+- Eski player uygulaması
+- H.265 / HEVC desteklemeyen cihaz
+- Çözünürlük uyumsuzluğu
+- Donanım hızlandırma problemi
+- Kanalın geçici akış sorunu
+
+## Denenmesi Gereken Çözümler
+
+### Player değiştirin
+Farklı bir IPTV player ile aynı kanalı deneyin.
+
+### Donanım hızlandırmayı kapatın
+Bazı cihazlarda tam tersi sonuç verir; bu yüzden açıp kapatarak test yapılmalıdır.
+
+### Kanalı başka cihazda test edin
+Sorunun hesaptan mı cihazdan mı kaynaklandığı anlaşılır.
+
+### Uygulamayı güncelleyin
+Eski player sürümleri yeni codec yapılarını desteklemeyebilir.
+
+## Özellikle Hangi Cihazlarda Daha Sık Görülür?
+
+- Eski Android TV Box modelleri
+- Düşük segment Smart TV'ler
+- Güncellenmeyen mobil uygulamalar
+
+## Sonuç
+
+Ses var görüntü yok sorunu çoğu zaman cihaz veya uygulama uyumsuzluğundan kaynaklanır. Doğru player ve codec desteğiyle çözülmesi mümkündür.
+    `,
+  },
+  {
+    slug: 'iptv-kanal-yenileniyor-sorunu',
+    title: 'IPTV Kanal Yenileniyor Sorunu: Neden Olur, Nasıl Düzeltilir?',
+    description:
+      'IPTV sürekli yeniden bağlanıyor, kanal yenileniyor veya yayın başa sarıyor mu? Ağ, buffer ve uygulama kaynaklı nedenleri öğrenin.',
+    date: '2026-03-12',
+    category: 'Sorun Giderme',
+    content: `
+## Kanal Neden Sürekli Yenilenir?
+
+"Yeniden bağlanıyor", "reconnecting" veya kanalın kısa aralıklarla yeniden başlaması genellikle bağlantı istikrarsızlığı işaretidir. Sorun her zaman sağlayıcı kaynaklı olmayabilir.
+
+## Başlıca Nedenler
+
+- Zayıf Wi‑Fi sinyali
+- Modem üzerinde yoğun trafik
+- Cihazın RAM yetersizliği
+- Player buffer ayarlarının kötü yapılandırılması
+- Sunucu ile kullanıcı arasındaki rota dalgalanması
+
+## Kontrol Listesi
+
+1. Modemi yeniden başlatın.
+2. Mümkünse Ethernet bağlantısı kullanın.
+3. Aynı yayını farklı cihazda deneyin.
+4. Player içinde buffer ayarlarını orta seviyeye alın.
+5. VPN açıksa kapatıp test edin.
+
+## Sürekli Maç Yayınlarında Oluyorsa?
+
+Yoğun zamanlarda ağ istikrarı daha kritik hâle gelir. Maç yayını gibi yüksek talep alan içeriklerde küçük ağ sorunları daha görünür olur.
+
+## Sonuç
+
+Kanal yenilenme sorunu çoğunlukla ağ ve cihaz istikrarıyla ilgilidir. Basit birkaç optimizasyonla büyük ölçüde azaltılabilir.
+    `,
+  },
+  {
+    slug: 'tivimate-vs-iptv-smarters',
+    title: 'TiviMate vs IPTV Smarters: Hangisi Daha İyi?',
+    description:
+      'TiviMate ve IPTV Smarters karşılaştırması: arayüz, EPG, kullanım kolaylığı, cihaz uyumu ve performans açısından hangi uygulama önde?',
+    date: '2026-03-11',
+    category: 'Karşılaştırma',
+    content: `
+## Neden Bu İki Uygulama Hep Karşılaştırılıyor?
+
+Çünkü TiviMate ve IPTV Smarters, IPTV kullanıcılarının en sık tercih ettiği iki güçlü player. Ancak kullanım senaryoları aynı değil.
+
+## TiviMate'in Güçlü Yanları
+
+- Televizyon odaklı modern arayüz
+- EPG görünümü çok başarılı
+- Kumanda ile kullanımı rahat
+- Favori ve kategori düzenleme kolay
+
+## IPTV Smarters'ın Güçlü Yanları
+
+- Çoklu platform desteği
+- Hızlı kurulum
+- Film, dizi ve canlı TV'yi tek yerde toplama
+- Xtream Codes ile pratik giriş
+
+## Hangi Kullanıcı İçin Hangisi?
+
+**Android TV / TV Box kullanıyorsanız:** TiviMate çoğu zaman daha iyi deneyim sunar.
+
+**Mobil + TV + bilgisayar arasında aynı mantığı istiyorsanız:** IPTV Smarters daha esnek olabilir.
+
+## Zayıf Taraflar
+
+TiviMate bazı premium özellikleri ücretli sunabilir. IPTV Smarters ise bazı kullanıcılar için arayüz tarafında daha kalabalık hissettirebilir.
+
+## Sonuç
+
+Saf canlı TV deneyimi için TiviMate, çok platformlu ve kolay kurulum isteyenler için IPTV Smarters öne çıkar.
+    `,
+  },
+  {
+    slug: 'm3u-vs-xtream-codes',
+    title: 'M3U mu Xtream Codes mu? IPTV Giriş Türleri Karşılaştırması',
+    description:
+      'M3U ve Xtream Codes arasındaki fark nedir? Kurulum kolaylığı, uyumluluk ve kullanıcı deneyimi açısından detaylı karşılaştırma.',
+    date: '2026-03-10',
+    category: 'Karşılaştırma',
+    content: `
+## IPTV Kullanırken Hangi Giriş Türü Daha İyi?
+
+Kullanıcıların en çok sorduğu sorulardan biri budur. Teknik olarak her iki yöntem de aynı servise bağlanabilir; fark daha çok kullanım kolaylığı ve uygulama desteğindedir.
+
+## M3U Nedir?
+
+M3U, kanal listesini URL veya dosya üzerinden yükleyen daha temel bir yöntemdir. Birçok uygulamayla çalışır ve hızlı test için pratiktir.
+
+## Xtream Codes Nedir?
+
+Kullanıcı adı, şifre ve sunucu adresi ile giriş yapılan daha düzenli bir yapıdır. Kategori yönetimi, VOD yapısı ve bazı player özellikleri burada daha iyi çalışır.
+
+## Karşılaştırma
+
+### Kurulum Kolaylığı
+- M3U: Kopyala-yapıştır kadar kolay
+- Xtream: Birkaç alan doldurmak gerekir
+
+### Düzen
+- M3U: Liste mantığıyla çalışır
+- Xtream: Daha düzenli panel görünümü sağlar
+
+### Uyum
+- M3U: Eski ve yeni çok sayıda player ile uyumludur
+- Xtream: Modern player'larda güçlü deneyim sunar
+
+## Sonuç
+
+Hızlı kurulum ve geniş uyumluluk için M3U, daha temiz ve zengin arayüz için Xtream Codes çoğu zaman daha avantajlıdır.
+    `,
+  },
+  {
+    slug: 'iptv-vs-youtube-tv',
+    title: 'IPTV vs YouTube TV: Fiyat ve İçerik Açısından Karşılaştırma',
+    description:
+      'IPTV ile YouTube TV arasındaki farklar neler? Kanal sayısı, cihaz desteği, esneklik ve maliyet açısından karşılaştırma rehberi.',
+    date: '2026-03-09',
+    category: 'Karşılaştırma',
+    content: `
+## İki Çözümün Temel Farkı
+
+YouTube TV daha sınırlı ama resmi paket mantığıyla çalışırken, IPTV çözümleri genellikle çok daha geniş kanal ve içerik arşivi sunar. Kullanıcının önceliği burada belirleyicidir.
+
+## Karşılaştırma Başlıkları
+
+### Kanal Çeşitliliği
+IPTV tarafında uluslararası kanal çeşitliliği genellikle çok daha geniştir.
+
+### Fiyat Esnekliği
+IPTV servislerinde farklı abonelik süreleri ve paket seçenekleri bulunabilir.
+
+### Cihaz Uyumu
+Her iki çözüm de modern cihazlarda çalışsa da IPTV, player çeşitliliği nedeniyle daha esnek olabilir.
+
+### Kullanım Kolaylığı
+YouTube TV tarafı daha sade olabilir; IPTV tarafı ise uygulama seçimine göre değişir.
+
+## Kim Hangisini Tercih Etmeli?
+
+- Geniş kanal ve spor/dizi çeşitliliği isteyenler: IPTV
+- Daha standart ve kapalı ekosistem sevenler: YouTube TV tarzı çözümler
+
+## Sonuç
+
+Fiyat/çeşitlilik dengesinde IPTV çoğu kullanıcı için daha avantajlı olabilir. Ancak beklentiye göre doğru yapı farklılaşır.
+    `,
+  },
+  {
+    slug: 'aile-icin-en-iyi-iptv-paketi',
+    title: 'Aile İçin En İyi IPTV Paketi Nasıl Seçilir?',
+    description:
+      'Çocuk içerikleri, spor, dizi ve aynı anda farklı ekranlar için aileye uygun IPTV paketi seçme rehberi.',
+    date: '2026-03-08',
+    category: 'Rehber',
+    content: `
+## Aile Kullanımında Neye Bakılmalı?
+
+Aile için IPTV paketi seçerken sadece kanal sayısına değil, içerik dağılımına ve kullanım senaryosuna bakmak gerekir. Evde farklı kişiler farklı beklentilere sahip olabilir.
+
+## Dikkat Edilmesi Gerekenler
+
+- Çocuk içerikleri var mı?
+- Spor ve film arşivi yeterli mi?
+- Farklı ülke kanalları mevcut mu?
+- Aynı anda birden fazla cihaz desteği var mı?
+
+## Bağlantı Sayısı Neden Önemli?
+
+Aynı anda biri salonda maç izlerken diğeri tablette çizgi film açacaksa tek bağlantılı abonelik yetersiz kalabilir.
+
+## Arşiv Kalitesi
+
+Aile kullanımı için canlı TV kadar VOD arşivi de önemlidir. Özellikle çocuk ve aile filmleri için düzenli içerik güncellemesi aranmalıdır.
+
+## Sonuç
+
+Aile için en iyi paket, en ucuz paket değil; evdeki gerçek izleme alışkanlıklarına en iyi uyan pakettir.
+    `,
+  },
+  {
+    slug: 'spor-icin-en-iyi-iptv-paketi',
+    title: 'Spor İzlemek İçin En İyi IPTV Paketi Nasıl Seçilir?',
+    description:
+      'Futbol, basketbol, Formula 1 ve uluslararası spor kanalları için doğru IPTV paketi nasıl seçilir? Spor odaklı rehber.',
+    date: '2026-03-07',
+    category: 'Rehber',
+    content: `
+## Spor Kullanıcısı İçin IPTV'de En Kritik Konu Nedir?
+
+Spor izleyicisi için iki konu hayati önemdedir: yayın stabilitesi ve doğru kanal kapsamı. Maçın tam kritik anında yaşanan donma, diğer içerik türlerine göre çok daha büyük memnuniyetsizlik yaratır.
+
+## Kontrol Edilecek Başlıklar
+
+- Spor kanal çeşitliliği
+- Yoğun saat performansı
+- Full HD / 4K destek durumu
+- Gecikme seviyesi
+- Yedek kaynak yapısı
+
+## Hangi Paket Daha İyi?
+
+Eğer düzenli olarak Süper Lig, Avrupa maçları, basketbol ve dövüş sporları izliyorsanız yalnızca kanal sayısına değil, spor kategorisinin ne kadar güçlü olduğuna bakmalısınız.
+
+## Teknik İpuçları
+
+- Ethernet bağlantısı kullanın.
+- Mümkünse 4K cihazda kaliteli player tercih edin.
+- Maç günlerinde cihazı önceden yeniden başlatın.
+
+## Sonuç
+
+Spor için en iyi IPTV paketi, en çok kanal sunan değil; yoğun saatlerde en istikrarlı yayını sunan pakettir.
+    `,
+  },
+  {
+    slug: 'yurtdisindaki-turkler-icin-iptv',
+    title: 'Yurt Dışındaki Türkler İçin IPTV Rehberi: Hangi Özellikler Önemli?',
+    description:
+      'Avrupa ve diğer ülkelerde yaşayan Türk kullanıcılar için IPTV seçerken dikkat edilmesi gereken kanal, dil ve bağlantı kriterleri.',
+    date: '2026-03-06',
+    category: 'Rehber',
+    content: `
+## Yurt Dışında IPTV Kullanım İhtiyacı Neden Artıyor?
+
+Yurt dışında yaşayan kullanıcılar çoğu zaman Türk kanallarına, spor yayınlarına ve yerel haberlere erişmek ister. IPTV bu ihtiyacı daha esnek biçimde karşılayabilir.
+
+## Nelere Dikkat Etmeli?
+
+- Türk kanal çeşitliliği
+- Avrupa içi bağlantı performansı
+- Farklı saat dilimlerinde stabil yayın
+- Mobil ve Smart TV uyumu
+
+## Hangi Cihazlar Daha Pratik?
+
+Smart TV, Android TV Box ve Fire TV Stick; yurt dışında yaşayan kullanıcılar için en pratik seçeneklerdir.
+
+## Sonuç
+
+Yurt dışındaki kullanıcılar için doğru IPTV çözümü, sadece kanal sayısı değil, uluslararası erişim kalitesi ve Türk içerik yoğunluğu ile belirlenir.
+    `,
+  },
+  {
+    slug: 'cocuklar-icin-iptv-kullanimi',
+    title: 'Çocuklar İçin IPTV Kullanımı: Aileler Nelere Dikkat Etmeli?',
+    description:
+      'Çocuk içerikleri, güvenli kullanım, kategori yönetimi ve ebeveyn kontrolü açısından IPTV kullanırken dikkat edilmesi gerekenler.',
+    date: '2026-03-05',
+    category: 'Rehber',
+    content: `
+## Çocuklar İçin IPTV Güvenli mi?
+
+Doğru yapılandırma yapıldığında IPTV, çocuklar için kontrollü bir içerik ortamı sunabilir. Ancak kategori yönetimi ve cihaz erişimi aile tarafından doğru planlanmalıdır.
+
+## Dikkat Edilecek Noktalar
+
+- Çocuk kanallarının ayrı favori listesine alınması
+- Uygulama erişiminin ebeveyn kontrolüyle sınırlandırılması
+- Gereksiz kategorilerin gizlenmesi
+- Kullanım süresi planı yapılması
+
+## Sonuç
+
+Aileler için önemli olan yalnızca içerik bolluğu değil, içeriğin düzenli ve kontrollü sunulmasıdır.
+    `,
+  },
+  {
+    slug: 'iptv-icin-minimum-internet-hizi',
+    title: 'IPTV İçin Kaç Mbps Gerekir? Hız ve Kalite Rehberi',
+    description:
+      'SD, HD, Full HD ve 4K IPTV yayını için gerekli minimum internet hızları ve bağlantı kalitesini artırma ipuçları.',
+    date: '2026-03-04',
+    category: 'Rehber',
+    content: `
+## İnternet Hızı IPTV İçin Ne Kadar Önemli?
+
+IPTV deneyimini belirleyen ana faktörlerden biri bağlantı kalitesidir. Sadece teorik hız değil; ping, paket kaybı ve Wi‑Fi stabilitesi de önemlidir.
+
+## Ortalama Gereksinimler
+
+- SD yayın: 5 Mbps
+- HD yayın: 10 Mbps
+- Full HD yayın: 15-20 Mbps
+- 4K yayın: 25 Mbps ve üzeri
+
+## Sadece Hız Yetmez
+
+Wi‑Fi çekim gücü zayıfsa, hatta yüksek hız paketinde bile donma yaşayabilirsiniz. Bu yüzden gerçek deneyim sadece Mbps değerine bağlı değildir.
+
+## Sonuç
+
+Stabil IPTV için yeterli hız kadar, tutarlı bağlantı kalitesi de gerekir.
+    `,
+  },
+  {
+    slug: 'samsung-tv-iptv-uygulamalari',
+    title: "Samsung Smart TV İçin En İyi IPTV Uygulamaları",
+    description:
+      "Samsung Smart TV kullanıcıları için en iyi IPTV uygulamaları, kurulum kolaylığı ve uyumluluk avantajlarıyla birlikte listelendi.",
+    date: '2026-03-03',
+    category: 'Uygulama',
+    content: `
+## Samsung TV'de Uygulama Seçimi Neden Önemli?
+
+Samsung Smart TV kullanıcıları için doğru uygulama seçimi, kurulum kolaylığı ve günlük kullanım kalitesi üzerinde doğrudan etkilidir.
+
+## Popüler Seçenekler
+
+- SS IPTV
+- Smart IPTV benzeri çözümler
+- M3U destekli web tabanlı yükleme araçları
+
+## Seçim Kriterleri
+
+- Kurulum kolaylığı
+- Kumanda ile rahat kullanım
+- Playlist yenileme kolaylığı
+- EPG desteği
+
+## Sonuç
+
+Samsung kullanıcıları için en iyi uygulama, teknik olarak en karmaşık olan değil; en stabil çalışan ve kolay yönetilen uygulamadır.
+    `,
+  },
+  {
+    slug: 'lg-webos-iptv-uygulamalari',
+    title: 'LG webOS İçin En İyi IPTV Uygulamaları ve Kurulum İpuçları',
+    description:
+      'LG Smart TV kullanıcıları için webOS üzerinde çalışan IPTV uygulamaları, kurulum ve kullanım önerileri.',
+    date: '2026-03-02',
+    category: 'Uygulama',
+    content: `
+## LG webOS'ta IPTV Deneyimi
+
+LG webOS arayüzü, IPTV için yeterince akıcı bir deneyim sunabilir. Ancak uygulama desteği model yılına göre değişebilir.
+
+## Nelere Dikkat Edilmeli?
+
+- Uygulamanın model yılıyla uyumu
+- Playlist güncelleme kolaylığı
+- Kanal geçiş performansı
+- EPG görünümü
+
+## Sonuç
+
+LG televizyonlarda doğru uygulama seçildiğinde IPTV kullanımı oldukça konforlu olabilir.
+    `,
+  },
+  {
+    slug: 'iptv-epg-nedir-nasil-eklenir',
+    title: 'IPTV EPG Nedir? Kanal Rehberi Nasıl Eklenir?',
+    description:
+      'EPG nedir, IPTV uygulamalarında nasıl çalışır ve kanal rehberi nasıl eklenir? Adım adım EPG rehberi.',
+    date: '2026-03-01',
+    category: 'Rehber',
+    content: `
+## EPG Nedir?
+
+EPG, yani elektronik program rehberi; hangi kanalda hangi programın oynadığını gösteren zaman çizelgesidir. IPTV deneyimini ciddi biçimde iyileştirir.
+
+## Neden Önemli?
+
+- Hangi yayının ne zaman başladığını görürsünüz.
+- Kanal gezinmesi hızlanır.
+- Daha düzenli TV deneyimi sunar.
+
+## Nasıl Eklenir?
+
+Çoğu player uygulamasında ayrı bir EPG URL alanı bulunur. Sağlayıcınızdan doğru XMLTV veya benzeri rehber bağlantısını alıp uygulamaya eklemeniz gerekir.
+
+## Sonuç
+
+EPG, IPTV kullanımını daha profesyonel ve rahat hâle getiren önemli bir özelliktir.
+    `,
+  },
+  {
+    slug: 'iptv-buffer-ayari-nasil-yapilir',
+    title: 'IPTV Buffer Ayarı Nasıl Yapılır? Daha Akıcı Yayın İçin Öneriler',
+    description:
+      'IPTV uygulamalarında buffer ayarı ne işe yarar? Donmayı azaltmak ve akıcı yayın almak için doğru buffer yapılandırması rehberi.',
+    date: '2026-02-28',
+    category: 'Rehber',
+    content: `
+## Buffer Ayarı Nedir?
+
+Buffer, oynatıcının kısa süreli veri önbelleği tutarak yayını daha stabil göstermesini sağlar. Çok düşük veya çok yüksek ayar bazen performansı olumsuz etkileyebilir.
+
+## Ne Zaman Değiştirilir?
+
+- Wi‑Fi istikrarsızsa
+- Kanal geçişleri yavaşsa
+- Yayın kısa aralıklarla duruyorsa
+
+## Genel Tavsiye
+
+Çoğu kullanıcı için orta seviye buffer dengeli sonuç verir. Ancak cihaz ve ağ durumuna göre test etmek gerekir.
+
+## Sonuç
+
+Doğru buffer ayarı, özellikle canlı spor yayınlarında hissedilir fark yaratabilir.
+    `,
+  },
+  {
+    slug: 'iptv-test-yayini-alirken-nelere-bakilmali',
+    title: 'IPTV Test Yayını Alırken Nelere Bakılmalı?',
+    description:
+      'Ücretsiz IPTV test yayını alırken kanal kalitesi, donma oranı, spor yayını performansı ve cihaz uyumluluğu nasıl değerlendirilir?',
+    date: '2026-02-27',
+    category: 'Rehber',
+    content: `
+## Test Yayını Neden Önemli?
+
+IPTV servislerinde test yayını, satın alma öncesi risk azaltmanın en doğru yoludur. Sunulan kalite iddialarını gerçek kullanımda görmenizi sağlar.
+
+## Testte Nelere Bakılmalı?
+
+- Kanal açılış hızı
+- Maç ve yoğun saat performansı
+- Film/dizi arşivinin düzeni
+- Cihazınızla uyum
+- EPG ve kategori yapısı
+
+## Hata Yapmayın
+
+Sadece 1-2 dakika test edip karar vermeyin. Mümkünse farklı saatlerde, farklı içerik türlerinde deneyin.
+
+## Sonuç
+
+İyi bir test yayını, kötü bir abonelik seçimini önler.
+    `,
+  },
+  {
+    slug: 'iptv-uygulama-degistirince-ne-olur',
+    title: 'IPTV Uygulama Değiştirince Ne Olur? Hesap Aynı Kalır mı?',
+    description:
+      'IPTV player değiştirmek isteyenler için hesap bilgileri, playlist, Xtream giriş ve cihaz uyumluluğu hakkında açıklayıcı rehber.',
+    date: '2026-02-26',
+    category: 'Rehber',
+    content: `
+## Player Değiştirmek Hesabı Bozar mı?
+
+Genellikle hayır. IPTV hizmeti ile player uygulaması aynı şey değildir. Çoğu durumda aynı hesabı farklı uygulamalarda kullanabilirsiniz.
+
+## Ne Değişir?
+
+- Arayüz
+- Kanal listesi görünümü
+- EPG sunumu
+- Favori ve kategori yönetimi
+
+## Dikkat Edilmesi Gerekenler
+
+Bazı uygulamalar sadece M3U, bazıları hem M3U hem Xtream destekler. Bu yüzden player değiştirirken giriş tipinizin desteklenip desteklenmediğini kontrol edin.
+
+## Sonuç
+
+Doğru player değişimi, aynı IPTV hesabıyla çok daha iyi kullanım deneyimi sunabilir.
+    `,
+  },
+  {
+    slug: 'iptv-evde-birden-fazla-cihazda-kullanma',
+    title: 'IPTV Evde Birden Fazla Cihazda Kullanılır mı?',
+    description:
+      'IPTV aynı evde TV, telefon ve tablette kullanılabilir mi? Eş zamanlı bağlantı sayısı ve çoklu cihaz kullanımı rehberi.',
+    date: '2026-02-25',
+    category: 'Rehber',
+    content: `
+## Tek Hesapla Kaç Cihaz Kullanılabilir?
+
+Bu tamamen servis paketine bağlıdır. Bazı abonelikler tek eş zamanlı bağlantı sunarken bazıları çoklu cihaz kullanımını destekler.
+
+## Neden Karıştırılıyor?
+
+Bir hesabın farklı cihazlara kurulabilmesi ile aynı anda birden fazla cihazda kullanılabilmesi farklı şeylerdir.
+
+## Dikkat Edilecek Nokta
+
+Eş zamanlı bağlantı sınırını aşmak, hesaptan atılma veya bağlantı çakışmasına yol açabilir.
+
+## Sonuç
+
+Kurulum çok cihaza yapılabilir; ama aynı anda kullanım hakkı paket detayına göre değişir.
+    `,
+  },
 ];
 
 export function getPostBySlug(slug: string): BlogPost | undefined {
