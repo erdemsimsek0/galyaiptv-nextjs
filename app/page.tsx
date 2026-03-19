@@ -1050,6 +1050,22 @@ function HomePageInner() {
                   IPTV Paketlerini Gör
                 </Link>
               </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {[
+                  { href: '/blog', label: '📚 Blog Rehberleri' },
+                  { href: '/iletisim', label: '💬 İletişim' },
+                  { href: '/kurulum-rehberi', label: '🛠️ Kurulum Rehberi' },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="rounded-xl border border-[#1e3a5f] bg-[#0d1a2a] px-4 py-2 text-sm font-medium text-[#9ca3af] transition-all hover:border-[#3b82f6]/50 hover:bg-[#162035] hover:text-white"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
             </div>
 
             {/* Sağ: mockup görseli — mobilde gizli */}
@@ -1573,6 +1589,18 @@ function HomePageInner() {
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackWhatsAppClick('footer_cta')} className="flex items-center justify-center gap-2 rounded-xl bg-[#25d366] px-8 py-4 font-semibold text-white transition-all hover:bg-[#1ebe5d]">
                 💬 WhatsApp ile İletişim
               </a>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+              <Link href="/blog" className="rounded-xl border border-[#1e3a5f] bg-[#111827] px-5 py-3 text-sm font-semibold text-[#9ca3af] transition-all hover:border-[#3b82f6]/50 hover:bg-[#162035] hover:text-white">
+                Blog Rehberlerini Oku
+              </Link>
+              <Link href="/iletisim" className="rounded-xl border border-[#1e3a5f] bg-[#111827] px-5 py-3 text-sm font-semibold text-[#9ca3af] transition-all hover:border-[#3b82f6]/50 hover:bg-[#162035] hover:text-white">
+                İletişim Sayfası
+              </Link>
+              <Link href="/kurulum-rehberi" className="rounded-xl border border-[#1e3a5f] bg-[#111827] px-5 py-3 text-sm font-semibold text-[#9ca3af] transition-all hover:border-[#3b82f6]/50 hover:bg-[#162035] hover:text-white">
+                Kurulum Rehberi
+              </Link>
             </div>
           </div>
         </section>
