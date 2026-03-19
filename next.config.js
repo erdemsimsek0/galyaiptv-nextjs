@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 
-// HTTP sunuculara fetch için gerekli
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
 const nextConfig = {
   images: {
     unoptimized: true,
@@ -16,10 +13,7 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
 
-  // Vercel'de HTTP kaynaklara sunucu tarafı fetch için gerekli
-  experimental: {
-    serverComponentsExternalPackages: [],
-  },
+  serverExternalPackages: [],
 
   // --- YÖNLENDİRMELER BURADA BAŞLIYOR ---
   async redirects() {

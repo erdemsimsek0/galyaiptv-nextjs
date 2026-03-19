@@ -47,6 +47,20 @@ function useSubscription(email: string | null | undefined): boolean {
 const SUBSCRIBER_EXTRA = 25;
 interface DurationOption { key: '12ay' | '6ay' | '3ay'; label: string; months: number; discount: number; badge?: string; badgeCls?: string }
 interface DeviceOption { n: 1 | 2 | 3; label: string; sub: string; badge?: string; badgeCls?: string }
+interface PlanOption {
+  id: 'max' | 'sports' | 'cinema';
+  lt: string;
+  ltColor: string;
+  name: string;
+  popular: boolean;
+  color: string;
+  openCls: string;
+  selCls: string;
+  desc: string;
+  basePrice: number;
+  features: string[];
+}
+
 
 const DURATIONS: DurationOption[] = [
   { key: '12ay', label: '12 Ay', months: 12, discount: 20, badge: '%20 İNDİRİM', badgeCls: 'bg-emerald-600' },
@@ -58,7 +72,7 @@ const DEVICES: DeviceOption[] = [
   { n: 1 as const, label: '1 Cihaz', sub: 'Bireysel' },
   { n: 3 as const, label: '3 Cihaz', sub: 'Aile' },
 ];
-const PLANS = [
+const PLANS: PlanOption[] = [
   {
     id: 'max', lt: 'MAX', ltColor: '#ef4444', name: 'Max', popular: true,
     color: '#ef4444', openCls: 'border-l-[#ef4444] border-[#ef444433]', selCls: 'border-[#ef444466] bg-[#0d0a0a]',
@@ -93,7 +107,7 @@ function PlanCard({
   deviceMultipliers,
   coupons,
 }: {
-  plan: typeof PLANS[number];
+  plan: PlanOption;
   isSubscriber: boolean;
   deviceMultipliers: Record<number, number>;
   coupons: CouponDefinition[];
