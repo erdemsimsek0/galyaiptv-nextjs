@@ -17,9 +17,7 @@ const nextConfig = {
   poweredByHeader: false,
 
   // Vercel'de HTTP kaynaklara sunucu tarafı fetch için gerekli
-  experimental: {
-    serverComponentsExternalPackages: [],
-  },
+  serverExternalPackages: [],
 
   // --- YÖNLENDİRMELER BURADA BAŞLIYOR ---
   async redirects() {
