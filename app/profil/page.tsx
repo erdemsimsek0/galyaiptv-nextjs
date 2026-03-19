@@ -302,9 +302,16 @@ function ProfilInner() {
   };
 
   const SERVER = 'http://pro4kiptv.xyz:2086';
-  const m3u    = creds
-    ? `${SERVER}/get.php?username=${creds.username}&password=${creds.password}&type=m3u&output=ts`
+  const activeUsername = subscription?.username || creds?.username || '';
+  const activePassword = subscription?.password || creds?.password || '';
+  const m3u = activeUsername && activePassword
+    ? `${SERVER}/get.php?username=${activeUsername}&password=${activePassword}&type=m3u&output=ts`
     : '';
+  const setupApps = [
+    { name: 'TiviMate', desc: 'Android TV / TV Box için önerilen', href: '/kurulum-rehberi' },
+    { name: 'IPTV Smarters', desc: 'Telefon, tablet ve PC için', href: '/kurulum-rehberi' },
+    { name: 'GSE Smart IPTV', desc: 'iPhone / iPad kurulumu', href: '/kurulum-rehberi' },
+  ];
 
   return (
     <div className="min-h-screen bg-[#07111f] text-white">
@@ -614,6 +621,50 @@ function ProfilInner() {
                 </Link>
               </div>
             )}
+          </div>
+        )}
+
+        {(activeUsername || subscription) && (
+          <div className="rounded-2xl border border-[#1e2d42] bg-[#0a1525] overflow-hidden">
+            <div className="border-b border-[#1e2d42] px-5 py-3 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4b5563]">Tek Tık Kurulum Bilgileri</p>
+                <p className="mt-1 text-xs text-[#6b7280]">Uygulamayı seç, bilgileri kopyala ve birkaç dakikada kurulumu tamamla.</p>
+              </div>
+              <Link href="/kurulum-rehberi" className="text-xs text-[#3b82f6] hover:underline">Detaylı rehber →</Link>
+            </div>
+            <div className="grid gap-4 px-5 py-4 lg:grid-cols-[1.3fr_1fr]">
+              <div className="space-y-3">
+                {[
+                  { label: 'Server URL', value: SERVER },
+                  { label: 'Kullanıcı Adı', value: activeUsername },
+                  { label: 'Şifre', value: activePassword },
+                  { label: 'M3U URL', value: m3u },
+                ].filter(row => row.value).map(row => (
+                  <div key={row.label} className="flex items-center gap-3 rounded-xl border border-[#1e2d42] bg-[#07111f] px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4b5563]">{row.label}</p>
+                      <p className="mt-1 truncate font-mono text-xs text-white">{row.value}</p>
+                    </div>
+                    <CopyBtn value={row.value} />
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-3">
+                {setupApps.map(app => (
+                  <Link key={app.name} href={app.href} className="block rounded-xl border border-[#1e2d42] bg-[#07111f] px-4 py-3 transition-colors hover:bg-[#0d1a2a]">
+                    <p className="text-sm font-semibold text-white">{app.name}</p>
+                    <p className="mt-1 text-xs text-[#6b7280]">{app.desc}</p>
+                    <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#3b82f6]/10 px-2.5 py-1 text-[11px] font-semibold text-[#3b82f6]">
+                      Bilgiler hazır · rehbere git
+                    </div>
+                  </Link>
+                ))}
+                <a href={`https://wa.me/447441921660?text=${encodeURIComponent(`Merhaba, kurulum için yardım istiyorum. Kullanıcı adım: ${activeUsername}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-[#25d366] px-4 py-3 text-sm font-bold text-white">
+                  💬 Kurulum için WhatsApp desteği
+                </a>
+              </div>
+            </div>
           </div>
         )}
 

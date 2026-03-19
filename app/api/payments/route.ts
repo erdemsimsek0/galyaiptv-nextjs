@@ -21,12 +21,6 @@ async function rSet(key: string, value: string, ttl?: number) {
   await fetch(url, { headers: { Authorization: `Bearer ${REDIS_TOKEN}` }, cache: 'no-store' });
 }
 
-async function rDel(key: string) {
-  await fetch(`${REDIS_URL}/del/${encodeURIComponent(key)}`, {
-    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
-  });
-}
-
 async function rKeys(pattern: string): Promise<string[]> {
   const res = await fetch(REDIS_URL, {
     method: 'POST',
@@ -150,21 +144,28 @@ export async function POST(req: NextRequest) {
     const senderName = formData.get('senderName')  as string;
     const duration   = formData.get('duration')    as string;
     const devices    = formData.get('devices')     as string;
+    const couponCode = formData.get('couponCode')  as string;
+    const couponDiscount = formData.get('couponDiscount') as string;
+    const receipt = formData.get('receipt');
 
     if (!email || !plan) {
       return NextResponse.json({ success: false, error: 'email ve plan gerekli' }, { status: 400 });
     }
 
     const notification = {
+      id: `pay_${Date.now()}` ,
       email,
       plan,
-      amount:      amount      || '',
+      amount: amount || '',
       paymentCode: paymentCode || '',
-      senderName:  senderName  || '',
-      duration:    duration    || '',
-      devices:     devices     || '',
-      status:      'pending',
-      createdAt:   Date.now(),
+      senderName: senderName || '',
+      duration: duration || '',
+      devices: devices || '',
+      couponCode: couponCode || '',
+      couponDiscount: couponDiscount || '',
+      hasReceipt: Boolean(receipt && typeof receipt === 'object' && 'name' in receipt && receipt.name),
+      status: 'pending',
+      createdAt: Date.now(),
       createdAtFormatted: new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }),
     };
 
