@@ -1,16 +1,18 @@
+// app/api/prices/route.ts
+// Paket fiyatlarını Redis'te saklar — tüm sayfalar buradan okur
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  DEFAULT_COUPONS,
-  DEFAULT_DEVICE_MULTIPLIERS,
-  DEFAULT_PRICES,
-  type CouponDefinition,
-  type PricingConfig,
-} from '@/lib/catalog';
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL!;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN!;
+const REDIS_URL    = process.env.UPSTASH_REDIS_REST_URL!;
+const REDIS_TOKEN  = process.env.UPSTASH_REDIS_REST_TOKEN!;
 const ADMIN_SECRET = process.env.ADMIN_SECRET!;
-const PRICES_KEY = 'config:pricing';
+const PRICES_KEY   = 'config:prices';
+
+// Varsayılan fiyatlar — Redis'te kayıt yoksa bunlar kullanılır
+export const DEFAULT_PRICES: Record<string, number> = {
+  max:    229.90,
+  sports: 159.90,
+  cinema: 129.90,
+};
 
 async function redisGet(key: string): Promise<string | null> {
   const res = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, {
@@ -22,102 +24,76 @@ async function redisGet(key: string): Promise<string | null> {
 }
 
 async function redisSet(key: string, value: string) {
-  await fetch(`${REDIS_URL}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}`, {
-    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
-    cache: 'no-store',
-  });
+  await fetch(
+    `${REDIS_URL}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}`,
+    { headers: { Authorization: `Bearer ${REDIS_TOKEN}` }, cache: 'no-store' }
+  );
 }
 
-function mergeConfig(raw?: Partial<PricingConfig> | null): PricingConfig {
-  return {
-    prices: { ...DEFAULT_PRICES, ...(raw?.prices ?? {}) },
-    deviceMultipliers: { ...DEFAULT_DEVICE_MULTIPLIERS, ...(raw?.deviceMultipliers ?? {}) },
-    coupons: Array.isArray(raw?.coupons) ? raw!.coupons! : DEFAULT_COUPONS,
-    updatedAt: raw?.updatedAt,
-  };
-}
-
-function validateCoupons(coupons: CouponDefinition[]) {
-  for (const coupon of coupons) {
-    if (!coupon.code || !coupon.label) return 'Kupon kodu ve adı zorunludur.';
-    if (!['percent', 'fixed'].includes(coupon.type)) return 'Geçersiz kupon tipi.';
-    if (typeof coupon.value !== 'number' || coupon.value <= 0) return 'Geçersiz kupon değeri.';
-  }
-  return null;
-}
-
+// ─── GET: Herkese açık — tüm sayfalarda kullanılır ───────────────────────────
 export async function GET() {
   try {
     const raw = await redisGet(PRICES_KEY);
     if (!raw) {
-      return NextResponse.json({
-        success: true,
-        ...mergeConfig(),
-        isDefault: true,
-      });
+      return NextResponse.json({ success: true, prices: DEFAULT_PRICES, isDefault: true });
     }
-
-    const parsed = mergeConfig(JSON.parse(raw) as Partial<PricingConfig>);
-    return NextResponse.json({ success: true, ...parsed, isDefault: false });
+    const prices = JSON.parse(raw);
+    return NextResponse.json({ success: true, prices, isDefault: false });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Sunucu hatası.';
-    return NextResponse.json({
-      success: true,
-      ...mergeConfig(),
-      isDefault: true,
-      warning: message,
-    });
+    // Hata durumunda varsayılan fiyatları döndür
+    return NextResponse.json({ success: true, prices: DEFAULT_PRICES, isDefault: true, warning: message });
   }
 }
 
+// ─── POST: Sadece admin ───────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   if (req.headers.get('x-admin-secret') !== ADMIN_SECRET) {
     return NextResponse.json({ success: false, error: 'Yetkisiz erişim.' }, { status: 401 });
   }
-
   try {
-    const body = (await req.json()) as Partial<PricingConfig>;
-    const prices = body.prices ?? DEFAULT_PRICES;
-    const deviceMultipliers = body.deviceMultipliers ?? DEFAULT_DEVICE_MULTIPLIERS;
-    const coupons = body.coupons ?? DEFAULT_COUPONS;
+    const body = await req.json();
+    const { prices } = body as { prices: Record<string, number> };
 
+    if (!prices || typeof prices !== 'object') {
+      return NextResponse.json({ success: false, error: 'Geçersiz veri.' }, { status: 400 });
+    }
+
+    // Validasyon: her fiyat pozitif sayı olmalı
     for (const [key, val] of Object.entries(prices)) {
       if (typeof val !== 'number' || val <= 0 || val > 99999) {
-        return NextResponse.json({ success: false, error: `Geçersiz fiyat: ${key}` }, { status: 400 });
+        return NextResponse.json(
+          { success: false, error: `Geçersiz fiyat: ${key} = ${val}` },
+          { status: 400 }
+        );
       }
     }
 
-    for (const [key, val] of Object.entries(deviceMultipliers)) {
-      if (typeof val !== 'number' || val < 1 || val > 5) {
-        return NextResponse.json({ success: false, error: `Geçersiz cihaz çarpanı: ${key}` }, { status: 400 });
-      }
+    // Sadece bilinen paket id'lerini kabul et
+    const allowed = Object.keys(DEFAULT_PRICES);
+    const filtered: Record<string, number> = {};
+    for (const id of allowed) {
+      if (prices[id] !== undefined) filtered[id] = Math.round(prices[id] * 100) / 100;
     }
 
-    const couponError = validateCoupons(coupons);
-    if (couponError) {
-      return NextResponse.json({ success: false, error: couponError }, { status: 400 });
-    }
-
-    const config = mergeConfig({ prices, deviceMultipliers, coupons, updatedAt: Date.now() });
-    await redisSet(PRICES_KEY, JSON.stringify(config));
-
-    return NextResponse.json({ success: true, ...config });
+    await redisSet(PRICES_KEY, JSON.stringify(filtered));
+    return NextResponse.json({ success: true, prices: filtered });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Sunucu hatası.';
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 
+// ─── DELETE: Varsayılanlara sıfırla ──────────────────────────────────────────
 export async function DELETE(req: NextRequest) {
   if (req.headers.get('x-admin-secret') !== ADMIN_SECRET) {
     return NextResponse.json({ success: false, error: 'Yetkisiz erişim.' }, { status: 401 });
   }
-
   try {
     await fetch(`${REDIS_URL}/del/${encodeURIComponent(PRICES_KEY)}`, {
       headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
     });
-    return NextResponse.json({ success: true, ...mergeConfig(), isDefault: true, message: 'Varsayılan fiyatlara döndürüldü.' });
+    return NextResponse.json({ success: true, prices: DEFAULT_PRICES, message: 'Varsayılan fiyatlara döndürüldü.' });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Sunucu hatası.';
     return NextResponse.json({ success: false, error: message }, { status: 500 });

@@ -47,21 +47,19 @@ interface ModalProps {
   paket: string;
   sure: string;
   cihaz: string;
-  couponCode: string;
-  couponDiscount: string;
   userEmail: string;
   userName: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-function PaymentModal({ total, paket, sure, cihaz, couponCode, couponDiscount, userEmail, userName, onClose, onSuccess }: ModalProps) {
+function PaymentModal({ total, paket, sure, cihaz, userEmail, userName, onClose, onSuccess }: ModalProps) {
   const [senderName, setSenderName] = useState(userName);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const waMsg = `Merhaba, ödeme yaptım.\nPaket: ${paket} - ${sure} - ${cihaz} Cihaz\nTutar: ₺${total}${couponCode ? `\nKupon: ${couponCode} (-₺${couponDiscount})` : ''}\nGönderen: ${senderName || '(belirtilmedi)'}\nE-posta: ${userEmail || '(belirtilmedi)'}`;
+  const waMsg = `Merhaba, ödeme yaptım.\nPaket: ${paket} - ${sure} - ${cihaz} Cihaz\nTutar: ₺${total}\nGönderen: ${senderName || '(belirtilmedi)'}\nE-posta: ${userEmail || '(belirtilmedi)'}`;
 
   async function submit() {
     if (!senderName.trim()) return;
@@ -74,8 +72,6 @@ function PaymentModal({ total, paket, sure, cihaz, couponCode, couponDiscount, u
       formData.append('devices', cihaz);
       formData.append('amount', total);
       formData.append('senderName', senderName.trim());
-      if (couponCode) formData.append('couponCode', couponCode);
-      if (couponDiscount) formData.append('couponDiscount', couponDiscount);
       if (file) formData.append('receipt', file);
       await fetch('/api/payments', { method: 'POST', body: formData });
     } catch { /* sessiz */ }
@@ -178,11 +174,8 @@ function OdemeInner() {
   const paket        = searchParams.get('paket')         || 'Premium';
   const sure         = searchParams.get('sure')          || '';
   const toplam       = searchParams.get('toplam')        || '0';
-  const araToplam    = searchParams.get('ara_toplam')    || toplam;
   const original     = searchParams.get('orijinal')      || '';
   const cihaz        = searchParams.get('cihaz')         || '1';
-  const couponCode   = searchParams.get('kupon')         || '';
-  const couponDiscount = searchParams.get('kupon_indirim') || '0';
   const isAbone      = searchParams.get('abone')         === '1';
   const aboneIndirim = parseFloat(searchParams.get('abone_indirim') || '0');
 
@@ -190,7 +183,6 @@ function OdemeInner() {
   const userName  = session?.user?.name  || '';
 
   const totalNum = parseFloat(toplam);
-  const araToplamNum = parseFloat(araToplam);
   const origNum  = parseFloat(original);
   const savedNum = Math.round((origNum - totalNum) * 100) / 100;
   const fmt = (n: number) => { const [i, d] = n.toFixed(2).split('.'); return `${i},${d}`; };
@@ -493,8 +485,6 @@ function OdemeInner() {
           paket={paket}
           sure={sure}
           cihaz={cihaz}
-          couponCode={couponCode}
-          couponDiscount={couponDiscount}
           userEmail={userEmail}
           userName={userName}
           onClose={() => setShowModal(false)}
