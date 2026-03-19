@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-// ─── Tipler ───────────────────────────────────────────────────────────────────
+// ─── Tiplerd ───────────────────────────────────────────────────────────────────
 type TrialRecord = {
   key:               string;
   email:             string;
