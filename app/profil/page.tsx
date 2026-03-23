@@ -89,6 +89,14 @@ interface Subscription {
   expiresFormatted: string;
 }
 
+interface PanelAutomationState {
+  status?: string;
+  expiresAt?: string;
+  packageName?: string;
+  matchedBy?: 'email' | 'username';
+  inspectedAt?: string;
+}
+
 function useSubscription(email: string | null | undefined): Subscription | null {
   const [sub, setSub] = useState<Subscription | null>(null);
   useEffect(() => {
@@ -167,6 +175,37 @@ function ProfilInner() {
   const { display: countdown, expired } = useCountdown(creds?.startedAt ?? null);
   const subscription = useSubscription(userEmail);
   const paymentStatus = usePaymentStatus(userEmail);
+  const [panelLoading, setPanelLoading] = useState(false);
+  const [panelError, setPanelError] = useState('');
+  const [panelInfo, setPanelInfo] = useState<PanelAutomationState | null>(null);
+
+  const runPanelAutomation = async (action: 'inspect' | 'refresh') => {
+    setPanelLoading(true);
+    setPanelError('');
+
+    try {
+      const res = await fetch('/api/panel-automation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setPanelError(data.error || 'Panel otomasyonu çalıştırılamadı.');
+        return;
+      }
+
+      setPanelInfo({
+        ...data.result.data,
+        inspectedAt: data.result.inspectedAt,
+      });
+    } catch {
+      setPanelError('Panel servisine bağlanılamadı. Lütfen daha sonra tekrar deneyin.');
+    } finally {
+      setPanelLoading(false);
+    }
+  };
 
   // ── Tüm state'ler — erken return'lerden ÖNCE ──────────────────────────────
   const [signingOut, setSigningOut] = useState(false);
@@ -504,6 +543,68 @@ function ProfilInner() {
                 ))}
               </>
             )}
+
+            <div className="border-b border-emerald-500/10 px-5 py-4">
+              <div className="flex flex-col gap-3 rounded-2xl border border-[#1e2d42] bg-[#08121d] p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-sky-400">Panel Otomasyonu</p>
+                    <h3 className="mt-1 text-sm font-bold text-white">Arka planda kullanıcı panelini senkronize et</h3>
+                    <p className="mt-1 text-xs text-[#6b7280]">
+                      Railway üzerinde çalışan tarayıcı botu, hesabını panelde açar; durum bilgisini okur ve istersen yenileme aksiyonunu tetikler.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => runPanelAutomation('inspect')}
+                      disabled={panelLoading}
+                      className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs font-bold text-sky-300 transition hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {panelLoading ? 'Kontrol ediliyor...' : 'Durumu Oku'}
+                    </button>
+                    <button
+                      onClick={() => runPanelAutomation('refresh')}
+                      disabled={panelLoading}
+                      className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {panelLoading ? 'Çalışıyor...' : 'Panelde Yenile'}
+                    </button>
+                  </div>
+                </div>
+
+                {panelError && (
+                  <div className="rounded-xl border border-red-500/20 bg-red-950/30 px-3 py-2 text-xs text-red-300">
+                    {panelError}
+                  </div>
+                )}
+
+                {panelInfo ? (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {[
+                      { label: 'Panel Durumu', value: panelInfo.status || 'Bulunamadı' },
+                      { label: 'Paket', value: panelInfo.packageName || 'Bulunamadı' },
+                      { label: 'Panel Bitiş', value: panelInfo.expiresAt || 'Bulunamadı' },
+                      { label: 'Eşleşme', value: panelInfo.matchedBy === 'username' ? 'Kullanıcı adı' : 'E-posta' },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-xl border border-[#1e2d42] bg-[#0c1726] px-3 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4b5563]">{item.label}</p>
+                        <p className="mt-1 text-sm font-semibold text-white">{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#4b5563]">
+                    İlk kontrolde panelden canlı veri okunur. Seçicileri tanımlamak için `PANEL_AUTOMATION_*` değişkenlerini backend ortamına eklemelisin.
+                  </p>
+                )}
+
+                {panelInfo?.inspectedAt && (
+                  <p className="text-[11px] text-[#4b5563]">
+                    Son senkronizasyon: {new Date(panelInfo.inspectedAt).toLocaleString('tr-TR')}
+                  </p>
+                )}
+              </div>
+            </div>
 
             {/* Uzat butonu — %25 indirim rozeti */}
             <div className="px-5 py-3 bg-emerald-950/30">

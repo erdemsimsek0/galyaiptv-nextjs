@@ -70,3 +70,48 @@ Bu proje Netlify için optimize      edilmiştir.
 2. `https://galyaiptv.com.tr` alan adını ekleyin
 3. `layout.tsx` içindeki `YOUR_GOOGLE_VERIFICATION_CODE` kısmını güncelleyin
 4. Sitemap olarak `https://galyaiptv.com.tr/sitemap.xml` ekleyin
+
+## Panel Otomasyonu (Railway + Tarayıcı Botu)
+
+Bu projede kullanıcı profilindeki **Panel Otomasyonu** kartı, arka planda panel hesabına giriş yapıp kullanıcı detayını okumak veya yenileme aksiyonu tetiklemek için hazırlandı.
+
+### Gerekli ortam değişkenleri
+
+Backend tarafında aşağıdaki değişkenleri tanımlayın:
+
+- `PANEL_AUTOMATION_URL`: Panel giriş adresi
+- `PANEL_AUTOMATION_USERNAME`: Botun panel kullanıcı adı
+- `PANEL_AUTOMATION_PASSWORD`: Botun panel şifresi
+- `PANEL_AUTOMATION_HEADLESS`: `false` verilmezse headless çalışır
+- `PANEL_AUTOMATION_SELECTORS`: Panel HTML yapısına göre selector JSON'u
+
+### `PANEL_AUTOMATION_SELECTORS` örneği
+
+```json
+{
+  "usernameInput": "input[name='username']",
+  "passwordInput": "input[name='password']",
+  "submitButton": "button[type='submit']",
+  "postLoginReady": ".sidebar",
+  "userSearchInput": "input[placeholder='Kullanıcı ara']",
+  "userSearchButton": "button[data-role='search']",
+  "userRow": "table tbody tr",
+  "userRowEmail": "td:nth-child(3)",
+  "userRowUsername": "td:nth-child(2)",
+  "openUserButton": "button[data-role='open-user']",
+  "detailReady": ".user-detail",
+  "statusField": "[data-field='status']",
+  "expiryField": "[data-field='expires']",
+  "packageField": "[data-field='package']",
+  "refreshButton": "button[data-role='refresh-user']"
+}
+```
+
+### Akış
+
+1. Kullanıcı `/profil` sayfasında **Durumu Oku** veya **Panelde Yenile** butonuna basar.
+2. `POST /api/panel-automation` oturumdaki kullanıcıyı ve aktif aboneliği doğrular.
+3. Backend, Puppeteer + Chromium ile panele giriş yapar.
+4. Kullanıcı e-posta/kullanıcı adına göre aranır.
+5. Durum bilgisi okunur veya yenileme butonu tetiklenir.
+6. Sonuç UI'de kullanıcıya sade bir kart olarak gösterilir.
