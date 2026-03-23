@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useSession, SessionProvider } from 'next-auth/react';
 
 // ─── Tipler ───────────────────────────────────────────────────────────────────
@@ -26,6 +27,24 @@ interface Platform {
 }
 
 const SERVER_URL = 'http://pro4kiptv.xyz:2086';
+
+function findApp(platformId: PlatformId | null, appId: string | null): { platform: Platform; app: AppInfo } | null {
+  const platforms = platformId
+    ? PLATFORMS.filter((platform) => platform.id === platformId)
+    : PLATFORMS;
+
+  for (const platform of platforms) {
+    const app = appId
+      ? platform.apps.find((candidate) => candidate.id === appId)
+      : platform.apps.find((candidate) => candidate.recommended) ?? platform.apps[0];
+
+    if (app) {
+      return { platform, app };
+    }
+  }
+
+  return null;
+}
 
 // ─── Logo dosya adları — /public/app-icons/ klasörüne yükleyin ───────────────
 // Her logo için beklenen dosya adı aşağıda belirtilmiştir.
@@ -612,18 +631,34 @@ function KurulumHeader() {
 // ─── Ana bileşen ──────────────────────────────────────────────────────────────
 function KurulumInner() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const userEmail = session?.user?.email ?? null;
   const { creds, loading: credsLoading } = useTrialCreds(userEmail);
 
-  const [activePlatform, setActivePlatform] = useState<PlatformId>('android');
-  const [selectedApp, setSelectedApp] = useState<AppInfo | null>(null);
+  const requestedPlatform = searchParams.get('platform') as PlatformId | null;
+  const requestedApp = searchParams.get('app');
+
+  const initialSelection = useMemo(() => {
+    return findApp(requestedPlatform, requestedApp) ?? findApp('android', null)!;
+  }, [requestedApp, requestedPlatform]);
+
+  const [activePlatform, setActivePlatform] = useState<PlatformId>(initialSelection.platform.id);
+  const [selectedApp, setSelectedApp] = useState<AppInfo | null>(initialSelection.app);
 
   const platform = PLATFORMS.find(p => p.id === activePlatform)!;
 
-  // Platform değişince ilk uygulamayı seç
   useEffect(() => {
+    if (requestedPlatform || requestedApp) {
+      const nextSelection = findApp(requestedPlatform, requestedApp);
+      if (nextSelection) {
+        setActivePlatform(nextSelection.platform.id);
+        setSelectedApp(nextSelection.app);
+        return;
+      }
+    }
+
     setSelectedApp(platform.apps[0]);
-  }, [activePlatform, platform.apps]);
+  }, [platform.apps, requestedApp, requestedPlatform]);
 
   return (
     <div className="min-h-screen bg-[#07111f] text-white">
