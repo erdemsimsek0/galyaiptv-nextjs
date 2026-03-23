@@ -455,17 +455,6 @@ const INSTALL_GUIDES: Record<DeviceId, { app: string; steps: string[]; note?: st
 
 const LS_KEY = 'galya_modal_progress';
 
-function getXtreamGuideHref(device: DeviceId | ''): string {
-  const targets: Record<DeviceId, string> = {
-    smarttv: '/kurulum-rehberi?platform=smarttv&app=hotiptv',
-    mobile: '/kurulum-rehberi?platform=android&app=xpiptv',
-    tvbox: '/kurulum-rehberi?platform=android&app=9xtream',
-    pc: '/kurulum-rehberi?platform=windows&app=smarters-pc',
-  };
-
-  return device ? targets[device] : '/kurulum-rehberi?platform=android&app=xpiptv';
-}
-
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 interface ToastMsg { id: number; message: string; type: ToastType }
 
@@ -1060,6 +1049,10 @@ function HomePageInner() {
                   className="flex items-center justify-center rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-7 py-3.5 text-base font-semibold text-white transition-all hover:border-[#3b82f6]/40 hover:bg-[#162035]">
                   IPTV Paketlerini Gör
                 </Link>
+                <Link href="/xtream-giris"
+                  className="flex items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-7 py-3.5 text-base font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20 hover:text-white">
+                  🚀 Xtream API Girişi
+                </Link>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -1067,6 +1060,7 @@ function HomePageInner() {
                   { href: '/blog', label: '📚 Blog Rehberleri' },
                   { href: '/iletisim', label: '💬 İletişim' },
                   { href: '/kurulum-rehberi', label: '🛠️ Kurulum Rehberi' },
+                  { href: '/xtream-giris', label: '🚀 Xtream API Girişi' },
                 ].map((item) => (
                   <Link
                     key={item.href}
@@ -1866,7 +1860,6 @@ function HomePageInner() {
                     </div>
                   </div>
                 )}
-                <Link href={getXtreamGuideHref(selectedDevice)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 py-3 font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">🚀 Xtream API ile Aç</Link>
                 <button onClick={() => setStep(5 as ModalStep)} className="w-full rounded-xl bg-[#6366f1] py-3 font-semibold text-white transition-colors hover:bg-[#4f46e5]">📲 Kurulumu Göster →</button>
                 <WaButton label="💬 Beğendiyseniz Satın Alın" />
                 <button onClick={handleCloseModal} className="w-full rounded-lg border border-[#1e3a5f] py-2.5 text-sm text-[#6b7280] transition-colors hover:text-white">Pencereyi Kapat</button>
