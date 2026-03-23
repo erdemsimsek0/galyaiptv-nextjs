@@ -99,6 +99,7 @@ function XtreamGirisInner() {
   const [items, setItems] = useState<XtreamItem[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [lineState, setLineState] = useState<PanelLineState | null>(null);
+  const [lineLoading, setLineLoading] = useState(false);
   const [lineSaving, setLineSaving] = useState(false);
   const [lineError, setLineError] = useState('');
   const [selectedEnabled, setSelectedEnabled] = useState<string[]>([]);
@@ -145,6 +146,7 @@ function XtreamGirisInner() {
     setSelectedCategoryId('');
     setLineState(null);
     setLineError('');
+    setLineLoading(true);
 
     try {
       const res = await fetch('/api/xtream', {
@@ -174,8 +176,10 @@ function XtreamGirisInner() {
       } else {
         setLineError(lineData.error || 'Kanal düzenleme ekranı panelden yüklenemedi.');
       }
+      setLineLoading(false);
     } catch {
       setError('Xtream API paneline bağlanırken bir hata oluştu.');
+      setLineLoading(false);
     } finally {
       setLoading(false);
     }
@@ -352,14 +356,7 @@ function XtreamGirisInner() {
                 )}
               </div>
 
-              {lineError && (
-                <div className="rounded-3xl border border-red-500/25 bg-red-950/20 p-5 sm:p-6">
-                  <p className="text-sm font-bold text-red-300">Kanal düzenleme ekranı yüklenemedi</p>
-                  <p className="mt-2 text-sm leading-6 text-red-200/90">{lineError}</p>
-                </div>
-              )}
-
-              {lineState && (
+              {dashboard && (
                 <div className="rounded-3xl border border-[#1e2d42] bg-[#07111f] p-5 sm:p-6">
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <div>
@@ -374,50 +371,65 @@ function XtreamGirisInner() {
                         <p className="text-[11px] uppercase tracking-[0.2em] text-amber-200">Toplam Kanal</p>
                         <p className="mt-1 text-lg font-black text-white">{totalManagedChannels}</p>
                       </div>
-                      <button onClick={saveLineChanges} disabled={lineSaving} className="rounded-2xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-amber-600 disabled:opacity-60">
+                      <button onClick={saveLineChanges} disabled={lineSaving || !lineState} className="rounded-2xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-amber-600 disabled:opacity-60">
                         {lineSaving ? 'Kaydediliyor...' : 'Save ile Kaydet'}
                       </button>
                     </div>
                   </div>
 
-                  <div className="grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
-                    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-                      <div className="mb-3 flex items-center justify-between">
-                        <p className="text-sm font-bold text-white">IN - Aktif Kanallar</p>
-                        <span className="text-xs text-emerald-300">{lineState.inChannels.length}</span>
-                      </div>
-                      <div className="max-h-[320px] space-y-2 overflow-auto pr-1">
-                        {lineState.inChannels.map((channel) => (
-                          <button key={channel} onClick={() => setSelectedEnabled((current) => current.includes(channel) ? current.filter((item) => item !== channel) : [...current, channel])} className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition-all ${selectedEnabled.includes(channel) ? 'border-emerald-400/60 bg-emerald-500/10 text-white' : 'border-[#1e2d42] bg-[#0d1a2a] text-[#cbd5e1]'}`}>
-                            <span className="truncate">{channel}</span>
-                          </button>
-                        ))}
-                      </div>
+                  {lineLoading && (
+                    <div className="rounded-2xl border border-[#1e2d42] bg-[#0d1a2a] p-5 text-sm text-[#8b9ab3]">
+                      Kanal düzenleme ekranı panelden yükleniyor...
                     </div>
+                  )}
 
-                    <div className="flex flex-row items-center justify-center gap-3 lg:flex-col">
-                      <button onClick={() => moveSelectedChannels('disable')} disabled={selectedEnabled.length === 0} className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-bold text-red-200 transition-all hover:bg-red-500/20 disabled:opacity-50">
-                        → NOT IN
-                      </button>
-                      <button onClick={() => moveSelectedChannels('enable')} disabled={selectedDisabled.length === 0} className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-sm font-bold text-sky-200 transition-all hover:bg-sky-500/20 disabled:opacity-50">
-                        ← IN
-                      </button>
+                  {!lineLoading && lineError && (
+                    <div className="rounded-2xl border border-red-500/25 bg-red-950/20 p-5">
+                      <p className="text-sm font-bold text-red-300">Kanal düzenleme ekranı yüklenemedi</p>
+                      <p className="mt-2 text-sm leading-6 text-red-200/90">{lineError}</p>
                     </div>
+                  )}
 
-                    <div className="rounded-2xl border border-[#1e2d42] bg-[#0d1a2a] p-4">
-                      <div className="mb-3 flex items-center justify-between">
-                        <p className="text-sm font-bold text-white">NOT IN - Kapalı Kanallar</p>
-                        <span className="text-xs text-[#8b9ab3]">{lineState.notInChannels.length}</span>
+                  {!lineLoading && !lineError && lineState && (
+                    <div className="grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
+                      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                          <p className="text-sm font-bold text-white">IN - Aktif Kanallar</p>
+                          <span className="text-xs text-emerald-300">{lineState.inChannels.length}</span>
+                        </div>
+                        <div className="max-h-[320px] space-y-2 overflow-auto pr-1">
+                          {lineState.inChannels.map((channel) => (
+                            <button key={channel} onClick={() => setSelectedEnabled((current) => current.includes(channel) ? current.filter((item) => item !== channel) : [...current, channel])} className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition-all ${selectedEnabled.includes(channel) ? 'border-emerald-400/60 bg-emerald-500/10 text-white' : 'border-[#1e2d42] bg-[#0d1a2a] text-[#cbd5e1]'}`}>
+                              <span className="truncate">{channel}</span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="max-h-[320px] space-y-2 overflow-auto pr-1">
-                        {lineState.notInChannels.map((channel) => (
-                          <button key={channel} onClick={() => setSelectedDisabled((current) => current.includes(channel) ? current.filter((item) => item !== channel) : [...current, channel])} className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition-all ${selectedDisabled.includes(channel) ? 'border-sky-400/60 bg-sky-500/10 text-white' : 'border-[#1e2d42] bg-[#07111f] text-[#cbd5e1]'}`}>
-                            <span className="truncate">{channel}</span>
-                          </button>
-                        ))}
+
+                      <div className="flex flex-row items-center justify-center gap-3 lg:flex-col">
+                        <button onClick={() => moveSelectedChannels('disable')} disabled={selectedEnabled.length === 0} className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-bold text-red-200 transition-all hover:bg-red-500/20 disabled:opacity-50">
+                          → NOT IN
+                        </button>
+                        <button onClick={() => moveSelectedChannels('enable')} disabled={selectedDisabled.length === 0} className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-sm font-bold text-sky-200 transition-all hover:bg-sky-500/20 disabled:opacity-50">
+                          ← IN
+                        </button>
+                      </div>
+
+                      <div className="rounded-2xl border border-[#1e2d42] bg-[#0d1a2a] p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                          <p className="text-sm font-bold text-white">NOT IN - Kapalı Kanallar</p>
+                          <span className="text-xs text-[#8b9ab3]">{lineState.notInChannels.length}</span>
+                        </div>
+                        <div className="max-h-[320px] space-y-2 overflow-auto pr-1">
+                          {lineState.notInChannels.map((channel) => (
+                            <button key={channel} onClick={() => setSelectedDisabled((current) => current.includes(channel) ? current.filter((item) => item !== channel) : [...current, channel])} className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition-all ${selectedDisabled.includes(channel) ? 'border-sky-400/60 bg-sky-500/10 text-white' : 'border-[#1e2d42] bg-[#07111f] text-[#cbd5e1]'}`}>
+                              <span className="truncate">{channel}</span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 
