@@ -132,6 +132,10 @@ async function clearAndType(page: Page, selector: string, value: string) {
   await page.type(selector, value, { delay: 20 });
 }
 
+async function delay(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function loginToPanel(page: Page, config: PanelAutomationConfig) {
   await page.goto(panelBaseUrl(), { waitUntil: 'networkidle2', timeout: 45000 });
   await clearAndType(page, config.selectors.usernameInput, config.username);
@@ -394,7 +398,7 @@ async function openLineEditor(page: Page, config: PanelAutomationConfig, usernam
   const searchSelector = await findLineSearchInput(page, config);
   await clearAndType(page, searchSelector, username);
   await page.waitForNetworkIdle({ idleTime: 600, timeout: 15000 }).catch(() => null);
-  await page.waitForTimeout(1200);
+  await delay(1200);
 
   const row = await findLineUserRow(page, config, username);
   if (!row) {
