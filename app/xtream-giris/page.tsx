@@ -261,6 +261,7 @@ function XtreamGirisInner() {
   };
 
   const userInfo = dashboard?.account?.user_info;
+  const totalManagedChannels = lineState ? lineState.inChannels.length + lineState.notInChannels.length : 0;
 
   return (
     <div className="min-h-screen bg-[#07111f] px-4 py-8 text-white sm:px-6 lg:px-8">
@@ -368,9 +369,15 @@ function XtreamGirisInner() {
                         Bu ekran paneldeki edit alanını arka planda açar. Soldaki aktif kanalları kapatabilir, sağdakileri tekrar aktif edip Save ile panelde kaydedebilirsin.
                       </p>
                     </div>
-                    <button onClick={saveLineChanges} disabled={lineSaving} className="rounded-2xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-amber-600 disabled:opacity-60">
-                      {lineSaving ? 'Kaydediliyor...' : 'Save ile Kaydet'}
-                    </button>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-2.5 text-right">
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-amber-200">Toplam Kanal</p>
+                        <p className="mt-1 text-lg font-black text-white">{totalManagedChannels}</p>
+                      </div>
+                      <button onClick={saveLineChanges} disabled={lineSaving} className="rounded-2xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-amber-600 disabled:opacity-60">
+                        {lineSaving ? 'Kaydediliyor...' : 'Save ile Kaydet'}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
