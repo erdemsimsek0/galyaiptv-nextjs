@@ -103,7 +103,16 @@ Backend tarafında aşağıdaki değişkenleri tanımlayın:
   "statusField": "[data-field='status']",
   "expiryField": "[data-field='expires']",
   "packageField": "[data-field='package']",
-  "refreshButton": "button[data-role='refresh-user']"
+  "refreshButton": "button[data-role='refresh-user']",
+  "linePageReady": ".table-responsive",
+  "lineSearchInput": "input[placeholder='Search Users']",
+  "lineUserRow": "table tbody tr",
+  "lineUserRowUsername": "td:nth-child(2)",
+  "lineEditButton": "button[data-role='edit-line']",
+  "lineEditorReady": ".modal.show",
+  "lineInSelect": "select[name='bouquets[]']",
+  "lineNotInSelect": "select[name='bouquets_not_in[]']",
+  "lineSaveButton": "button[type='submit']"
 }
 ```
 
@@ -115,3 +124,5 @@ Backend tarafında aşağıdaki değişkenleri tanımlayın:
 4. Kullanıcı e-posta/kullanıcı adına göre aranır.
 5. Durum bilgisi okunur veya yenileme butonu tetiklenir.
 6. Sonuç UI'de kullanıcıya sade bir kart olarak gösterilir.
+
+> Not: Kanal yönetimi ekranı farklı panel temalarında değişebildiği için, gerekirse `line*` selector alanlarını doldurarak IN / NOT IN editörünü daha kararlı hale getirebilirsiniz.

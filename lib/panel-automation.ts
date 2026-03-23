@@ -1,5 +1,5 @@
 import chromium from '@sparticuz/chromium';
-import puppeteer, { type Page } from 'puppeteer-core';
+import puppeteer, { type ElementHandle, type Page } from 'puppeteer-core';
 
 export type PanelAutomationAction = 'inspect' | 'refresh';
 
@@ -29,6 +29,15 @@ interface PanelAutomationConfig {
     expiryField?: string;
     packageField?: string;
     refreshButton?: string;
+    linePageReady?: string;
+    lineSearchInput?: string;
+    lineUserRow?: string;
+    lineUserRowUsername?: string;
+    lineEditButton?: string;
+    lineEditorReady?: string;
+    lineInSelect?: string;
+    lineNotInSelect?: string;
+    lineSaveButton?: string;
   };
 }
 
@@ -42,6 +51,11 @@ export interface PanelAutomationResult {
     expiresAt?: string;
     packageName?: string;
   };
+}
+
+export interface PanelLineState {
+  inChannels: string[];
+  notInChannels: string[];
 }
 
 function requireEnv(name: string): string {
@@ -85,7 +99,48 @@ async function getTextBySelector(page: Page, selector?: string) {
   if (!selector) return undefined;
   const handle = await page.$(selector);
   if (!handle) return undefined;
-  return page.$eval(selector, (el) => el.textContent?.trim() || '');
+  return page.$eval(selector, (el: Element) => el.textContent?.trim() || '');
+}
+
+
+function describeSelector(selector?: string) {
+  return selector ? ` (${selector})` : '';
+}
+
+async function waitForAnySelector(page: Page, selectors: string[], timeout: number) {
+  const startedAt = Date.now();
+
+  for (const selector of selectors) {
+    const remaining = timeout - (Date.now() - startedAt);
+    if (remaining <= 0) break;
+
+    try {
+      await page.waitForSelector(selector, { timeout: remaining });
+      return selector;
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+async function clearAndType(page: Page, selector: string, value: string) {
+  await page.waitForSelector(selector, { timeout: 15000 });
+  await page.click(selector, { clickCount: 3 });
+  await page.keyboard.press('Backspace');
+  await page.type(selector, value, { delay: 20 });
+}
+
+async function loginToPanel(page: Page, config: PanelAutomationConfig) {
+  await page.goto(panelBaseUrl(), { waitUntil: 'networkidle2', timeout: 45000 });
+  await clearAndType(page, config.selectors.usernameInput, config.username);
+  await clearAndType(page, config.selectors.passwordInput, config.password);
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 45000 }).catch(() => null),
+    page.click(config.selectors.submitButton),
+  ]);
+  await page.waitForSelector(config.selectors.postLoginReady, { timeout: 20000 });
 }
 
 export async function runPanelAutomation(params: {
@@ -99,9 +154,8 @@ export async function runPanelAutomation(params: {
   try {
     await page.goto(config.panelUrl, { waitUntil: 'networkidle2', timeout: 45000 });
 
-    await page.waitForSelector(config.selectors.usernameInput, { timeout: 15000 });
-    await page.type(config.selectors.usernameInput, config.username, { delay: 15 });
-    await page.type(config.selectors.passwordInput, config.password, { delay: 15 });
+    await clearAndType(page, config.selectors.usernameInput, config.username);
+    await clearAndType(page, config.selectors.passwordInput, config.password);
 
     await Promise.all([
       page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 45000 }).catch(() => null),
@@ -116,9 +170,7 @@ export async function runPanelAutomation(params: {
       throw new Error('Kullanıcıyı panelde aramak için email veya username gerekli.');
     }
 
-    await page.click(config.selectors.userSearchInput, { clickCount: 3 });
-    await page.keyboard.press('Backspace');
-    await page.type(config.selectors.userSearchInput, identifier, { delay: 20 });
+    await clearAndType(page, config.selectors.userSearchInput, identifier);
 
     if (config.selectors.userSearchButton) {
       await Promise.all([
@@ -134,9 +186,9 @@ export async function runPanelAutomation(params: {
 
     const rowMatches = await page.$$eval(
       config.selectors.userRow,
-      (rows, selectors, expected) => {
+      (rows: Element[], selectors: { userRowEmail?: string; userRowUsername?: string }, expected: string) => {
         const clean = (value: string | null | undefined) => (value || '').trim().toLowerCase();
-        return rows.findIndex((row) => {
+        return rows.findIndex((row: Element) => {
           const email = selectors.userRowEmail
             ? row.querySelector(selectors.userRowEmail)?.textContent
             : row.textContent;
@@ -210,12 +262,6 @@ export async function runPanelAutomation(params: {
   }
 }
 
-
-export interface PanelLineState {
-  inChannels: string[];
-  notInChannels: string[];
-}
-
 function panelBaseUrl() {
   return process.env.PANEL_AUTOMATION_URL || 'https://pa.ipguzel.com/';
 }
@@ -224,90 +270,185 @@ function panelLinesUrl() {
   return process.env.PANEL_LINES_URL || 'https://pa.ipguzel.com/lines';
 }
 
-async function loginToPanel(page: Page, config: PanelAutomationConfig) {
-  await page.goto(panelBaseUrl(), { waitUntil: 'networkidle2', timeout: 45000 });
-  await page.waitForSelector(config.selectors.usernameInput, { timeout: 15000 });
-  await page.type(config.selectors.usernameInput, config.username, { delay: 15 });
-  await page.type(config.selectors.passwordInput, config.password, { delay: 15 });
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 45000 }).catch(() => null),
-    page.click(config.selectors.submitButton),
-  ]);
+async function findLineSearchInput(page: Page, config: PanelAutomationConfig) {
+  if (config.selectors.lineSearchInput) {
+    await page.waitForSelector(config.selectors.lineSearchInput, { timeout: 30000 });
+    return config.selectors.lineSearchInput;
+  }
+
+  const fallbackSelector = await waitForAnySelector(
+    page,
+    [
+      "input[placeholder*='Search']",
+      "input[placeholder*='search']",
+      "input[placeholder*='User']",
+      "input[type='search']",
+      'table input',
+    ],
+    30000,
+  );
+
+  if (!fallbackSelector) {
+    throw new Error('Lines sayfasındaki kullanıcı arama alanı bulunamadı. lineSearchInput selectoru tanımlayın.');
+  }
+
+  return fallbackSelector;
 }
 
-async function openLineEditor(page: Page, username: string) {
-  await page.goto(panelLinesUrl(), { waitUntil: 'networkidle2', timeout: 45000 });
-  await page.waitForFunction(() => Array.from(document.querySelectorAll('input')).some((input) => (input.getAttribute('placeholder') || '').toLowerCase().includes('search users')), { timeout: 20000 });
+async function findLineUserRow(page: Page, config: PanelAutomationConfig, username: string) {
+  if (config.selectors.lineUserRow) {
+    await page.waitForSelector(config.selectors.lineUserRow, { timeout: 30000 });
+    const rows = await page.$$(config.selectors.lineUserRow);
 
-  const opened = await page.evaluate(async (targetUsername) => {
-    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    const searchInput = Array.from(document.querySelectorAll('input')).find((input) => ((input.getAttribute('placeholder') || '')).toLowerCase().includes('search users')) as HTMLInputElement | undefined;
-    if (!searchInput) return false;
+    for (const row of rows) {
+      const matches = await row.evaluate((element: Element, expected: string, usernameSelector?: string) => {
+        const text = usernameSelector ? element.querySelector(usernameSelector)?.textContent : element.textContent;
+        return (text || '').toLowerCase().includes(expected.toLowerCase());
+      }, username, config.selectors.lineUserRowUsername);
 
-    searchInput.focus();
-    searchInput.value = '';
-    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-    searchInput.value = targetUsername;
-    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-    searchInput.dispatchEvent(new Event('change', { bubbles: true }));
-    await sleep(900);
+      if (matches) return row;
+    }
+  }
 
-    const rows = Array.from(document.querySelectorAll('table tbody tr'));
-    const row = rows.find((candidate) => (candidate.textContent || '').toLowerCase().includes(targetUsername.toLowerCase()));
-    if (!row) return false;
+  await page.waitForFunction(
+    (expected: string) => Array.from(document.querySelectorAll('table tbody tr, [role="row"]')).some((row) => (row.textContent || '').toLowerCase().includes(expected.toLowerCase())),
+    { timeout: 30000 },
+    username,
+  );
 
-    const editButton = Array.from(row.querySelectorAll('button,a')).find((button) => (button.textContent || '').trim().toLowerCase() === 'edit') as HTMLElement | undefined;
+  const handles = await page.$$('table tbody tr, [role="row"]');
+  for (const row of handles) {
+    const matches = await row.evaluate((element: Element, expected: string) => (element.textContent || '').toLowerCase().includes(expected.toLowerCase()), username);
+    if (matches) return row;
+  }
+
+  return null;
+}
+
+async function clickLineEditButton(page: Page, config: PanelAutomationConfig, row: ElementHandle<Element>) {
+  if (config.selectors.lineEditButton) {
+    const button = await row.$(config.selectors.lineEditButton);
+    if (!button) {
+      throw new Error(`Edit butonu bulunamadı${describeSelector(config.selectors.lineEditButton)}.`);
+    }
+
+    await Promise.all([
+      page.waitForNetworkIdle({ idleTime: 500, timeout: 15000 }).catch(() => null),
+      button.click(),
+    ]);
+    return;
+  }
+
+  const clicked = await row.evaluate((element: Element) => {
+    const candidates = Array.from(element.querySelectorAll<HTMLElement | HTMLInputElement>('button,a,input[type="button"],input[type="submit"]'));
+    const editButton = candidates.find((candidate: HTMLElement | HTMLInputElement) => {
+      const text = (candidate.textContent || (candidate as HTMLInputElement).value || '').trim().toLowerCase();
+      return text === 'edit' || text.includes('edit') || text.includes('düzenle');
+    }) as HTMLElement | HTMLInputElement | undefined;
+
     if (!editButton) return false;
     editButton.click();
     return true;
-  }, username);
+  });
 
-  if (!opened) {
-    throw new Error(`Lines sayfasında ${username} kullanıcısı bulunamadı veya Edit butonu tıklanamadı.`);
+  if (!clicked) {
+    throw new Error('Lines sayfasında Edit butonu bulunamadı. lineEditButton selectoru tanımlayın.');
   }
 
-  await page.waitForFunction(() => document.querySelectorAll('select[multiple]').length >= 2, { timeout: 15000 });
+  await page.waitForNetworkIdle({ idleTime: 500, timeout: 15000 }).catch(() => null);
 }
 
-async function readLineState(page: Page): Promise<PanelLineState> {
-  return page.evaluate(() => {
-    const cleanOptions = (select: Element | null | undefined) => Array.from(select?.querySelectorAll('option') || []).map((option) => option.textContent?.trim() || '').filter(Boolean);
-    const selects = Array.from(document.querySelectorAll('select[multiple]'));
-    if (selects.length < 2) {
-      return { inChannels: [], notInChannels: [] };
-    }
+async function waitForLineEditor(page: Page, config: PanelAutomationConfig) {
+  if (config.selectors.lineEditorReady) {
+    await page.waitForSelector(config.selectors.lineEditorReady, { timeout: 45000 });
+    return;
+  }
 
-    const findByLabel = (keyword: string) => selects.find((select) => {
-      const wrapper = select.closest('div,section,td,form') || select.parentElement;
-      return (wrapper?.textContent || '').toLowerCase().includes(keyword);
-    });
+  const readySelector = await waitForAnySelector(
+    page,
+    [
+      config.selectors.lineInSelect || '',
+      config.selectors.lineNotInSelect || '',
+      'select[multiple]',
+      '.ms-container',
+      '.multi-select-container',
+      '[data-role="line-editor"]',
+      '.modal.show',
+      '.modal-dialog',
+    ].filter(Boolean),
+    45000,
+  );
 
-    const inSelect = findByLabel(' in') || findByLabel('active') || selects[1];
-    const notInSelect = findByLabel('not in') || findByLabel('inactive') || selects[0];
-
-    return {
-      inChannels: cleanOptions(inSelect),
-      notInChannels: cleanOptions(notInSelect),
-    };
-  });
+  if (!readySelector) {
+    throw new Error('Kanal düzenleme ekranı açıldıktan sonra editor alanı bulunamadı. lineEditorReady / lineInSelect / lineNotInSelect selectorlarını tanımlayın.');
+  }
 }
 
-async function moveChannels(page: Page, channels: string[], source: 'in' | 'not_in') {
+async function openLineEditor(page: Page, config: PanelAutomationConfig, username: string) {
+  await page.goto(panelLinesUrl(), { waitUntil: 'networkidle2', timeout: 45000 });
+
+  if (config.selectors.linePageReady) {
+    await page.waitForSelector(config.selectors.linePageReady, { timeout: 30000 });
+  }
+
+  const searchSelector = await findLineSearchInput(page, config);
+  await clearAndType(page, searchSelector, username);
+  await page.waitForNetworkIdle({ idleTime: 600, timeout: 15000 }).catch(() => null);
+  await page.waitForTimeout(1200);
+
+  const row = await findLineUserRow(page, config, username);
+  if (!row) {
+    throw new Error(`Lines sayfasında ${username} kullanıcısı bulunamadı.`);
+  }
+
+  await clickLineEditButton(page, config, row);
+  await waitForLineEditor(page, config);
+}
+
+async function getSelectHandle(page: Page, preferredSelector: string | undefined, fallback: 'in' | 'not_in') {
+  if (preferredSelector) {
+    const handle = await page.$(preferredSelector);
+    if (handle) return handle;
+  }
+
+  const selectHandles = await page.$$('select[multiple]');
+  if (selectHandles.length >= 2) {
+    return fallback === 'in' ? selectHandles[1] : selectHandles[0];
+  }
+
+  return null;
+}
+
+async function readLineState(page: Page, config: PanelAutomationConfig): Promise<PanelLineState> {
+  const inSelect = await getSelectHandle(page, config.selectors.lineInSelect, 'in');
+  const notInSelect = await getSelectHandle(page, config.selectors.lineNotInSelect, 'not_in');
+
+  if (!inSelect || !notInSelect) {
+    throw new Error('IN / NOT IN listeleri bulunamadı. lineInSelect ve lineNotInSelect selectorlarını kontrol edin.');
+  }
+
+  const readOptions = async (handle: ElementHandle<Element>) => handle.evaluate((element: Element) =>
+    Array.from(element.querySelectorAll('option'))
+      .map((option: Element) => option.textContent?.trim() || '')
+      .filter(Boolean),
+  );
+
+  return {
+    inChannels: await readOptions(inSelect),
+    notInChannels: await readOptions(notInSelect),
+  };
+}
+
+async function moveChannels(page: Page, config: PanelAutomationConfig, channels: string[], source: 'in' | 'not_in') {
+  const sourceHandle = await getSelectHandle(page, source === 'in' ? config.selectors.lineInSelect : config.selectors.lineNotInSelect, source);
+  if (!sourceHandle) {
+    throw new Error(`Kaynak kanal listesi bulunamadı (${source}).`);
+  }
+
   for (const channel of channels) {
-    const moved = await page.evaluate(async ({ channelName, from }) => {
+    const moved = await sourceHandle.evaluate(async (element: Element, channelName: string) => {
       const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-      const selects = Array.from(document.querySelectorAll('select[multiple]'));
-      if (selects.length < 2) return false;
-
-      const findByLabel = (keyword: string) => selects.find((select) => {
-        const wrapper = select.closest('div,section,td,form') || select.parentElement;
-        return (wrapper?.textContent || '').toLowerCase().includes(keyword);
-      });
-
-      const inSelect = findByLabel(' in') || findByLabel('active') || selects[1];
-      const notInSelect = findByLabel('not in') || findByLabel('inactive') || selects[0];
-      const sourceSelect = from === 'in' ? inSelect : notInSelect;
-      const option = Array.from(sourceSelect?.querySelectorAll('option') || []).find((candidate) => (candidate.textContent || '').trim() === channelName) as HTMLOptionElement | undefined;
+      const option = Array.from(element.querySelectorAll<HTMLOptionElement>('option')).find((candidate: HTMLOptionElement) => (candidate.textContent || '').trim() === channelName);
       if (!option) return false;
 
       option.selected = true;
@@ -315,7 +456,7 @@ async function moveChannels(page: Page, channels: string[], source: 'in' | 'not_
       option.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
       await sleep(150);
       return true;
-    }, { channelName: channel, from: source });
+    }, channel);
 
     if (!moved) {
       throw new Error(`Kanal taşınamadı: ${channel}`);
@@ -323,7 +464,16 @@ async function moveChannels(page: Page, channels: string[], source: 'in' | 'not_
   }
 }
 
-async function clickSave(page: Page) {
+async function clickSave(page: Page, config: PanelAutomationConfig) {
+  if (config.selectors.lineSaveButton) {
+    await page.waitForSelector(config.selectors.lineSaveButton, { timeout: 15000 });
+    await Promise.all([
+      page.waitForNetworkIdle({ idleTime: 800, timeout: 15000 }).catch(() => null),
+      page.click(config.selectors.lineSaveButton),
+    ]);
+    return;
+  }
+
   const saved = await page.evaluate(() => {
     const saveButton = Array.from(document.querySelectorAll('button,a,input[type="submit"]')).find((button) => {
       const text = (button.textContent || (button as HTMLInputElement).value || '').trim().toLowerCase();
@@ -336,7 +486,7 @@ async function clickSave(page: Page) {
   });
 
   if (!saved) {
-    throw new Error('Save butonu bulunamadı.');
+    throw new Error('Save butonu bulunamadı. lineSaveButton selectoru tanımlayın.');
   }
 
   await page.waitForNetworkIdle({ idleTime: 800, timeout: 15000 }).catch(() => null);
@@ -349,8 +499,8 @@ export async function loadPanelLineState(username: string): Promise<PanelLineSta
 
   try {
     await loginToPanel(page, config);
-    await openLineEditor(page, username);
-    return await readLineState(page);
+    await openLineEditor(page, config, username);
+    return await readLineState(page, config);
   } finally {
     await page.close().catch(() => undefined);
     await browser.close().catch(() => undefined);
@@ -364,17 +514,17 @@ export async function savePanelLineState(username: string, target: PanelLineStat
 
   try {
     await loginToPanel(page, config);
-    await openLineEditor(page, username);
-    const current = await readLineState(page);
+    await openLineEditor(page, config, username);
+    const current = await readLineState(page, config);
 
     const toDisable = current.inChannels.filter((channel) => target.notInChannels.includes(channel));
     const toEnable = current.notInChannels.filter((channel) => target.inChannels.includes(channel));
 
-    if (toDisable.length > 0) await moveChannels(page, toDisable, 'in');
-    if (toEnable.length > 0) await moveChannels(page, toEnable, 'not_in');
+    if (toDisable.length > 0) await moveChannels(page, config, toDisable, 'in');
+    if (toEnable.length > 0) await moveChannels(page, config, toEnable, 'not_in');
 
-    await clickSave(page);
-    return await readLineState(page);
+    await clickSave(page, config);
+    return await readLineState(page, config);
   } finally {
     await page.close().catch(() => undefined);
     await browser.close().catch(() => undefined);
