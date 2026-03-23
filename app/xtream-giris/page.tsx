@@ -100,6 +100,7 @@ function XtreamGirisInner() {
   const [itemsLoading, setItemsLoading] = useState(false);
   const [lineState, setLineState] = useState<PanelLineState | null>(null);
   const [lineSaving, setLineSaving] = useState(false);
+  const [lineError, setLineError] = useState('');
   const [selectedEnabled, setSelectedEnabled] = useState<string[]>([]);
   const [selectedDisabled, setSelectedDisabled] = useState<string[]>([]);
 
@@ -142,6 +143,8 @@ function XtreamGirisInner() {
     setDashboard(null);
     setItems([]);
     setSelectedCategoryId('');
+    setLineState(null);
+    setLineError('');
 
     try {
       const res = await fetch('/api/xtream', {
@@ -168,6 +171,8 @@ function XtreamGirisInner() {
         setLineState(lineData.lines);
         setSelectedEnabled([]);
         setSelectedDisabled([]);
+      } else {
+        setLineError(lineData.error || 'Kanal düzenleme ekranı panelden yüklenemedi.');
       }
     } catch {
       setError('Xtream API paneline bağlanırken bir hata oluştu.');
@@ -203,6 +208,7 @@ function XtreamGirisInner() {
     if (!lineState) return;
     setLineSaving(true);
     setError('');
+    setLineError('');
     try {
       const res = await fetch('/api/panel-lines', {
         method: 'POST',
@@ -216,7 +222,7 @@ function XtreamGirisInner() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setError(data.error || 'Kanal değişiklikleri kaydedilemedi.');
+        setLineError(data.error || 'Kanal değişiklikleri kaydedilemedi.');
         return;
       }
       setLineState(data.lines);
@@ -344,6 +350,13 @@ function XtreamGirisInner() {
                   <div className="rounded-2xl border border-dashed border-[#1e2d42] bg-[#0d1a2a] p-6 text-sm text-[#8b9ab3]">Önce soldaki bilgileri doldurup giriş yapın. Ardından kullanıcı paneli, kategoriler ve içerik listesi burada görünecek.</div>
                 )}
               </div>
+
+              {lineError && (
+                <div className="rounded-3xl border border-red-500/25 bg-red-950/20 p-5 sm:p-6">
+                  <p className="text-sm font-bold text-red-300">Kanal düzenleme ekranı yüklenemedi</p>
+                  <p className="mt-2 text-sm leading-6 text-red-200/90">{lineError}</p>
+                </div>
+              )}
 
               {lineState && (
                 <div className="rounded-3xl border border-[#1e2d42] bg-[#07111f] p-5 sm:p-6">
