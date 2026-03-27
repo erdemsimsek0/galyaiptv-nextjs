@@ -1049,6 +1049,10 @@ function HomePageInner() {
                   className="flex items-center justify-center rounded-xl border border-[#1e2d42] bg-[#0d1a2a] px-7 py-3.5 text-base font-semibold text-white transition-all hover:border-[#3b82f6]/40 hover:bg-[#162035]">
                   IPTV Paketlerini Gör
                 </Link>
+                <Link href="/xtream-giris"
+                  className="flex items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-7 py-3.5 text-base font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20 hover:text-white">
+                  🚀 Xtream API Girişi
+                </Link>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -1056,6 +1060,7 @@ function HomePageInner() {
                   { href: '/blog', label: '📚 Blog Rehberleri' },
                   { href: '/iletisim', label: '💬 İletişim' },
                   { href: '/kurulum-rehberi', label: '🛠️ Kurulum Rehberi' },
+                  { href: '/xtream-giris', label: '🚀 Xtream API Girişi' },
                 ].map((item) => (
                   <Link
                     key={item.href}
