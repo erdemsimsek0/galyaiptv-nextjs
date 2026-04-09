@@ -456,7 +456,7 @@ function IpTab({ data, secret, onRefresh }: { data: ApiResponse; secret: string;
 // ─── Ödeme Bildirimleri + Kullanıcı Yönetimi Sekmesi ─────────────────────────
 function PaymentsTab({ secret }: { secret: string }) {
   const [notifications, setNotifications] = useState<{
-    email: string; plan: string; duration?: string; devices?: string; amount: string; senderName?: string; paymentCode?: string; hasReceipt?: boolean;
+    email: string; plan: string; duration?: string; devices?: string; amount: string; senderName?: string; paymentCode?: string; hasReceipt?: boolean; couponCode?: string; couponDiscount?: string;
     status: string; createdAt: number; createdAtFormatted: string;
     approvedAt?: number; assignedPlan?: string;
   }[]>([]);
@@ -563,6 +563,7 @@ function PaymentsTab({ secret }: { secret: string }) {
                       {n.duration && <Badge variant="gray">{n.duration}</Badge>}
                       {n.devices && <Badge variant="gray">{n.devices} Cihaz</Badge>}
                       {n.amount && <Badge variant="green">₺{n.amount}</Badge>}
+                      {n.couponCode && <Badge variant="yellow">🎟 {n.couponCode} (-₺{n.couponDiscount || '0'})</Badge>}
                       {n.hasReceipt && <Badge variant="green">📎 Dekont Var</Badge>}
                     </div>
                   </div>
@@ -811,6 +812,125 @@ function SupportTab({ secret }: { secret: string }) {
   );
 }
 
+// ─── Müşteri Timeline + Yenileme Hatırlatma Sekmesi ───────────────────────────
+function CustomersTab({ secret }: { secret: string }) {
+  const [customers, setCustomers] = useState<Array<{
+    email: string;
+    plan: string | null;
+    expiresFormatted: string;
+    daysLeft: number | null;
+    username: string;
+    password: string;
+    lastReminderFormatted: string;
+    openTickets: number;
+    timeline: Array<{ title: string; detail: string; status: string; createdAtFormatted: string }>;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [msg, setMsg] = useState('');
+  const [query, setQuery] = useState('');
+  const [sending, setSending] = useState<string | null>(null);
+
+  const fetchCustomers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/customers', { headers: { 'x-admin-secret': secret } });
+      const data = await res.json();
+      if (data.success) setCustomers(data.customers || []);
+      else setMsg(data.error || 'Müşteri verileri alınamadı.');
+    } catch { setMsg('Bağlantı hatası.'); }
+    finally { setLoading(false); }
+  }, [secret]);
+
+  useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
+
+  const sendReminder = async (email: string) => {
+    setSending(email);
+    try {
+      const res = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ action: 'send_renewal_reminder', email, note: 'Admin panelinden manuel hatırlatma' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMsg(`${email} için yenileme hatırlatması kaydedildi.`);
+        fetchCustomers();
+      } else setMsg(data.error || 'Hatırlatma kaydedilemedi.');
+    } catch { setMsg('Bağlantı hatası.'); }
+    finally { setSending(null); }
+  };
+
+  const filtered = customers.filter(customer => query === '' || customer.email.toLowerCase().includes(query.toLowerCase()) || (customer.plan || '').toLowerCase().includes(query.toLowerCase()));
+  const dueSoon = customers.filter(customer => customer.daysLeft !== null && customer.daysLeft <= 7).length;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="Toplam Müşteri" value={customers.length} icon="👥" color="blue" />
+        <StatCard label="7 Gün İçinde Yenileme" value={dueSoon} icon="🔔" color="orange" />
+        <StatCard label="Açık Ticket" value={customers.reduce((sum, c) => sum + c.openTickets, 0)} icon="🎫" color="purple" />
+        <StatCard label="Hatırlatma Gönderilen" value={customers.filter(c => c.lastReminderFormatted).length} icon="✉️" color="green" />
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Email veya plan ara..." className="flex-1 min-w-60 bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 outline-none focus:border-[#7c3aed] text-sm" />
+        <button onClick={fetchCustomers} className="text-xs bg-[#1f2937] border border-[#374151] text-gray-300 px-4 py-2.5 rounded-xl">⟳ Yenile</button>
+      </div>
+
+      {msg && <div className="rounded-xl border border-blue-800/40 bg-blue-900/20 px-4 py-3 text-sm text-blue-300">{msg}</div>}
+      {loading && <div className="text-center py-16 text-gray-400">Müşteriler yükleniyor...</div>}
+
+      <div className="space-y-4">
+        {filtered.map(customer => (
+          <div key={customer.email} className="rounded-2xl border border-[#1f2937] bg-[#111827] p-5">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <p className="text-sm font-semibold text-white">{customer.email}</p>
+                <p className="mt-1 text-xs text-gray-400">{customer.plan || 'Abonelik yok'} · {customer.daysLeft === null ? 'Bitiş bilgisi yok' : `${customer.daysLeft} gün kaldı`}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {customer.plan && <Badge variant="green">{customer.plan}</Badge>}
+                  {customer.openTickets > 0 && <Badge variant="yellow">{customer.openTickets} açık ticket</Badge>}
+                  {customer.lastReminderFormatted && <Badge variant="purple">Son hatırlatma: {customer.lastReminderFormatted}</Badge>}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => sendReminder(customer.email)} disabled={sending === customer.email} className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
+                  {sending === customer.email ? 'Gönderiliyor...' : '🔔 Yenileme Hatırlat'}
+                </button>
+              </div>
+            </div>
+
+            {(customer.username || customer.password) && (
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {customer.username && <div className="rounded-xl bg-[#0f172a] px-4 py-3 text-xs text-gray-300"><p className="text-[10px] uppercase tracking-wider text-gray-500">Kullanıcı adı</p><p className="mt-1 font-mono text-white">{customer.username}</p></div>}
+                {customer.password && <div className="rounded-xl bg-[#0f172a] px-4 py-3 text-xs text-gray-300"><p className="text-[10px] uppercase tracking-wider text-gray-500">Şifre</p><p className="mt-1 font-mono text-white">{customer.password}</p></div>}
+              </div>
+            )}
+
+            <div className="mt-4 rounded-xl border border-[#1f2937] bg-[#0f172a] p-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Müşteri Timeline</p>
+              <div className="space-y-3">
+                {customer.timeline.slice(0, 8).map((event, index) => (
+                  <div key={`${customer.email}-${index}`} className="flex gap-3">
+                    <div className={`mt-1 h-2.5 w-2.5 rounded-full ${event.status === 'success' ? 'bg-emerald-400' : event.status === 'warning' || event.status === 'pending' || event.status === 'open' ? 'bg-amber-400' : event.status === 'approved' ? 'bg-emerald-400' : event.status === 'rejected' || event.status === 'closed' ? 'bg-red-400' : 'bg-blue-400'}`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-white">{event.title}</p>
+                        <span className="text-[11px] text-gray-500 whitespace-nowrap">{event.createdAtFormatted}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-400">{event.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Fiyat Yönetimi Sekmesi ───────────────────────────────────────────────────
 const PLAN_LABELS: Record<string, { name: string; color: string; emoji: string }> = {
   max:    { name: 'GalyaStream Max',    color: '#ef4444', emoji: '👑' },
@@ -818,13 +938,16 @@ const PLAN_LABELS: Record<string, { name: string; color: string; emoji: string }
   cinema: { name: 'GalyaStream Cinema', color: '#f59e0b', emoji: '🎬' },
 };
 const DEFAULT_PRICES_ADMIN: Record<string, number> = { max: 229.90, sports: 159.90, cinema: 129.90 };
+const DEFAULT_DEVICE_MULTIPLIERS_ADMIN: Record<string, number> = { '1': 1, '2': 1.6, '3': 2.2 };
 
 function PricesTab({ secret }: { secret: string }) {
-  const [prices,  setPrices]  = useState<Record<string, number>>(DEFAULT_PRICES_ADMIN);
-  const [form,    setForm]    = useState<Record<string, string>>({});
+  const [prices, setPrices] = useState<Record<string, number>>(DEFAULT_PRICES_ADMIN);
+  const [deviceMultipliers, setDeviceMultipliers] = useState<Record<string, string>>({ '1': '1', '2': '1.6', '3': '2.2' });
+  const [coupons, setCoupons] = useState<Array<{ code: string; label: string; type: 'percent' | 'fixed'; value: string; minMonths: string; active: boolean }>>([]);
+  const [form, setForm] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [saving,  setSaving]  = useState(false);
-  const [msg,     setMsg]     = useState('');
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState<'ok'|'err'>('ok');
   const [isDefault, setIsDefault] = useState(true);
 
@@ -837,11 +960,22 @@ function PricesTab({ secret }: { secret: string }) {
       .then(r => r.json())
       .then(d => {
         if (d.success) {
-          setPrices(d.prices);
+          setPrices(d.prices || DEFAULT_PRICES_ADMIN);
           setIsDefault(d.isDefault ?? false);
           const f: Record<string, string> = {};
-          Object.entries(d.prices).forEach(([k, v]) => { f[k] = String(v); });
+          Object.entries(d.prices || DEFAULT_PRICES_ADMIN).forEach(([k, v]) => { f[k] = String(v); });
           setForm(f);
+          const multiplierForm: Record<string, string> = {};
+          Object.entries(d.deviceMultipliers || DEFAULT_DEVICE_MULTIPLIERS_ADMIN).forEach(([k, v]) => { multiplierForm[k] = String(v); });
+          setDeviceMultipliers(multiplierForm);
+          setCoupons((d.coupons || []).map((coupon: Record<string, unknown>) => ({
+            code: String(coupon.code || ''),
+            label: String(coupon.label || ''),
+            type: (coupon.type === 'fixed' ? 'fixed' : 'percent'),
+            value: String(coupon.value || ''),
+            minMonths: String(coupon.minMonths || ''),
+            active: Boolean(coupon.active),
+          })));
         }
       })
       .catch(() => showMsg('Fiyatlar yüklenemedi.', 'err'))
@@ -849,44 +983,67 @@ function PricesTab({ secret }: { secret: string }) {
   }, []);
 
   const handleSave = async () => {
-    // Validasyon
-    const parsed: Record<string, number> = {};
+    const parsedPrices: Record<string, number> = {};
     for (const [key, val] of Object.entries(form)) {
       const num = parseFloat(val.replace(',', '.'));
       if (isNaN(num) || num <= 0) {
-        showMsg(`Geçersiz fiyat: ${PLAN_LABELS[key]?.name || key}`, 'err'); return;
+        showMsg(`Geçersiz fiyat: ${PLAN_LABELS[key]?.name || key}`, 'err');
+        return;
       }
-      parsed[key] = num;
+      parsedPrices[key] = num;
     }
+
+    const parsedMultipliers: Record<string, number> = {};
+    for (const [key, val] of Object.entries(deviceMultipliers)) {
+      const num = parseFloat(val.replace(',', '.'));
+      if (isNaN(num) || num < 1) {
+        showMsg(`Geçersiz cihaz çarpanı: ${key}`, 'err');
+        return;
+      }
+      parsedMultipliers[key] = num;
+    }
+
+    const parsedCoupons = coupons
+      .filter(coupon => coupon.code.trim() && coupon.label.trim())
+      .map(coupon => ({
+        code: coupon.code.trim().toUpperCase(),
+        label: coupon.label.trim(),
+        type: coupon.type,
+        value: parseFloat(coupon.value.replace(',', '.')),
+        minMonths: coupon.minMonths ? Number(coupon.minMonths) : undefined,
+        active: coupon.active,
+      }));
+
+    if (parsedCoupons.some(coupon => Number.isNaN(coupon.value) || coupon.value <= 0)) {
+      showMsg('Kupon değerleri geçersiz.', 'err');
+      return;
+    }
+
     setSaving(true);
     try {
       const res = await fetch('/api/prices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
-        body: JSON.stringify({ prices: parsed }),
+        body: JSON.stringify({ prices: parsedPrices, deviceMultipliers: parsedMultipliers, coupons: parsedCoupons }),
       });
       const d = await res.json();
       if (d.success) {
-        setPrices(d.prices); setIsDefault(false);
-        showMsg('✓ Fiyatlar güncellendi. Tüm sayfalara yansıdı.');
+        setPrices(d.prices);
+        setIsDefault(false);
+        showMsg('✓ Fiyat, cihaz çarpanı ve kampanyalar güncellendi.');
       } else showMsg(d.error || 'Hata.', 'err');
     } catch { showMsg('Bağlantı hatası.', 'err'); }
     finally { setSaving(false); }
   };
 
   const handleReset = async () => {
-    if (!confirm('Fiyatları varsayılan değerlere sıfırlamak istediğinize emin misiniz?')) return;
+    if (!confirm('Tüm fiyat ve kampanyaları varsayılan değerlere döndürmek istiyor musunuz?')) return;
     setSaving(true);
     try {
       const res = await fetch('/api/prices', { method: 'DELETE', headers: { 'x-admin-secret': secret } });
       const d = await res.json();
-      if (d.success) {
-        setPrices(d.prices); setIsDefault(true);
-        const f: Record<string, string> = {};
-        Object.entries(d.prices).forEach(([k, v]) => { f[k] = String(v); });
-        setForm(f);
-        showMsg('Varsayılan fiyatlara döndürüldü.');
-      } else showMsg(d.error || 'Hata.', 'err');
+      if (d.success) window.location.reload();
+      else showMsg(d.error || 'Hata.', 'err');
     } catch { showMsg('Bağlantı hatası.', 'err'); }
     finally { setSaving(false); }
   };
@@ -894,114 +1051,70 @@ function PricesTab({ secret }: { secret: string }) {
   if (loading) return <div className="text-center py-20 text-gray-400">Fiyatlar yükleniyor...</div>;
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-white">💰 Paket Fiyat Yönetimi</h2>
-          <p className="text-xs text-gray-500 mt-1">
-            {isDefault ? '⚠️ Şu an varsayılan fiyatlar kullanılıyor.' : '✓ Özel fiyatlar aktif.'}
-          </p>
+          <h2 className="text-lg font-bold text-white">💰 Fiyat · Cihaz · Kampanya Yönetimi</h2>
+          <p className="text-xs text-gray-500 mt-1">{isDefault ? '⚠️ Varsayılan ayarlar aktif.' : '✓ Özel ticari ayarlar aktif.'}</p>
         </div>
-        {!isDefault && (
-          <button onClick={handleReset} disabled={saving}
-            className="text-xs bg-gray-800 border border-gray-700 text-gray-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
-            Varsayılana Sıfırla
-          </button>
-        )}
+        <button onClick={handleReset} disabled={saving} className="text-xs bg-gray-800 border border-gray-700 text-gray-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors">Sıfırla</button>
       </div>
 
-      {msg && (
-        <div className={`rounded-xl px-4 py-3 text-sm border ${msgType === 'ok' ? 'bg-green-900/30 text-green-400 border-green-800/50' : 'bg-red-900/30 text-red-400 border-red-800/50'}`}>
-          {msg}
-        </div>
-      )}
+      {msg && <div className={`rounded-xl px-4 py-3 text-sm border ${msgType === 'ok' ? 'bg-green-900/30 text-green-400 border-green-800/50' : 'bg-red-900/30 text-red-400 border-red-800/50'}`}>{msg}</div>}
 
-      {/* Fiyat kartları */}
       <div className="grid gap-4">
         {Object.entries(PLAN_LABELS).map(([id, meta]) => (
-          <div key={id} className="bg-[#111827] border border-[#1f2937] rounded-2xl p-5"
-            style={{ borderLeftColor: meta.color, borderLeftWidth: 3 }}>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-2xl">{meta.emoji}</span>
+          <div key={id} className="bg-[#111827] border border-[#1f2937] rounded-2xl p-5" style={{ borderLeftColor: meta.color, borderLeftWidth: 3 }}>
+            <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
-                <p className="font-bold text-white">{meta.name}</p>
-                <p className="text-xs text-gray-500">Aylık baz fiyat (TL)</p>
+                <p className="font-bold text-white">{meta.emoji} {meta.name}</p>
+                <p className="text-xs text-gray-500">Aylık baz fiyat</p>
               </div>
-              <div className="ml-auto text-right">
-                <p className="text-xs text-gray-500">Mevcut</p>
-                <p className="font-mono font-bold" style={{ color: meta.color }}>
-                  ₺{(prices[id] ?? DEFAULT_PRICES_ADMIN[id]).toFixed(2).replace('.', ',')}
-                </p>
-              </div>
+              <input type="number" step="0.01" value={form[id] ?? ''} onChange={e => setForm(p => ({ ...p, [id]: e.target.value }))} className="w-40 bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 text-sm font-mono" />
             </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="mb-1.5 block text-xs text-gray-400">Yeni Fiyat (₺)</label>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500 text-sm">₺</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="1"
-                    max="99999"
-                    value={form[id] ?? ''}
-                    onChange={e => setForm(p => ({ ...p, [id]: e.target.value }))}
-                    className="flex-1 bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 outline-none focus:border-[#7c3aed] transition-colors text-sm font-mono"
-                    placeholder={String(DEFAULT_PRICES_ADMIN[id])}
-                  />
-                </div>
-              </div>
-              {/* Hızlı değişim butonları */}
-              <div className="flex flex-col gap-1.5 pt-5">
-                {[-10, -5, +5, +10].map(delta => (
-                  <button key={delta}
-                    onClick={() => {
-                      const current = parseFloat((form[id] || String(prices[id])).replace(',', '.')) || 0;
-                      const newVal  = Math.max(1, Math.round((current + delta) * 100) / 100);
-                      setForm(p => ({ ...p, [id]: String(newVal) }));
-                    }}
-                    className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${delta > 0 ? 'border-green-800/50 bg-green-900/20 text-green-400 hover:bg-green-900/40' : 'border-red-800/50 bg-red-900/20 text-red-400 hover:bg-red-900/40'}`}>
-                    {delta > 0 ? `+${delta}` : delta}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* İndirim hesaplayıcı */}
-            {form[id] && (
-              <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                {[{ label: '1 Ay', m: 1, d: 0 }, { label: '6 Ay (%5)', m: 6, d: 5 }, { label: '12 Ay (%20)', m: 12, d: 20 }].map(({ label, m, d }) => {
-                  const base  = parseFloat(form[id].replace(',', '.')) || 0;
-                  const total = Math.round(base * (1 - d/100) * m * 100) / 100;
-                  return (
-                    <div key={label} className="rounded-lg bg-[#1f2937] p-2 text-center">
-                      <p className="text-gray-500">{label}</p>
-                      <p className="font-mono font-semibold text-white">₺{total.toFixed(2).replace('.', ',')}</p>
-                      <p className="text-gray-600">/{m === 1 ? 'ay' : `${m} ay`}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
         ))}
       </div>
 
-      <div className="flex gap-3">
-        <button onClick={handleSave} disabled={saving}
-          className="flex-1 bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors">
-          {saving ? 'Kaydediliyor...' : '💾 Fiyatları Kaydet & Yayınla'}
-        </button>
+      <div className="rounded-2xl border border-[#1f2937] bg-[#111827] p-5">
+        <h3 className="text-sm font-bold text-white mb-4">📱 Cihaz Sayısına Göre Fiyatlandırma</h3>
+        <div className="grid gap-3 md:grid-cols-3">
+          {Object.entries(deviceMultipliers).map(([key, value]) => (
+            <div key={key}>
+              <label className="mb-1.5 block text-xs text-gray-500">{key} cihaz çarpanı</label>
+              <input type="number" step="0.01" min="1" value={value} onChange={e => setDeviceMultipliers(prev => ({ ...prev, [key]: e.target.value }))} className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl px-4 py-2.5 text-sm font-mono" />
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="rounded-xl border border-[#1f2937] bg-[#0f172a] p-4 text-xs text-gray-500 space-y-1">
-        <p className="font-semibold text-gray-400">ℹ️ Nasıl Çalışır?</p>
-        <p>• Fiyatlar Redis&apos;te saklanır, tüm sayfalar her yüklemede API&apos;den çeker.</p>
-        <p>• Ana sayfa paket kartları, abonelik sayfası ve ödeme özeti anlık güncellenir.</p>
-        <p>• Varsayılan fiyatlar: Max ₺229,90 · Sports ₺159,90 · Cinema ₺129,90</p>
-        <p>• İndirimler otomatik hesaplanır (6 ay %5, 12 ay %20).</p>
+      <div className="rounded-2xl border border-[#1f2937] bg-[#111827] p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-white">🎟 Kupon / Kampanya Altyapısı</h3>
+          <button onClick={() => setCoupons(prev => [...prev, { code: '', label: '', type: 'percent', value: '', minMonths: '', active: true }])} className="text-xs bg-[#7c3aed] px-3 py-1.5 rounded-lg text-white font-semibold">+ Kupon Ekle</button>
+        </div>
+        <div className="space-y-3">
+          {coupons.map((coupon, index) => (
+            <div key={`${coupon.code}-${index}`} className="grid gap-3 md:grid-cols-6 rounded-xl border border-[#1f2937] bg-[#0f172a] p-4">
+              <input value={coupon.code} onChange={e => setCoupons(prev => prev.map((item, idx) => idx === index ? { ...item, code: e.target.value.toUpperCase() } : item))} placeholder="Kod" className="bg-[#1f2937] border border-[#374151] rounded-lg px-3 py-2 text-sm text-white" />
+              <input value={coupon.label} onChange={e => setCoupons(prev => prev.map((item, idx) => idx === index ? { ...item, label: e.target.value } : item))} placeholder="Kampanya adı" className="bg-[#1f2937] border border-[#374151] rounded-lg px-3 py-2 text-sm text-white md:col-span-2" />
+              <select value={coupon.type} onChange={e => setCoupons(prev => prev.map((item, idx) => idx === index ? { ...item, type: e.target.value as 'percent' | 'fixed' } : item))} className="bg-[#1f2937] border border-[#374151] rounded-lg px-3 py-2 text-sm text-white">
+                <option value="percent">%</option>
+                <option value="fixed">TL</option>
+              </select>
+              <input value={coupon.value} onChange={e => setCoupons(prev => prev.map((item, idx) => idx === index ? { ...item, value: e.target.value } : item))} placeholder="Değer" className="bg-[#1f2937] border border-[#374151] rounded-lg px-3 py-2 text-sm text-white" />
+              <input value={coupon.minMonths} onChange={e => setCoupons(prev => prev.map((item, idx) => idx === index ? { ...item, minMonths: e.target.value } : item))} placeholder="Min ay" className="bg-[#1f2937] border border-[#374151] rounded-lg px-3 py-2 text-sm text-white" />
+              <div className="flex items-center justify-between gap-2 md:col-span-6">
+                <label className="flex items-center gap-2 text-xs text-gray-400"><input type="checkbox" checked={coupon.active} onChange={e => setCoupons(prev => prev.map((item, idx) => idx === index ? { ...item, active: e.target.checked } : item))} /> Aktif</label>
+                <button onClick={() => setCoupons(prev => prev.filter((_, idx) => idx !== index))} className="text-xs text-red-400">Sil</button>
+              </div>
+            </div>
+          ))}
+          {coupons.length === 0 && <p className="text-sm text-gray-500">Henüz kampanya yok.</p>}
+        </div>
       </div>
+
+      <button onClick={handleSave} disabled={saving} className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors">{saving ? 'Kaydediliyor...' : '💾 Ticari Ayarları Kaydet'}</button>
     </div>
   );
 }
@@ -1014,7 +1127,7 @@ export default function AdminPage() {
   const [data,      setData]      = useState<ApiResponse | null>(null);
   const [error,     setError]     = useState('');
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState<'trials'|'ips'|'payment'|'prices'|'payments'|'support'>('trials');
+  const [activeTab, setActiveTab] = useState<'trials'|'ips'|'payment'|'prices'|'payments'|'support'|'customers'>('trials');
 
   const fetchData = useCallback(async (s: string) => {
     setLoading(true); setError('');
@@ -1109,6 +1222,9 @@ export default function AdminPage() {
           <Tab active={activeTab === 'support'} onClick={() => setActiveTab('support')}>
             🎫 Destek Talepleri
           </Tab>
+          <Tab active={activeTab === 'customers'} onClick={() => setActiveTab('customers')}>
+            👥 Müşteri Timeline
+          </Tab>
         </div>
 
         {error && (
@@ -1141,6 +1257,10 @@ export default function AdminPage() {
 
         {activeTab === 'support' && (
           <SupportTab secret={secret} />
+        )}
+
+        {activeTab === 'customers' && (
+          <CustomersTab secret={secret} />
         )}
       </div>
     </div>
